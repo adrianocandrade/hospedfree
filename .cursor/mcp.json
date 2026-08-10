@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "hospedfree-storybook": {
+      "url": "http://localhost:6006/mcp"
+    }
+  }
+}

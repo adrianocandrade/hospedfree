@@ -1,0 +1,2073 @@
+import {WidgetRenderers} from '@app/dashboard/biolink/biolink-editor/content/widgets/widget-renderers';
+import {
+  AdvancedAppearanceConfig,
+  bannerBackgroundStyle,
+  defaultDesktopConfig,
+  defaultEffectsConfig,
+  defaultMediaConfig,
+  headerShapePath,
+  normalizeHeaderShapeVariant,
+  resolveImageUrl,
+  resolvedMediaEffect,
+  resolvedParticlePreset,
+} from '@app/dashboard/biolink/biolink-editor/appearance/biolink-theme-utils';
+import {
+  BiolinkButtonConfig,
+  BiolinkButtonStyleOverride,
+  assetUsesMask,
+  getBiolinkButtonIconColor,
+  getBiolinkButtonStyle,
+} from '@app/dashboard/biolink/biolink-editor/appearance/biolink-button-style-utils';
+import {Biolink} from '@app/gen/schemas/biolink';
+import {BiolinkAppearanceConfig} from '@app/gen/schemas/biolink-appearance-config';
+import {BiolinkAppearanceConfigBtnConfig} from '@app/gen/schemas/biolink-appearance-config-btn-config';
+import {BiolinkLink} from '@app/gen/schemas/biolink-link';
+import {validateLinkPasswordOptions} from '@app/dashboard/links/links-queries';
+import {AdHost} from '@common/admin/ads/ad-host';
+import {onFormQueryError} from '@common/http/errors/on-form-query-error';
+import {
+  getImageBackgroundEffectStyle,
+  ImageBackgroundEffectOverlay,
+} from '@common/background-selector/image-background-effect';
+import {NoiseFilter} from '@common/background-selector/images/noise-filter';
+import {
+  cssPropsFromBgConfig,
+  getBgTintStyle,
+} from '@common/background-selector/utils/css-props-from-bg-config';
+import type {FontConfig} from '@ui/fonts/font-picker/font-config';
+import {Button} from '@shadcn/button/button';
+import {Field} from '@shadcn/forms/field';
+import {HookForm} from '@shadcn/forms/form/hook-form';
+import {Input} from '@shadcn/forms/input/input';
+import {loadFonts} from '@ui/fonts/font-picker/load-fonts';
+import {Trans} from '@ui/i18n/trans';
+import {message} from '@ui/i18n/message';
+import {useTrans} from '@ui/i18n/use-trans';
+import {useSettings} from '@ui/settings/use-settings';
+import {useIsDarkMode} from '@ui/themes/use-is-dark-mode';
+import {cn} from '@ui/utils/cn';
+import {useMutation} from '@tanstack/react-query';
+import Color from 'colorjs.io';
+import {
+  CSSProperties,
+  ReactElement,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {useForm} from 'react-hook-form';
+import {Link} from 'react-router';
+import {PauseIcon, PlayIcon, Volume2Icon} from 'lucide-react';
+import * as SimpleIcons from '@icons-pack/react-simple-icons';
+import * as LucideIcons from 'lucide-react';
+import type {ISourceOptions} from '@tsparticles/engine';
+import {ComponentType, createElement} from 'react';
+
+interface BiolinkLayoutProps {
+  biolink: Biolink;
+  appearance?: BiolinkAppearanceConfig | null;
+  content?: Biolink['content'];
+  className?: string;
+  enableLinkAnimations?: boolean;
+  showAds?: boolean;
+}
+
+type BiolinkContentItem = NonNullable<Biolink['content']>[number];
+
+export function BiolinkLayout({
+  biolink,
+  className,
+  appearance,
+  content,
+  enableLinkAnimations,
+  showAds,
+}: BiolinkLayoutProps) {
+  if (!appearance) {
+    appearance = biolink.appearance?.config ?? null;
+  }
+  if (!content) {
+    content = biolink.content || [];
+  }
+
+  useEffect(() => {
+    const id = 'biolink-fonts';
+    const audioPromptFont = (appearance as AdvancedAppearanceConfig | null)
+      ?.mediaConfig?.audioPrompt?.fontConfig;
+    const fonts = [
+      appearance?.fontConfig,
+      appearance?.headerConfig?.alternativeFont
+        ? appearance?.headerConfig?.titleFontConfig
+        : null,
+      audioPromptFont,
+    ].filter((font): font is FontConfig => !!font);
+
+    if (fonts.length) {
+      void loadFonts(fonts, {id}).catch(() => {
+        // Keep the system fallback when a remote font cannot be loaded.
+      });
+    }
+  }, [
+    appearance?.fontConfig,
+    appearance?.headerConfig?.alternativeFont,
+    appearance?.headerConfig?.titleFontConfig,
+    (appearance as AdvancedAppearanceConfig | null)?.mediaConfig?.audioPrompt
+      ?.fontConfig,
+  ]);
+
+  useEffect(() => {
+    const hasAnimations = content.some(
+      item => item.model_type === 'link' && item.animation,
+    );
+    if (enableLinkAnimations && hasAnimations) {
+      import('@app/dashboard/biolink/biolink-editor/content/link-content-item/animate.min.css');
+    }
+  }, [enableLinkAnimations, content]);
+
+  const advancedAppearance = appearance as AdvancedAppearanceConfig | null;
+  const desktopEnabled = !!advancedAppearance?.desktopConfig?.enabled;
+
+  return (
+    <div className="@container">
+      <div
+        className={cn(
+          'biolink-layout-container isolate @2xl:pt-10',
+          appearance?.theme?.slug && `linkbio-theme-${appearance.theme.slug}`,
+          desktopEnabled && '@2xl:pt-0',
+          effectClassNames(advancedAppearance),
+          className,
+        )}
+        style={{
+          fontFamily: appearance?.fontConfig?.family,
+          ...effectVariables(advancedAppearance),
+          ...cursorStyle(advancedAppearance),
+        }}
+      >
+        {appearance?.customCss && (
+          <style dangerouslySetInnerHTML={{__html: appearance.customCss}} />
+        )}
+        <EffectStyles appearance={advancedAppearance} />
+        {desktopEnabled ? (
+          <DesktopBiolinkLayout
+            appearance={advancedAppearance}
+            biolink={biolink}
+            content={content}
+            showAds={showAds}
+          />
+        ) : null}
+        <div
+          className={cn(
+            'fixed inset-0 z-1 hidden after:absolute after:inset-0 after:bg-black/20 after:backdrop-blur-sm @2xl:block',
+            desktopEnabled && '@2xl:hidden',
+          )}
+        >
+          <Background appearance={appearance} />
+        </div>
+
+        <div
+          className={cn(
+            'relative z-2 mx-auto min-h-screen max-w-2xl overflow-hidden @2xl:min-h-[calc(100vh-2.5rem)] @2xl:rounded-t-card @2xl:shadow-2xl',
+            desktopEnabled && '@2xl:hidden',
+          )}
+          style={{
+            color: appearance?.bgConfig?.color,
+          }}
+        >
+          <Background className="z-3" appearance={appearance} />
+          <VisualEffectsOverlay appearance={advancedAppearance} />
+          <ParticleEffectLayer appearance={advancedAppearance} />
+          <AudioControl appearance={advancedAppearance} />
+
+          <div className="relative z-4 flex flex-col p-6">
+            <div className="flex-auto">
+              {showAds && <AdHost slot="biolink_top" className="mb-15" />}
+              <BiolinkHeader biolink={biolink} appearance={appearance} />
+              <BiolinkBadges appearance={advancedAppearance} />
+              <BiolinkContentList appearance={appearance} content={content} />
+            </div>
+            <Branding appearance={appearance} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function isBiolinkContentItemVisible(item: BiolinkContentItem): boolean {
+  if (!item.active) {
+    return false;
+  }
+
+  if (item.model_type !== 'biolinkWidget') {
+    return true;
+  }
+
+  const widget = item as BiolinkContentItem & {
+    activates_at?: string | null;
+    expires_at?: string | null;
+  };
+  const now = Date.now();
+
+  if (widget.activates_at && new Date(widget.activates_at).getTime() > now) {
+    return false;
+  }
+
+  if (widget.expires_at && new Date(widget.expires_at).getTime() <= now) {
+    return false;
+  }
+
+  return true;
+}
+
+function WidgetPasswordGate({
+  widget,
+  children,
+}: {
+  widget: BiolinkContentItem;
+  children: ReactElement;
+}) {
+  const passwordProtectedWidget = widget as BiolinkContentItem & {
+    password?: string | null;
+  };
+  const [unlocked, setUnlocked] = useState(!passwordProtectedWidget.password);
+  const form = useForm<{password: string}>();
+  const checkPassword = useMutation(validateLinkPasswordOptions());
+
+  if (unlocked) {
+    return children;
+  }
+
+  return (
+    <HookForm.Root
+      form={form}
+      onSubmit={values => {
+        checkPassword.mutate(
+          {
+            ...values,
+            linkeableType: 'biolinkWidget',
+            linkeableId: widget.id,
+          },
+          {
+            onSuccess: () => setUnlocked(true),
+            onError: err => onFormQueryError(err, form),
+          },
+        );
+      }}
+      className="rounded-lg border border-current/15 p-4 text-left"
+    >
+      <div className="mb-3 text-sm font-medium">
+        <Trans message="This widget is password protected." />
+      </div>
+      <HookForm.Field name="password">
+        <Field.Label>
+          <Trans message="Password" />
+        </Field.Label>
+        <Input type="password" required />
+        <Field.Error />
+      </HookForm.Field>
+      <Button
+        type="submit"
+        className="mt-3 w-full"
+        disabled={checkPassword.isPending}
+      >
+        <Trans message="Unlock" />
+      </Button>
+    </HookForm.Root>
+  );
+}
+
+function BiolinkContentList({
+  appearance,
+  content,
+}: {
+  appearance?: BiolinkAppearanceConfig | null;
+  content: NonNullable<Biolink['content']>;
+}) {
+  const groups: {isPanel: boolean; items: BiolinkContentItem[]}[] = [];
+  let currentGroup: {isPanel: boolean; items: BiolinkContentItem[]} | null =
+    null;
+
+  content.forEach(item => {
+    if (!isBiolinkContentItemVisible(item)) return;
+
+    const itemType = 'type' in item ? item.type : null;
+    const isPanel =
+      item.model_type === 'link' ||
+      !['socials', 'imageGallery', 'linkCollection'].includes(itemType ?? '');
+
+    if (!currentGroup || currentGroup.isPanel !== isPanel) {
+      currentGroup = {isPanel, items: []};
+      groups.push(currentGroup);
+    }
+    currentGroup.items.push(item);
+  });
+
+  return groups.map((group, groupIdx) => (
+    <div
+      key={groupIdx}
+      className={cn(
+        'flex w-full flex-col',
+        group.isPanel ? 'biolink-panel-group' : 'biolink-top-group',
+      )}
+    >
+      {group.items.map(item => {
+        const key = `${item.model_type}-${item.id}`;
+        let renderedItem: ReactElement;
+        if (item.model_type === 'link') {
+          renderedItem = <LinkButton appearance={appearance} link={item} />;
+        } else {
+          const Widget = WidgetRenderers[item.type];
+          renderedItem = (
+            <WidgetPasswordGate widget={item}>
+              <Widget
+                widget={item}
+                variant="biolinkPage"
+                appearance={appearance}
+              />
+            </WidgetPasswordGate>
+          );
+        }
+
+        return (
+          <div className="mb-3.5 w-full" key={key}>
+            {renderedItem}
+          </div>
+        );
+      })}
+    </div>
+  ));
+}
+
+function DesktopBiolinkLayout({
+  appearance,
+  biolink,
+  content,
+  showAds,
+}: {
+  appearance: AdvancedAppearanceConfig | null;
+  biolink: Biolink;
+  content: NonNullable<Biolink['content']>;
+  showAds?: boolean;
+}) {
+  const desktop = {...defaultDesktopConfig, ...appearance?.desktopConfig};
+  const savedDesktop = appearance?.desktopConfig ?? {};
+  const surfaceMode =
+    savedDesktop.surfaceMode ??
+    (savedDesktop.panelBackgroundColor &&
+    savedDesktop.panelBackgroundColor !== '#111111cc'
+      ? 'tinted'
+      : 'open');
+  const panelTextColor =
+    surfaceMode === 'tinted'
+      ? (desktop.panelTextColor ??
+        appearance?.bgConfig?.color ??
+        'currentColor')
+      : (appearance?.bgConfig?.color ?? 'currentColor');
+  const placement = desktop.profilePlacement ?? 'center';
+  const contentMode = desktop.contentMode ?? 'spotlight';
+  const gridMode = desktop.gridMode ?? 'auto';
+  const gridClassName =
+    contentMode === 'columns'
+      ? gridMode === '1'
+        ? '[&_.biolink-panel-group]:grid [&_.biolink-panel-group]:grid-cols-1 [&_.biolink-panel-group>div]:mb-0'
+        : gridMode === '2'
+          ? '[&_.biolink-panel-group]:grid [&_.biolink-panel-group]:grid-cols-2 [&_.biolink-panel-group]:gap-4 [&_.biolink-panel-group>div]:mb-0'
+          : gridMode === '3'
+            ? '[&_.biolink-panel-group]:grid [&_.biolink-panel-group]:grid-cols-3 [&_.biolink-panel-group]:gap-4 [&_.biolink-panel-group>div]:mb-0'
+            : '[&_.biolink-panel-group]:grid [&_.biolink-panel-group]:grid-cols-[repeat(auto-fit,minmax(min(100%,20rem),1fr))] [&_.biolink-panel-group]:gap-4 [&_.biolink-panel-group>div]:mb-0'
+      : '';
+  const panelStyle =
+    surfaceMode === 'tinted'
+      ? {
+          backgroundColor: colorWithAlpha(
+            desktop.panelBackgroundColor ?? '#111111',
+            desktop.profileOpacity ?? 0.9,
+          ),
+          backdropFilter: `blur(${desktop.profileBlur ?? 12}px)`,
+        }
+      : undefined;
+
+  return (
+    <div
+      className={cn(
+        'relative z-2 hidden min-h-[100dvh] overflow-visible @2xl:block',
+        gridClassName,
+      )}
+      style={{color: panelTextColor}}
+    >
+      <Background appearance={appearance} />
+      <VisualEffectsOverlay appearance={appearance} />
+      <ParticleEffectLayer appearance={appearance} />
+      <DecorativeAsset appearance={appearance} />
+      <AudioControl appearance={appearance} />
+      <div
+        className={cn(
+          'relative z-5 flex min-h-[100dvh] px-10 py-16',
+          placement === 'left' && 'items-center justify-start',
+          placement === 'right' && 'items-center justify-end',
+          placement === 'center' && 'items-center justify-center',
+        )}
+      >
+        <div
+          className={cn(
+            'w-full p-2 sm:p-6',
+            contentMode === 'columns' && 'max-w-6xl',
+            contentMode === 'stack' && 'max-w-3xl',
+            contentMode === 'spotlight' && 'max-w-2xl',
+          )}
+          style={panelStyle}
+        >
+          {showAds && <AdHost slot="biolink_top" className="mb-10" />}
+          <BiolinkHeader biolink={biolink} appearance={appearance} />
+          <BiolinkBadges appearance={appearance} />
+          <BiolinkContentList appearance={appearance} content={content} />
+          <Branding appearance={appearance} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BiolinkHeader({
+  appearance,
+  biolink,
+}: {
+  appearance?: BiolinkAppearanceConfig | null;
+  biolink: Biolink;
+}) {
+  const header = appearance?.headerConfig;
+
+  if (!header) {
+    return null;
+  }
+
+  const layout = header.layout ?? 'classic';
+  const title = header.title || biolink.name;
+  const titleColor = header.titleColor || appearance?.bgConfig?.color;
+  const titleFontFamily = header.alternativeFont
+    ? header.titleFontConfig?.family
+    : undefined;
+  const logo = resolveImageUrl(header.logo);
+  const media = appearance as AdvancedAppearanceConfig | null;
+  const avatarSideAsset = resolveImageUrl(media?.mediaConfig?.avatarOverride);
+  const headerImage =
+    layout === 'hero' || layout === 'cutout'
+      ? resolveImageUrl(header.image)
+      : undefined;
+  const hasHeroImageHeader = layout === 'hero' && !!headerImage;
+  const hasCutoutImageHeader = layout === 'cutout' && !!headerImage;
+  const hasImageHeader = !!headerImage;
+  const showLogo = header.titleStyle === 'logo' && logo;
+
+  return (
+    <header
+      className={cn(
+        'mb-8 flex flex-col items-center text-center',
+        layout === 'hero' && !headerImage && 'pt-4',
+        hasHeroImageHeader &&
+          'relative -mx-6 -mt-6 h-[420px] max-h-[58vh] min-h-80 justify-end overflow-hidden rounded-t-card px-6 pt-28 pb-8',
+        hasCutoutImageHeader &&
+          'relative -mx-6 -mt-6 h-[360px] max-h-[52vh] min-h-72 justify-start overflow-hidden rounded-t-card px-6 pt-20 pb-10',
+        layout === 'banner' && '-mx-2',
+      )}
+    >
+      {headerImage && (
+        <HeaderBackdropImage
+          image={headerImage}
+          variant={layout === 'cutout' ? 'cutout' : 'hero'}
+        />
+      )}
+      {layout === 'banner' && (
+        <div
+          className="mb-[-38px] h-60 w-full rounded-card-sm"
+          style={bannerBackgroundStyle(header, appearance?.bgConfig)}
+        />
+      )}
+      {!hasImageHeader && (
+        <HeaderAvatar
+          accentImage={avatarSideAsset}
+          layout={layout}
+          title={title}
+          image={header.image}
+          shapeColor={
+            header.shapeColor ??
+            header.titleColor ??
+            appearance?.bgConfig?.color ??
+            '#111111'
+          }
+          shapeVariant={header.shapeVariant}
+        />
+      )}
+      <div
+        className={cn(
+          'relative z-2 flex w-full flex-col items-center',
+          hasImageHeader && 'drop-shadow-lg',
+          hasCutoutImageHeader && 'pt-1',
+        )}
+      >
+        {showLogo ? (
+          <div
+            className={cn(
+              'flex min-h-18 w-full items-center justify-center px-4',
+              hasImageHeader ? 'mt-0' : 'mt-4',
+            )}
+          >
+            <span className="biolink-profile-title biolink-profile-title-logo relative inline-flex items-center justify-center">
+              <img
+                src={logo}
+                alt=""
+                className={cn(
+                  'block max-h-full max-w-full object-contain',
+                  hasImageHeader
+                    ? 'max-h-20 max-w-[min(18rem,100%)]'
+                    : 'max-h-18 max-w-[min(17rem,100%)]',
+                )}
+              />
+              <span className="sr-only">{title}</span>
+            </span>
+          </div>
+        ) : (
+          <h1
+            className={cn(
+              'biolink-profile-title biolink-profile-title-text max-w-full font-bold wrap-break-word',
+              hasImageHeader ? 'mt-0 text-3xl' : 'mt-4 text-2xl',
+            )}
+            style={{
+              color: titleColor,
+              fontFamily: titleFontFamily,
+            }}
+          >
+            {title}
+          </h1>
+        )}
+        {header.bio ? (
+          <p
+            className={cn(
+              'mt-2 max-w-md text-sm leading-6 wrap-break-word',
+              hasImageHeader ? 'opacity-90' : 'opacity-85',
+            )}
+          >
+            {header.bio}
+          </p>
+        ) : null}
+      </div>
+    </header>
+  );
+}
+
+function HeaderBackdropImage({
+  image,
+  variant,
+}: {
+  image: string;
+  variant: 'hero' | 'cutout';
+}) {
+  const isCutout = variant === 'cutout';
+
+  return (
+    <div aria-hidden className="absolute inset-0 z-0 overflow-hidden">
+      <div
+        className="absolute inset-0"
+        style={isCutout ? cutoutFooterMaskStyle : heroFooterMaskStyle}
+      >
+        <img
+          src={image}
+          alt=""
+          className={cn(
+            'size-full object-cover saturate-110',
+            isCutout ? 'opacity-90' : 'opacity-[0.82]',
+          )}
+        />
+        <div
+          className={cn(
+            'absolute inset-0',
+            isCutout ? 'bg-black/10' : 'bg-black/15',
+          )}
+        />
+      </div>
+    </div>
+  );
+}
+
+const heroFooterMask =
+  'radial-gradient(125% 105% at 50% 0%, rgb(0 0 0) 0%, rgb(0 0 0) 42%, rgb(0 0 0 / 0.98) 50%, rgb(0 0 0 / 0.9) 58%, rgb(0 0 0 / 0.76) 66%, rgb(0 0 0 / 0.55) 74%, rgb(0 0 0 / 0.3) 82%, rgb(0 0 0 / 0.1) 90%, rgb(0 0 0 / 0) 96%, rgb(0 0 0 / 0) 100%)';
+
+const cutoutFooterMask =
+  'radial-gradient(115% 100% at 50% 0%, rgb(0 0 0) 0%, rgb(0 0 0) 52%, rgb(0 0 0 / 0.98) 59%, rgb(0 0 0 / 0.9) 65%, rgb(0 0 0 / 0.75) 71%, rgb(0 0 0 / 0.55) 77%, rgb(0 0 0 / 0.32) 83%, rgb(0 0 0 / 0.12) 89%, rgb(0 0 0 / 0) 94%, rgb(0 0 0 / 0) 100%)';
+
+const heroFooterMaskStyle = {
+  WebkitMaskImage: heroFooterMask,
+  maskImage: heroFooterMask,
+  WebkitMaskRepeat: 'no-repeat',
+  maskRepeat: 'no-repeat',
+  WebkitMaskSize: '100% 100%',
+  maskSize: '100% 100%',
+};
+
+const cutoutFooterMaskStyle = {
+  WebkitMaskImage: cutoutFooterMask,
+  maskImage: cutoutFooterMask,
+  WebkitMaskRepeat: 'no-repeat',
+  maskRepeat: 'no-repeat',
+  WebkitMaskSize: '100% 100%',
+  maskSize: '100% 100%',
+};
+
+function HeaderAvatar({
+  accentImage,
+  image,
+  layout,
+  shapeColor,
+  shapeVariant,
+  title,
+}: {
+  accentImage?: string;
+  image?: string;
+  layout: string;
+  shapeColor?: string;
+  shapeVariant?: string | null;
+  title: string;
+}) {
+  const src = resolveImageUrl(image);
+
+  if (layout === 'shape') {
+    return (
+      <HeaderShapeAvatar
+        accentImage={accentImage}
+        image={src}
+        shapeColor={shapeColor}
+        shapeVariant={shapeVariant}
+        title={title}
+      />
+    );
+  }
+
+  const className = cn(
+    'flex items-center justify-center overflow-hidden bg-white/20 text-xl font-semibold shadow-lg ring-1 ring-white/25',
+    layout === 'hero' && 'size-30 rounded-t-card rounded-b-full',
+    layout === 'banner' && 'size-22 rounded-full border-4 border-white/40',
+    layout === 'cutout' && 'size-24 rounded-t-card rounded-b-[40%]',
+    layout === 'classic' && 'size-24 rounded-full',
+  );
+
+  const avatar = src ? (
+    <img src={src} alt="" className={cn(className, 'object-cover')} />
+  ) : (
+    <div className={className}>{title.slice(0, 1).toUpperCase()}</div>
+  );
+
+  return (
+    <div className="relative z-2 inline-flex">
+      {avatar}
+      <HeaderAvatarSideAsset image={accentImage} />
+    </div>
+  );
+}
+
+function HeaderShapeAvatar({
+  accentImage,
+  image,
+  shapeColor = '#111111',
+  shapeVariant,
+  title,
+}: {
+  accentImage?: string;
+  image?: string;
+  shapeColor?: string;
+  shapeVariant?: string | null;
+  title: string;
+}) {
+  const variant = normalizeHeaderShapeVariant(shapeVariant);
+  const rawId = useId();
+  const clipId = `biolink-header-shape-${variant}-${rawId.replace(/:/g, '')}`;
+  const path = headerShapePath(variant);
+
+  return (
+    <div className="relative z-2 flex h-34 w-48 items-center justify-center">
+      <svg
+        aria-hidden
+        className="size-full overflow-visible drop-shadow-lg"
+        viewBox="0 0 100 100"
+      >
+        <defs>
+          <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
+            <path d={path} />
+          </clipPath>
+        </defs>
+        {image ? (
+          <image
+            clipPath={`url(#${clipId})`}
+            height="100"
+            href={image}
+            preserveAspectRatio="xMidYMid slice"
+            width="100"
+          />
+        ) : (
+          <path d={path} fill={shapeColor} />
+        )}
+      </svg>
+      {!image ? (
+        <span className="absolute flex size-16 items-center justify-center rounded-full bg-white/15 text-xl font-semibold text-white">
+          {title.slice(0, 1).toUpperCase()}
+        </span>
+      ) : null}
+      <HeaderAvatarSideAsset image={accentImage} className="right-7 bottom-5" />
+    </div>
+  );
+}
+
+function HeaderAvatarSideAsset({
+  className,
+  image,
+}: {
+  className?: string;
+  image?: string;
+}) {
+  const src = resolveImageUrl(image);
+
+  if (!src) {
+    return null;
+  }
+
+  const placementClassName = className ?? '-right-1 -bottom-1';
+
+  return (
+    <img
+      aria-hidden
+      src={src}
+      alt=""
+      className={cn(
+        'pointer-events-none absolute z-10 size-8 shrink-0 rounded-full bg-white/95 object-contain p-1 shadow-md ring-2 ring-white/85',
+        placementClassName,
+      )}
+      loading="lazy"
+      draggable={false}
+    />
+  );
+}
+
+interface LinkButtonProps {
+  link: BiolinkLink;
+  appearance?: BiolinkAppearanceConfig | null;
+}
+function LinkButton({link, appearance}: LinkButtonProps) {
+  const btnConfig = appearance?.btnConfig as BiolinkButtonConfig | undefined;
+  const variant = btnConfig?.variant ?? 'solid';
+  const radius: BiolinkAppearanceConfigBtnConfig['radius'] =
+    btnConfig?.radius ?? 'rounded-sm';
+  const override = (
+    link as BiolinkLink & {style?: BiolinkButtonStyleOverride | null}
+  ).style;
+  const buttonColor: BiolinkAppearanceConfigBtnConfig['color'] =
+    override?.backgroundColor ?? btnConfig?.color ?? undefined;
+  const buttonTextColor =
+    override?.textColor ?? btnConfig?.textColor ?? undefined;
+  const media = linkButtonMedia(link);
+  const iconColor = getBiolinkButtonIconColor({btnConfig, override});
+  const hasBlockStyle = !!btnConfig?.blockStyle;
+
+  return (
+    <a
+      className={cn(
+        'biolink-btn-custom relative flex h-14 w-full appearance-none items-center justify-center border py-4 align-middle text-sm font-semibold wrap-break-word hyphens-auto whitespace-normal no-underline transition-button duration-200 outline-none select-none focus-visible:ring',
+        link.animation &&
+          `animate__animated animate__repeat-3 animate__${link.animation}`,
+        !hasBlockStyle && radius,
+        hasBlockStyle && 'rounded-none',
+        media ? 'px-16.5' : 'px-4.5',
+        !buttonColor &&
+          (variant === 'outline'
+            ? 'border-primary'
+            : 'border-primary bg-primary'),
+        !buttonTextColor &&
+          (variant === 'outline' ? 'text-primary' : 'text-primary-foreground'),
+      )}
+      style={getBiolinkButtonStyle({btnConfig, override})}
+      target="_blank"
+      href={link.short_url}
+    >
+      {media ? (
+        <LinkButtonMedia media={media} radius={radius} iconColor={iconColor} />
+      ) : null}
+      <span className="relative z-10">{link.name}</span>
+    </a>
+  );
+}
+
+type LinkMedia = {
+  src: string;
+  type: 'asset' | 'image';
+};
+
+function linkButtonMedia(link: BiolinkLink): LinkMedia | null {
+  const designedLink = link as BiolinkLink & {
+    thumbnail_type?: 'image' | 'asset' | 'none' | null;
+    thumbnail_asset?: string | null;
+  };
+
+  if (designedLink.thumbnail_type === 'none') {
+    return null;
+  }
+
+  if (designedLink.thumbnail_type !== 'image' && designedLink.thumbnail_asset) {
+    return {src: designedLink.thumbnail_asset, type: 'asset'};
+  }
+
+  return link.image ? {src: link.image, type: 'image'} : null;
+}
+
+function LinkButtonMedia({
+  media,
+  radius,
+  iconColor,
+}: {
+  media: LinkMedia;
+  radius?: BiolinkAppearanceConfigBtnConfig['radius'];
+  iconColor?: string;
+}) {
+  const className = cn(
+    'absolute top-1/2 left-2.5 z-10 aspect-square h-[calc(100%-18px)] -translate-y-1/2',
+    media.type === 'asset' ? 'object-contain p-1.5' : 'object-cover',
+    media.type === 'image' && radius,
+  );
+
+  if (media.type === 'asset' && assetUsesMask(media.src)) {
+    return (
+      <span
+        aria-hidden
+        className="absolute top-1/2 left-4 size-6 -translate-y-1/2"
+        style={{
+          backgroundColor: iconColor ?? 'currentColor',
+          WebkitMaskImage: `url("${media.src}")`,
+          maskImage: `url("${media.src}")`,
+          WebkitMaskRepeat: 'no-repeat',
+          maskRepeat: 'no-repeat',
+          WebkitMaskPosition: 'center',
+          maskPosition: 'center',
+          WebkitMaskSize: 'contain',
+          maskSize: 'contain',
+        }}
+      />
+    );
+  }
+
+  return (
+    <img
+      className={className}
+      src={media.src}
+      alt=""
+      loading="lazy"
+      draggable={false}
+    />
+  );
+}
+
+function BiolinkBadges({
+  appearance,
+}: {
+  appearance?: AdvancedAppearanceConfig | null;
+}) {
+  const {trans} = useTrans();
+  const badgeConfig = appearance?.badgeConfig;
+  const items = (
+    (badgeConfig?.items ?? []) as Array<{
+      id: string;
+      type?: 'system' | 'custom';
+      label?: string;
+      icon?: string | null;
+      iconRef?: {library: 'lucide' | 'simple-icons'; name: string} | null;
+      color?: string;
+      active?: boolean;
+      sort_order?: number;
+    }>
+  )
+    .filter(item => item.active !== false)
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+  if (!items.length) {
+    return null;
+  }
+
+  const style = badgeConfig?.style ?? 'chips';
+
+  return (
+    <div
+      className={cn(
+        'mb-6 flex justify-center gap-2',
+        style === 'cards' ? 'flex-col' : 'flex-wrap',
+      )}
+    >
+      {items.map(item => (
+        <span
+          key={item.id}
+          className={cn(
+            'biolink-badge inline-flex items-center justify-center gap-1.5 text-xs font-semibold',
+            style === 'inline' && 'px-1',
+            style === 'chips' && 'rounded-full border px-2.5 py-1',
+            style === 'cards' && 'rounded-card-sm border px-3 py-2',
+          )}
+          style={{
+            color: item.color ?? 'currentColor',
+            borderColor: item.color
+              ? colorWithAlpha(item.color, 0.4)
+              : 'currentColor',
+            backgroundColor:
+              style === 'inline'
+                ? 'transparent'
+                : item.color
+                  ? colorWithAlpha(item.color, 0.12)
+                  : 'rgb(255 255 255 / 0.08)',
+          }}
+        >
+          <BadgeIcon item={item} />
+          <span>
+            {trans({
+              message: item.label?.startsWith('biolink.badges.')
+                ? officialBadgeLabel(item.id)
+                : (item.label ?? ''),
+            })}
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function officialBadgeLabel(id: string): string {
+  const labels: Record<string, string> = {
+    staff: 'Staff',
+    helper: 'Helper',
+    premium: 'Premium',
+    verified: 'Verified',
+    donor: 'Donor',
+    gifter: 'Gifter',
+    image_host: 'Image Host',
+    domain_legend: 'Domain Legend',
+    og: 'OG',
+    server_booster: 'Server Booster',
+    hone_gg: 'Hone.gg',
+    bug_hunter: 'Bug Hunter',
+    summer_2026: 'Summer 2026',
+    easter_2026: 'Easter 2026',
+    christmas_2025: 'Christmas 2025',
+    easter_2025: 'Easter 2025',
+    christmas_2024: 'Christmas 2024',
+    the_million: 'The Million',
+    winner: 'Winner',
+    second_place: 'Second Place',
+    third_place: 'Third Place',
+  };
+
+  return labels[id] ?? id;
+}
+
+function BadgeIcon({
+  item,
+}: {
+  item: {
+    icon?: string | null;
+    iconRef?: {library: 'lucide' | 'simple-icons'; name: string} | null;
+  };
+}) {
+  if (item.iconRef?.library === 'lucide') {
+    const Icon = LucideIcons[item.iconRef.name as keyof typeof LucideIcons];
+    if (typeof Icon === 'function') {
+      return createElement(Icon as ComponentType<{className?: string}>, {
+        className: 'size-4 shrink-0',
+      });
+    }
+  }
+
+  if (item.iconRef?.library === 'simple-icons') {
+    const iconName = `Si${item.iconRef.name.charAt(0).toUpperCase()}${item.iconRef.name.slice(1)}`;
+    const Icon = SimpleIcons[iconName as keyof typeof SimpleIcons];
+    if (typeof Icon === 'function') {
+      return createElement(Icon as ComponentType<{className?: string}>, {
+        className: 'size-4 shrink-0',
+      });
+    }
+  }
+
+  if (!item.icon) {
+    return null;
+  }
+
+  if (assetUsesMask(item.icon)) {
+    return (
+      <span
+        aria-hidden
+        className="size-4 shrink-0 bg-current"
+        style={{
+          WebkitMaskImage: `url("${item.icon}")`,
+          maskImage: `url("${item.icon}")`,
+          WebkitMaskRepeat: 'no-repeat',
+          maskRepeat: 'no-repeat',
+          WebkitMaskPosition: 'center',
+          maskPosition: 'center',
+          WebkitMaskSize: 'contain',
+          maskSize: 'contain',
+        }}
+      />
+    );
+  }
+
+  return (
+    <img
+      src={item.icon}
+      alt=""
+      className="size-4 object-contain"
+      loading="lazy"
+      draggable={false}
+    />
+  );
+}
+
+function Branding({appearance}: {appearance?: BiolinkAppearanceConfig | null}) {
+  const {branding, biolink} = useSettings();
+  let src = biolink?.branding_img;
+  const {trans} = useTrans();
+  let isDarkMode = useIsDarkMode();
+
+  const isContrastDarkMode = useMemo(() => {
+    if (!appearance?.bgConfig?.color) {
+      return isDarkMode;
+    }
+    const color = new Color(appearance?.bgConfig?.color);
+    return color.luminance > 0.5;
+  }, [isDarkMode, appearance?.bgConfig?.color]);
+
+  if (appearance?.hideBranding) {
+    return null;
+  }
+
+  if (!src) {
+    src = isContrastDarkMode ? branding.logo_light : branding.logo_dark;
+  }
+
+  return (
+    <div className="shrink-0">
+      <Link to="/">
+        <img
+          className="mx-auto h-6 w-auto"
+          src={src}
+          alt={trans(
+            message(':site logo', {values: {site: branding.site_name}}),
+          )}
+        />
+      </Link>
+    </div>
+  );
+}
+
+function DecorativeAsset({
+  appearance,
+}: {
+  appearance?: AdvancedAppearanceConfig | null;
+}) {
+  const desktop = appearance?.desktopConfig;
+  const src = resolveImageUrl(desktop?.decorativeAsset);
+
+  if (!src) {
+    return null;
+  }
+
+  const placement = desktop?.decorativePlacement ?? 'right';
+
+  return (
+    <img
+      aria-hidden
+      src={src}
+      className={cn(
+        'pointer-events-none absolute z-4 hidden max-h-[74vh] max-w-[38vw] object-contain opacity-80 @2xl:block',
+        placement === 'left' && 'top-1/2 left-10 -translate-y-1/2',
+        placement === 'right' && 'top-1/2 right-10 -translate-y-1/2',
+        placement === 'background' &&
+          'right-1/2 bottom-6 translate-x-1/2 opacity-20',
+      )}
+      draggable={false}
+    />
+  );
+}
+
+function VisualEffectsOverlay({
+  appearance,
+}: {
+  appearance?: AdvancedAppearanceConfig | null;
+}) {
+  const configuredEffects = appearance?.effectsConfig;
+  const effects = {...defaultEffectsConfig, ...configuredEffects};
+  const color = effects.effectColor ?? '#ffffff';
+  const secondaryColor = effects.effectSecondaryColor ?? '#6ee7b7';
+  const tertiaryColor = effects.effectTertiaryColor ?? '#3b82f6';
+  const mediaEffect = resolvedMediaEffect(configuredEffects);
+  const effectClass = mediaEffect ? `biolink-${mediaEffect}-effect` : undefined;
+
+  if (!mediaEffect || mediaEffect === 'none') {
+    return null;
+  }
+
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        'biolink-effects-layer pointer-events-none absolute inset-0 z-4 overflow-hidden',
+        effectClass,
+      )}
+      style={
+        {
+          '--biolink-effect-color': color,
+          '--biolink-effect-secondary': secondaryColor,
+          '--biolink-effect-tertiary': tertiaryColor,
+        } as CSSProperties
+      }
+    />
+  );
+}
+
+const particleEffects = [
+  'stars',
+  'particles',
+  'snow',
+  'rain',
+  'ambient',
+  'big-circles',
+  'bubbles',
+  'confetti',
+  'confetti-cannon',
+  'confetti-explosions',
+  'confetti-falling',
+  'confetti-parade',
+  'party',
+  'fire',
+  'firefly',
+  'fireworks',
+  'fountain',
+  'hyperspace',
+  'links',
+  'matrix',
+  'meteors',
+  'ribbons',
+  'sea-anemone',
+  'squares',
+  'triangles',
+] as const;
+type ParticleEffect = (typeof particleEffects)[number];
+
+function isParticleEffect(
+  effect: string | undefined,
+): effect is ParticleEffect {
+  return !!effect && particleEffects.includes(effect as ParticleEffect);
+}
+
+function particleOptions(
+  effect: ParticleEffect,
+  appearance: AdvancedAppearanceConfig,
+): ISourceOptions {
+  const effects = {...defaultEffectsConfig, ...appearance.effectsConfig};
+  const colors = [
+    effects.effectColor ?? '#ffffff',
+    effects.effectSecondaryColor ?? '#6ee7b7',
+    effects.effectTertiaryColor ?? '#3b82f6',
+  ];
+  const isSnow = effect === 'snow';
+  const isRain = effect === 'rain';
+  const isFire = effect === 'fire';
+  const isLinks = effect === 'links';
+  const density = Math.max(10, Math.min(220, effects.particleDensity ?? 70));
+  const speed = Math.max(0, Math.min(10, effects.particleSpeed ?? 1));
+
+  return {
+    fullScreen: {enable: false},
+    detectRetina: true,
+    fpsLimit: 60,
+    particles: {
+      number: {
+        value: isSnow || isRain ? density : density,
+        density: {enable: true, width: 1600, height: 900},
+      },
+      color: {value: colors},
+      opacity: {
+        value: isRain ? 0.5 : 0.7,
+        random: {enable: true, minimumValue: 0.25},
+      },
+      size: {
+        value: isRain ? {min: 1, max: 2} : {min: 1, max: isSnow ? 5 : 4},
+        random: true,
+      },
+      shape: {
+        type: isRain
+          ? 'line'
+          : effect === 'triangles'
+            ? 'triangle'
+            : effect === 'squares'
+              ? 'square'
+              : 'circle',
+      },
+      links: {
+        enable: isLinks,
+        distance: 150,
+        opacity: 0.35,
+        width: 1,
+        color: colors[0],
+      },
+      move: {
+        enable: true,
+        direction: isSnow || isRain ? 'bottom' : isFire ? 'top' : 'none',
+        speed: (isRain ? 12 : isSnow ? 1.5 : isFire ? 2.5 : 1.2) * speed,
+        straight: isRain,
+        outModes: {default: 'out'},
+      },
+    },
+    interactivity: {
+      detectsOn: 'window',
+      events: {resize: true},
+    },
+  } as ISourceOptions;
+}
+
+function ParticleEffectLayer({
+  appearance,
+}: {
+  appearance?: AdvancedAppearanceConfig | null;
+}) {
+  const effect = resolvedParticlePreset(appearance?.effectsConfig);
+  const id = `biolink-particles-${useId().replace(/:/g, '')}`;
+  const reducedMotion =
+    appearance?.effectsConfig?.respectReducedMotion !== false &&
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const options = useMemo(
+    () =>
+      !reducedMotion && isParticleEffect(effect) && appearance
+        ? particleOptions(effect, appearance)
+        : null,
+    [appearance, effect, reducedMotion],
+  );
+
+  useEffect(() => {
+    if (!options) {
+      return;
+    }
+
+    let cancelled = false;
+    let container: {destroy: () => void} | undefined;
+
+    void Promise.all([
+      import('@tsparticles/engine'),
+      import('@tsparticles/slim'),
+    ])
+      .then(async ([engine, slim]) => {
+        await slim.loadSlim(engine.tsParticles);
+        if (cancelled) {
+          return;
+        }
+        const loaded = await engine.tsParticles.load({id, options});
+        if (cancelled) {
+          loaded?.destroy();
+          return;
+        }
+        container = loaded;
+      })
+      .catch(() => {
+        // Effects are optional; a failed dynamic bundle must not block the page.
+      });
+
+    return () => {
+      cancelled = true;
+      container?.destroy();
+    };
+  }, [id, options]);
+
+  if (!options) {
+    return null;
+  }
+
+  return (
+    <div
+      id={id}
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-4"
+    />
+  );
+}
+
+function AudioControl({
+  appearance,
+}: {
+  appearance?: AdvancedAppearanceConfig | null;
+}) {
+  const media = {...defaultMediaConfig, ...appearance?.mediaConfig};
+  const audioSrc = resolveImageUrl(media.audio);
+  const prompt = {
+    ...defaultMediaConfig.audioPrompt,
+    ...media.audioPrompt,
+  };
+  const showPrompt = prompt.enabled !== false;
+  const showControl = appearance?.effectsConfig?.showVolumeControl !== false;
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [audioError, setAudioError] = useState(false);
+
+  if (!audioSrc || (!showPrompt && !showControl)) {
+    return null;
+  }
+
+  const toggleAudio = async () => {
+    const audio = audioRef.current;
+    if (!audio) {
+      return;
+    }
+
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+      return;
+    }
+
+    setAudioError(false);
+
+    try {
+      await audio.play();
+      setPlaying(true);
+    } catch {
+      setPlaying(false);
+      setAudioError(true);
+    }
+  };
+
+  const showLabel = !playing && (showPrompt || audioError);
+
+  return (
+    <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 @2xl:absolute @2xl:top-6">
+      <audio
+        ref={audioRef}
+        src={audioSrc}
+        loop
+        preload="metadata"
+        onError={() => {
+          setPlaying(false);
+          setAudioError(true);
+        }}
+      />
+      <button
+        type="button"
+        className={cn(
+          'inline-flex max-w-[min(22rem,calc(100vw-2rem))] items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm backdrop-blur transition-colors',
+          !playing && showPrompt && 'animate-pulse',
+          !showLabel ? 'size-9 px-0' : 'min-h-9',
+        )}
+        style={{
+          color:
+            prompt.textColor ?? appearance?.bgConfig?.color ?? 'currentColor',
+          borderColor: colorWithAlpha(
+            prompt.textColor ?? appearance?.bgConfig?.color ?? '#ffffff',
+            0.35,
+          ),
+          backgroundColor: colorWithAlpha(
+            prompt.textColor ?? appearance?.bgConfig?.color ?? '#111111',
+            0.12,
+          ),
+          fontFamily: prompt.fontConfig?.family,
+        }}
+        aria-label={
+          audioError
+            ? message('Audio could not be played').message
+            : playing
+              ? message('Pause audio').message
+              : (prompt.text ?? message('Play audio').message)
+        }
+        onClick={() => {
+          void toggleAudio();
+        }}
+      >
+        <span className="sr-only">
+          {audioError ? (
+            <Trans message="Audio could not be played" />
+          ) : playing ? (
+            <Trans message="Pause audio" />
+          ) : (
+            <Trans message="Play audio" />
+          )}
+        </span>
+        {playing ? (
+          <PauseIcon className="size-4" />
+        ) : showPrompt ? (
+          <PlayIcon className="size-4" />
+        ) : (
+          <Volume2Icon className="size-4" />
+        )}
+        {showLabel ? (
+          <span className="truncate">
+            {audioError ? (
+              <Trans message="Audio could not be played" />
+            ) : (
+              prompt.text
+            )}
+          </span>
+        ) : null}
+      </button>
+    </div>
+  );
+}
+
+function Background({
+  appearance,
+  className,
+}: {
+  appearance: BiolinkAppearanceConfig | null;
+  className?: string;
+}) {
+  const bgTintStyle = getBgTintStyle(appearance?.bgConfig?.tint);
+  const bgEffectStyle = getImageBackgroundEffectStyle(
+    appearance?.bgConfig?.imageEffect,
+    appearance?.bgConfig?.noise,
+  );
+
+  return (
+    <div
+      className={cn(
+        'biolink-background-layer pointer-events-none absolute inset-0 overflow-hidden',
+        className,
+      )}
+    >
+      <div
+        className="absolute inset-0 mx-auto"
+        style={{
+          ...cssPropsFromBgConfig(appearance?.bgConfig),
+          ...bgEffectStyle,
+        }}
+      />
+      <MediaBackground
+        appearance={appearance as AdvancedAppearanceConfig | null}
+      />
+      <ImageBackgroundEffectOverlay
+        effect={appearance?.bgConfig?.imageEffect}
+      />
+      {bgTintStyle && (
+        <div className="absolute inset-0 mx-auto" style={bgTintStyle} />
+      )}
+      {appearance?.bgConfig?.noise && <NoiseFilter />}
+    </div>
+  );
+}
+
+function MediaBackground({
+  appearance,
+}: {
+  appearance?: AdvancedAppearanceConfig | null;
+}) {
+  const media = {...defaultMediaConfig, ...appearance?.mediaConfig};
+  const src = resolveImageUrl(media.backgroundMedia);
+
+  if (!src) {
+    return null;
+  }
+
+  if (media.backgroundMediaType === 'image') {
+    return (
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{backgroundImage: `url("${escapeCssUrl(src)}")`}}
+      />
+    );
+  }
+
+  return (
+    <video
+      className="absolute inset-0 size-full object-cover"
+      src={src}
+      muted
+      loop
+      playsInline
+      autoPlay
+    />
+  );
+}
+
+function EffectStyles({
+  appearance,
+}: {
+  appearance?: AdvancedAppearanceConfig | null;
+}) {
+  const effects = appearance?.effectsConfig;
+  const cursor = resolveImageUrl(appearance?.mediaConfig?.cursor);
+
+  if (!effects && !cursor) {
+    return null;
+  }
+
+  return (
+    <style>
+      {`
+        .biolink-profile-title {
+          will-change: transform, filter;
+        }
+        .biolink-username-effect-glow .biolink-profile-title,
+        .biolink-glow-username .biolink-profile-title {
+          text-shadow: 0 0 12px var(--biolink-effect-color, currentColor), 0 0 28px var(--biolink-effect-color, currentColor);
+          filter: drop-shadow(0 0 10px var(--biolink-effect-color, currentColor));
+        }
+        .biolink-username-effect-pulse .biolink-profile-title {
+          animation: biolink-title-pulse 2.4s ease-in-out infinite;
+        }
+        .biolink-username-effect-scanline .biolink-profile-title {
+          position: relative;
+        }
+        .biolink-username-effect-scanline .biolink-profile-title::after {
+          content: '';
+          position: absolute;
+          right: 4%;
+          bottom: -0.24rem;
+          left: 4%;
+          height: 2px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, transparent, var(--biolink-effect-color, currentColor), transparent);
+          box-shadow: 0 0 12px var(--biolink-effect-color, currentColor);
+          opacity: 0.9;
+        }
+        .biolink-animated-title .biolink-profile-title {
+          animation: biolink-title-float 3.2s ease-in-out infinite;
+        }
+        .biolink-glow-socials .biolink-top-group a,
+        .biolink-glow-socials .biolink-top-group button {
+          filter: drop-shadow(0 0 10px var(--biolink-effect-color, currentColor));
+        }
+        .biolink-glow-badges .biolink-badge {
+          filter: drop-shadow(0 0 10px var(--biolink-effect-color, currentColor));
+        }
+        .biolink-monochrome-social-icons .biolink-top-group a svg,
+        .biolink-monochrome-social-icons .biolink-top-group button svg {
+          color: currentColor !important;
+          fill: currentColor !important;
+          stroke: currentColor !important;
+        }
+        .biolink-invert-boxes .biolink-btn-custom {
+          filter: invert(1);
+        }
+        .biolink-background-blur .biolink-background-layer > * {
+          filter: blur(11px) saturate(112%);
+          transform: scale(1.045);
+        }
+        .biolink-background-night .biolink-background-layer::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: 2;
+          background: rgb(0 0 0 / 0.58);
+        }
+        .biolink-effects-layer::before,
+        .biolink-effects-layer::after {
+          content: '';
+          position: absolute;
+          inset: -18%;
+          pointer-events: none;
+          will-change: transform, opacity, background-position;
+        }
+        .biolink-stars-effect::before {
+          background-image:
+            radial-gradient(circle, var(--biolink-effect-color, #fff) 0 1px, transparent 1.2px),
+            radial-gradient(circle, rgb(255 255 255 / 0.58) 0 1.4px, transparent 1.6px);
+          background-position: 0 0, 38px 64px;
+          background-size: 92px 92px, 180px 180px;
+          opacity: 0.6;
+          animation: biolink-stars-drift 28s linear infinite;
+        }
+        .biolink-stars-effect::after {
+          background-image:
+            radial-gradient(circle, var(--biolink-effect-color, #fff) 0 1px, transparent 1.2px),
+            radial-gradient(circle, rgb(255 255 255 / 0.42) 0 1px, transparent 1.2px);
+          background-position: 16px 28px, 72px 4px;
+          background-size: 140px 140px, 220px 220px;
+          opacity: 0.36;
+          animation: biolink-stars-twinkle 3.8s ease-in-out infinite alternate;
+        }
+        .biolink-particles-effect::before {
+          background-image:
+            radial-gradient(circle at 12% 24%, var(--biolink-effect-color, #fff) 0 3px, transparent 4px),
+            radial-gradient(circle at 42% 72%, var(--biolink-effect-color, #fff) 0 2px, transparent 3px),
+            radial-gradient(circle at 78% 38%, rgb(255 255 255 / 0.8) 0 3px, transparent 4px),
+            radial-gradient(circle at 88% 82%, var(--biolink-effect-color, #fff) 0 2px, transparent 3px);
+          background-size: 100% 100%;
+          filter: drop-shadow(0 0 8px var(--biolink-effect-color, #fff));
+          opacity: 0.58;
+          animation: biolink-particles-float 18s ease-in-out infinite alternate;
+        }
+        .biolink-particles-effect::after {
+          background-image:
+            radial-gradient(circle at 24% 44%, var(--biolink-effect-color, #fff), transparent 16%),
+            radial-gradient(circle at 76% 68%, rgb(255 255 255 / 0.56), transparent 14%);
+          filter: blur(22px) saturate(120%);
+          opacity: 0.3;
+          animation: biolink-particles-glow 11s ease-in-out infinite alternate;
+        }
+        .biolink-aurora-effect::before {
+          background:
+            conic-gradient(
+              from 150deg at 50% 50%,
+              transparent 0deg,
+              var(--biolink-effect-color, #fff) 70deg,
+              var(--biolink-effect-secondary, #6ee7b7) 155deg,
+              var(--biolink-effect-tertiary, #3b82f6) 240deg,
+              transparent 320deg
+            );
+          filter: blur(42px) saturate(135%);
+          opacity: 0.42;
+          transform: scale(1.12) rotate(-8deg);
+          animation: biolink-aurora-flow 15s ease-in-out infinite alternate;
+        }
+        .biolink-aurora-effect::after {
+          background-image:
+            radial-gradient(ellipse at 18% 20%, var(--biolink-effect-color, #fff), transparent 34%),
+            radial-gradient(ellipse at 82% 28%, var(--biolink-effect-secondary, #6ee7b7), transparent 34%),
+            radial-gradient(ellipse at 50% 92%, var(--biolink-effect-tertiary, #3b82f6), transparent 34%);
+          filter: blur(30px);
+          opacity: 0.4;
+          animation: biolink-aurora-drift 18s ease-in-out infinite alternate;
+        }
+        .biolink-spotlight-effect::before {
+          inset: 0;
+          background:
+            radial-gradient(circle at 50% 28%, var(--biolink-effect-color, #fff), transparent 28%),
+            radial-gradient(circle at 50% 115%, rgb(0 0 0 / 0.22), transparent 48%);
+          opacity: 0.48;
+          animation: biolink-spotlight-sweep 10s ease-in-out infinite alternate;
+        }
+        .biolink-spotlight-effect::after {
+          inset: 0;
+          background: radial-gradient(circle at 50% 28%, rgb(255 255 255 / 0.5), transparent 24%);
+          opacity: 0.42;
+          animation: biolink-spotlight-pulse 5.6s ease-in-out infinite;
+        }
+        .biolink-snow-effect::before {
+          background-image:
+            radial-gradient(circle, var(--biolink-effect-color, #fff) 0 2px, transparent 2.8px),
+            radial-gradient(circle, rgb(255 255 255 / 0.88) 0 1.4px, transparent 2px),
+            radial-gradient(circle, rgb(255 255 255 / 0.7) 0 3px, transparent 4px);
+          background-position: 0 -12px, 28px -36px, 70px -22px;
+          background-size: 82px 92px, 124px 132px, 178px 190px;
+          opacity: 0.82;
+          animation: biolink-snow-fall 13s linear infinite;
+        }
+        .biolink-snow-effect::after {
+          background-image:
+            radial-gradient(circle, rgb(255 255 255 / 0.9) 0 4px, transparent 5px),
+            radial-gradient(circle, var(--biolink-effect-color, #fff) 0 2px, transparent 3px);
+          background-position: 18px -80px, 90px -40px;
+          background-size: 240px 250px, 164px 180px;
+          opacity: 0.5;
+          animation: biolink-snow-fall 20s linear infinite reverse;
+        }
+        .biolink-rain-effect::before {
+          background-image: linear-gradient(108deg, transparent 0 45%, var(--biolink-effect-color, #fff) 46% 48%, transparent 49%);
+          background-size: 34px 74px;
+          opacity: 0.44;
+          transform: rotate(4deg) scale(1.2);
+          animation: biolink-rain-fall 0.9s linear infinite;
+        }
+        .biolink-rain-effect::after {
+          background-image: linear-gradient(108deg, transparent 0 47%, rgb(255 255 255 / 0.7) 48% 49%, transparent 50%);
+          background-size: 68px 112px;
+          opacity: 0.3;
+          transform: rotate(4deg) scale(1.2);
+          animation: biolink-rain-fall 1.4s linear infinite reverse;
+        }
+        .biolink-tv-effect::before {
+          background-image:
+            radial-gradient(circle at 20% 30%, var(--biolink-effect-color, #fff) 0 1px, transparent 1.5px),
+            radial-gradient(circle at 74% 64%, rgb(255 255 255 / 0.7) 0 1px, transparent 1.5px),
+            linear-gradient(90deg, transparent 0 48%, rgb(255 255 255 / 0.22) 50%, transparent 52%);
+          background-size: 8px 8px, 11px 11px, 17px 100%;
+          mix-blend-mode: screen;
+          filter: contrast(180%);
+          opacity: 0.22;
+          animation: biolink-tv-noise 0.22s steps(5) infinite;
+        }
+        .biolink-tv-effect::after {
+          background-image: linear-gradient(to bottom, transparent 0 3px, rgb(255 255 255 / 0.15) 4px, transparent 5px 7px);
+          background-size: 100% 8px;
+          mix-blend-mode: screen;
+          opacity: 0.34;
+          animation: biolink-tv-scan 4.5s linear infinite;
+        }
+        .biolink-blur-effect::before {
+          inset: 0;
+          background: rgb(255 255 255 / 0.04);
+          backdrop-filter: blur(10px) saturate(115%);
+          opacity: 0.72;
+          animation: biolink-blur-breathe 8s ease-in-out infinite alternate;
+        }
+        .biolink-night-effect::before {
+          inset: 0;
+          background: radial-gradient(circle at 50% 30%, transparent 0 22%, rgb(0 0 0 / 0.18) 72%, rgb(0 0 0 / 0.58) 100%);
+          opacity: 0.92;
+          animation: biolink-night-breathe 7s ease-in-out infinite alternate;
+        }
+        .biolink-ambient-effect::before {
+          background:
+            radial-gradient(circle at 20% 20%, var(--biolink-effect-color, #fff), transparent 24%),
+            radial-gradient(circle at 80% 75%, var(--biolink-effect-secondary, #6ee7b7), transparent 28%);
+          filter: blur(26px);
+          opacity: 0.28;
+          animation: biolink-ambient-drift 16s ease-in-out infinite alternate;
+        }
+        .biolink-ambient-effect::after {
+          background: radial-gradient(circle at 50% 50%, var(--biolink-effect-tertiary, #3b82f6), transparent 40%);
+          filter: blur(34px);
+          opacity: 0.2;
+          animation: biolink-ambient-drift 22s ease-in-out infinite alternate-reverse;
+        }
+        .biolink-big-circles-effect::before,
+        .biolink-bubbles-effect::before {
+          background-image:
+            radial-gradient(circle at 18% 22%, var(--biolink-effect-color, #fff) 0 34px, transparent 36px),
+            radial-gradient(circle at 78% 72%, var(--biolink-effect-secondary, #6ee7b7) 0 58px, transparent 60px),
+            radial-gradient(circle at 58% 12%, var(--biolink-effect-tertiary, #3b82f6) 0 24px, transparent 26px);
+          filter: blur(2px);
+          opacity: 0.28;
+          animation: biolink-circles-drift 18s ease-in-out infinite alternate;
+        }
+        .biolink-bubbles-effect::after {
+          background-image:
+            radial-gradient(circle at 32% 80%, transparent 0 9px, var(--biolink-effect-color, #fff) 10px 11px, transparent 12px),
+            radial-gradient(circle at 66% 92%, transparent 0 16px, var(--biolink-effect-secondary, #6ee7b7) 17px 18px, transparent 19px),
+            radial-gradient(circle at 84% 66%, transparent 0 6px, var(--biolink-effect-tertiary, #3b82f6) 7px 8px, transparent 9px);
+          opacity: 0.56;
+          animation: biolink-bubbles-rise 12s ease-in-out infinite;
+        }
+        .biolink-confetti-effect::before,
+        .biolink-confetti-falling-effect::before,
+        .biolink-confetti-parade-effect::before {
+          background-image:
+            linear-gradient(35deg, var(--biolink-effect-color, #fff) 0 7px, transparent 7px 16px),
+            linear-gradient(115deg, var(--biolink-effect-secondary, #6ee7b7) 0 6px, transparent 6px 15px),
+            linear-gradient(175deg, var(--biolink-effect-tertiary, #3b82f6) 0 8px, transparent 8px 20px),
+            linear-gradient(75deg, #fbbf24 0 7px, transparent 7px 18px);
+          background-size: 78px 110px, 120px 160px, 95px 140px, 150px 180px;
+          opacity: 0.7;
+          animation: biolink-confetti-fall 8s linear infinite;
+        }
+        .biolink-confetti-cannon-effect::before,
+        .biolink-confetti-explosions-effect::before,
+        .biolink-party-effect::before {
+          background-image:
+            radial-gradient(circle at 20% 80%, var(--biolink-effect-color, #fff) 0 5px, transparent 6px),
+            radial-gradient(circle at 50% 45%, var(--biolink-effect-secondary, #6ee7b7) 0 4px, transparent 5px),
+            radial-gradient(circle at 82% 78%, var(--biolink-effect-tertiary, #3b82f6) 0 6px, transparent 7px),
+            radial-gradient(circle at 56% 86%, #fbbf24 0 4px, transparent 5px);
+          opacity: 0.72;
+          animation: biolink-confetti-burst 3.6s ease-in-out infinite;
+        }
+        .biolink-fire-effect::before {
+          background:
+            radial-gradient(ellipse at 30% 92%, #ef4444, transparent 26%),
+            radial-gradient(ellipse at 65% 90%, #f97316, transparent 28%),
+            radial-gradient(ellipse at 52% 74%, #facc15, transparent 22%);
+          filter: blur(18px) saturate(140%);
+          opacity: 0.48;
+          animation: biolink-fire-flicker 1.6s ease-in-out infinite alternate;
+        }
+        .biolink-firefly-effect::before {
+          background-image:
+            radial-gradient(circle at 18% 24%, #fef08a 0 3px, transparent 5px),
+            radial-gradient(circle at 42% 68%, var(--biolink-effect-color, #fff) 0 2px, transparent 4px),
+            radial-gradient(circle at 76% 32%, #fef08a 0 3px, transparent 5px),
+            radial-gradient(circle at 84% 80%, var(--biolink-effect-secondary, #6ee7b7) 0 2px, transparent 4px);
+          filter: drop-shadow(0 0 8px #fef08a);
+          opacity: 0.76;
+          animation: biolink-firefly-drift 9s ease-in-out infinite alternate;
+        }
+        .biolink-fireworks-effect::before,
+        .biolink-fountain-effect::before {
+          background-image:
+            radial-gradient(circle at 24% 34%, var(--biolink-effect-color, #fff) 0 3px, transparent 5px),
+            radial-gradient(circle at 72% 28%, var(--biolink-effect-secondary, #6ee7b7) 0 3px, transparent 5px),
+            radial-gradient(circle at 48% 58%, var(--biolink-effect-tertiary, #3b82f6) 0 3px, transparent 5px);
+          filter: drop-shadow(0 0 8px var(--biolink-effect-color, #fff));
+          opacity: 0.72;
+          animation: biolink-fireworks-bloom 4s ease-in-out infinite;
+        }
+        .biolink-hyperspace-effect::before,
+        .biolink-meteors-effect::before {
+          background-image: linear-gradient(115deg, transparent 0 46%, var(--biolink-effect-color, #fff) 48%, transparent 51%);
+          background-size: 72px 72px;
+          filter: blur(1px);
+          opacity: 0.48;
+          transform: scale(1.4) rotate(-7deg);
+          animation: biolink-meteors-fly 2.5s linear infinite;
+        }
+        .biolink-links-effect::before {
+          background-image:
+            linear-gradient(28deg, transparent 0 48%, var(--biolink-effect-color, #fff) 49% 50%, transparent 51%),
+            linear-gradient(142deg, transparent 0 48%, var(--biolink-effect-secondary, #6ee7b7) 49% 50%, transparent 51%);
+          background-size: 140px 110px, 180px 150px;
+          opacity: 0.34;
+          animation: biolink-links-shift 10s linear infinite;
+        }
+        .biolink-matrix-effect::before {
+          background-image: linear-gradient(to bottom, transparent 0 48%, var(--biolink-effect-color, #fff) 49% 50%, transparent 51%);
+          background-size: 24px 42px;
+          opacity: 0.44;
+          mix-blend-mode: screen;
+          animation: biolink-matrix-fall 2.4s linear infinite;
+        }
+        .biolink-ribbons-effect::before {
+          background: conic-gradient(from 10deg at 40% 50%, transparent, var(--biolink-effect-color, #fff), transparent 28%, var(--biolink-effect-secondary, #6ee7b7), transparent 56%, var(--biolink-effect-tertiary, #3b82f6), transparent);
+          filter: blur(12px);
+          opacity: 0.4;
+          animation: biolink-ribbons-flow 12s ease-in-out infinite alternate;
+        }
+        .biolink-sea-anemone-effect::before {
+          background: radial-gradient(ellipse at 50% 100%, var(--biolink-effect-color, #fff), transparent 42%);
+          filter: blur(14px);
+          opacity: 0.36;
+          animation: biolink-anemone-sway 5s ease-in-out infinite alternate;
+        }
+        .biolink-squares-effect::before {
+          background-image: linear-gradient(45deg, var(--biolink-effect-color, #fff) 0 10px, transparent 10px 34px);
+          background-size: 76px 76px;
+          opacity: 0.34;
+          animation: biolink-squares-drift 12s linear infinite;
+        }
+        .biolink-triangles-effect::before {
+          background-image: linear-gradient(135deg, var(--biolink-effect-color, #fff) 0 12px, transparent 12px 32px);
+          background-size: 80px 80px;
+          opacity: 0.32;
+          animation: biolink-triangles-drift 10s linear infinite reverse;
+        }
+        @keyframes biolink-title-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.68; }
+        }
+        @keyframes biolink-title-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3px); }
+        }
+        @keyframes biolink-stars-drift {
+          from { transform: translate3d(0, 0, 0); }
+          to { transform: translate3d(-7%, 8%, 0); }
+        }
+        @keyframes biolink-stars-twinkle {
+          from { transform: scale(0.98); opacity: 0.24; }
+          to { transform: scale(1.04); opacity: 0.6; }
+        }
+        @keyframes biolink-particles-float {
+          from { transform: translate3d(-3%, 2%, 0) scale(0.98); }
+          to { transform: translate3d(4%, -5%, 0) scale(1.04); }
+        }
+        @keyframes biolink-particles-glow {
+          from { transform: translate3d(-4%, 4%, 0) scale(0.92); opacity: 0.18; }
+          to { transform: translate3d(5%, -5%, 0) scale(1.12); opacity: 0.42; }
+        }
+        @keyframes biolink-aurora-flow {
+          from { transform: scale(1.12) rotate(-8deg) translate3d(-3%, 2%, 0); }
+          to { transform: scale(1.24) rotate(9deg) translate3d(4%, -4%, 0); }
+        }
+        @keyframes biolink-aurora-drift {
+          from { transform: translate3d(-4%, 3%, 0) scale(0.96); }
+          to { transform: translate3d(5%, -3%, 0) scale(1.08); }
+        }
+        @keyframes biolink-spotlight-sweep {
+          from { transform: translate3d(-4%, 0, 0) scale(0.98); }
+          to { transform: translate3d(4%, 2%, 0) scale(1.04); }
+        }
+        @keyframes biolink-spotlight-pulse {
+          0%, 100% { transform: scale(0.94); opacity: 0.24; }
+          50% { transform: scale(1.08); opacity: 0.56; }
+        }
+        @keyframes biolink-snow-fall {
+          from { background-position: 0 -18px, 28px -36px, 70px -22px; transform: translate3d(0, -2%, 0); }
+          to { background-position: 54px 112px, -22px 156px, 92px 218px; transform: translate3d(3%, 8%, 0); }
+        }
+        @keyframes biolink-rain-fall {
+          from { background-position: 0 -80px; }
+          to { background-position: -20px 80px; }
+        }
+        @keyframes biolink-tv-noise {
+          0% { background-position: 0 0, 0 0, 0 0; transform: translateX(0); }
+          25% { background-position: 7px -4px, -4px 6px, 9px 0; transform: translateX(1%); }
+          50% { background-position: -5px 8px, 6px -5px, -12px 0; transform: translateX(-1%); }
+          75% { background-position: 4px 3px, -8px -7px, 5px 0; transform: translateX(0.5%); }
+          100% { background-position: -8px -5px, 5px 8px, -8px 0; transform: translateX(0); }
+        }
+        @keyframes biolink-tv-scan {
+          from { background-position: 0 -100%; }
+          to { background-position: 0 100%; }
+        }
+        @keyframes biolink-blur-breathe {
+          from { opacity: 0.52; }
+          to { opacity: 0.82; }
+        }
+        @keyframes biolink-night-breathe {
+          from { opacity: 0.78; }
+          to { opacity: 1; }
+        }
+        @keyframes biolink-ambient-drift {
+          from { transform: translate3d(-5%, 3%, 0) scale(0.96); }
+          to { transform: translate3d(5%, -4%, 0) scale(1.08); }
+        }
+        @keyframes biolink-circles-drift {
+          from { transform: translate3d(-4%, 3%, 0) scale(0.92); }
+          to { transform: translate3d(4%, -5%, 0) scale(1.08); }
+        }
+        @keyframes biolink-bubbles-rise {
+          from { transform: translate3d(-2%, 12%, 0) scale(0.94); }
+          to { transform: translate3d(4%, -18%, 0) scale(1.06); }
+        }
+        @keyframes biolink-confetti-fall {
+          from { background-position: 0 -120px, 40px -140px, -20px -180px, 60px -160px; transform: rotate(-2deg); }
+          to { background-position: 60px 120px, -30px 160px, 40px 190px, -70px 180px; transform: rotate(3deg); }
+        }
+        @keyframes biolink-confetti-burst {
+          0%, 100% { transform: scale(0.86) translate3d(-2%, 3%, 0); opacity: 0.28; }
+          50% { transform: scale(1.18) translate3d(3%, -5%, 0); opacity: 0.76; }
+        }
+        @keyframes biolink-fire-flicker {
+          from { transform: translate3d(-3%, 2%, 0) scale(0.92); opacity: 0.3; }
+          to { transform: translate3d(4%, -5%, 0) scale(1.1); opacity: 0.62; }
+        }
+        @keyframes biolink-firefly-drift {
+          from { transform: translate3d(-5%, 4%, 0); opacity: 0.3; }
+          to { transform: translate3d(5%, -5%, 0); opacity: 0.82; }
+        }
+        @keyframes biolink-fireworks-bloom {
+          0%, 100% { transform: scale(0.72); opacity: 0.2; }
+          50% { transform: scale(1.2); opacity: 0.78; }
+        }
+        @keyframes biolink-meteors-fly {
+          from { background-position: 40px -90px; transform: scale(1.4) rotate(-7deg); }
+          to { background-position: -60px 160px; transform: scale(1.65) rotate(-7deg); }
+        }
+        @keyframes biolink-links-shift {
+          from { background-position: 0 0, 40px 22px; }
+          to { background-position: 140px 110px, -140px -110px; }
+        }
+        @keyframes biolink-matrix-fall {
+          from { background-position: 0 -40px; }
+          to { background-position: 0 80px; }
+        }
+        @keyframes biolink-ribbons-flow {
+          from { transform: translate3d(-5%, 2%, 0) rotate(-8deg) scale(1); }
+          to { transform: translate3d(6%, -4%, 0) rotate(10deg) scale(1.16); }
+        }
+        @keyframes biolink-anemone-sway {
+          from { transform: skewX(-5deg) scaleY(0.94); }
+          to { transform: skewX(6deg) scaleY(1.08); }
+        }
+        @keyframes biolink-squares-drift {
+          from { background-position: 0 0; transform: rotate(-2deg); }
+          to { background-position: 76px 76px; transform: rotate(4deg); }
+        }
+        @keyframes biolink-triangles-drift {
+          from { background-position: 0 0; transform: translate3d(-3%, 2%, 0); }
+          to { background-position: 80px -80px; transform: translate3d(4%, -3%, 0); }
+        }
+        @media (pointer: fine) {
+          ${cursor ? `.biolink-layout-container { cursor: url("${escapeCssUrl(cursor)}"), auto; }` : ''}
+          .biolink-layout-container a,
+          .biolink-layout-container button {
+            cursor: pointer;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .biolink-effects-layer::before,
+          .biolink-effects-layer::after,
+          .biolink-username-effect-pulse .biolink-profile-title,
+          .biolink-animated-title .biolink-profile-title {
+            animation: none !important;
+          }
+        }
+      `}
+    </style>
+  );
+}
+
+function effectClassNames(
+  appearance?: AdvancedAppearanceConfig | null,
+): string {
+  const effects = appearance?.effectsConfig;
+  const classes = [];
+  const mediaEffect = resolvedMediaEffect(effects);
+
+  if (mediaEffect === 'blur') {
+    classes.push('biolink-background-blur');
+  }
+  if (mediaEffect === 'night') {
+    classes.push('biolink-background-night');
+  }
+
+  if (effects?.usernameEffect && effects.usernameEffect !== 'none') {
+    classes.push(`biolink-username-effect-${effects.usernameEffect}`);
+  }
+  if (effects?.glowUsername) {
+    classes.push('biolink-glow-username');
+  }
+  if (effects?.glowSocials) {
+    classes.push('biolink-glow-socials');
+  }
+  if (effects?.glowBadges) {
+    classes.push('biolink-glow-badges');
+  }
+  if (effects?.monochromeSocialIcons) {
+    classes.push('biolink-monochrome-social-icons');
+  }
+  if (effects?.invertBoxes) {
+    classes.push('biolink-invert-boxes');
+  }
+  if (effects?.animatedTitle) {
+    classes.push('biolink-animated-title');
+  }
+
+  return classes.join(' ');
+}
+
+function effectVariables(
+  appearance?: AdvancedAppearanceConfig | null,
+): CSSProperties {
+  const effects = {...defaultEffectsConfig, ...appearance?.effectsConfig};
+
+  return {
+    '--biolink-effect-color': effects.effectColor ?? '#ffffff',
+    '--biolink-effect-secondary': effects.effectSecondaryColor ?? '#6ee7b7',
+    '--biolink-effect-tertiary': effects.effectTertiaryColor ?? '#3b82f6',
+  } as CSSProperties;
+}
+
+function cursorStyle(
+  appearance?: AdvancedAppearanceConfig | null,
+): CSSProperties | undefined {
+  const color = appearance?.effectsConfig?.effectColor;
+  return color
+    ? ({'--biolink-effect-color': color} as CSSProperties)
+    : undefined;
+}
+
+function colorWithAlpha(color: string, alpha: number): string {
+  if (!color.startsWith('#')) {
+    return color;
+  }
+
+  const hex = color.slice(1);
+  const normalized =
+    hex.length === 3
+      ? hex
+          .split('')
+          .map(char => `${char}${char}`)
+          .join('')
+      : hex.slice(0, 6);
+
+  if (normalized.length !== 6) {
+    return color;
+  }
+
+  const red = parseInt(normalized.slice(0, 2), 16);
+  const green = parseInt(normalized.slice(2, 4), 16);
+  const blue = parseInt(normalized.slice(4, 6), 16);
+
+  return `rgb(${red} ${green} ${blue} / ${alpha})`;
+}
+
+function escapeCssUrl(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}

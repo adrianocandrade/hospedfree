@@ -1,0 +1,2285 @@
+import {BackgroundStyle} from '@app/dashboard/biolink/biolink-editor/appearance/background-style';
+import {BiolinkAssetPickerDialog} from '@app/dashboard/biolink/biolink-editor/assets/biolink-asset-picker-dialog';
+import {
+  AdvancedAppearanceConfig,
+  AudioPromptConfig,
+  AppearanceConfig,
+  BackgroundEffect,
+  applyThemeToAppearance,
+  bannerBackgroundStyle,
+  bannerGradientFrom,
+  bannerGradientTo,
+  compactFontConfig,
+  defaultBadgeConfig,
+  defaultDesktopConfig,
+  defaultEffectsConfig,
+  defaultHeaderConfig,
+  defaultHeaderShapeVariant,
+  defaultMediaConfig,
+  BadgeConfigItem,
+  DesktopConfig,
+  EffectsConfig,
+  headerShapePath,
+  HeaderShapeVariant,
+  headerShapeVariants,
+  HeaderLayout,
+  isBannerLayout,
+  isShapeLayout,
+  isThemeLocked,
+  mergeHeaderConfig,
+  normalizeHeaderShapeVariant,
+  resolveImageUrl,
+  resolvedMediaEffect,
+  resolvedParticlePreset,
+  ThemeCategory,
+  themeCategory,
+  unlockThemeForCustomization,
+} from '@app/dashboard/biolink/biolink-editor/appearance/biolink-theme-utils';
+import {
+  BiolinkFileSelector,
+  BiolinkFileSelectorIcons,
+} from '@app/dashboard/biolink/biolink-editor/appearance/biolink-file-selector';
+import {ButtonStyle} from '@app/dashboard/biolink/biolink-editor/appearance/button-style';
+import {appearanceHeaderClassnames} from '@app/dashboard/biolink/biolink-editor/appearance/header-classnames';
+import {
+  CuratedLockTooltip,
+  ThemeCardFromTheme,
+  ThemePreviewCard,
+} from '@app/dashboard/biolink/biolink-editor/appearance/theme-preview-card';
+import {useBiolinkEditorStore} from '@app/dashboard/biolink/biolink-editor/biolink-editor-store';
+import {useUsage} from '@app/dashboard/use-usage';
+import {listBiolinkThemes} from '@app/gen/biolink-themes';
+import type {BiolinkAppearanceConfigHeaderConfig} from '@app/gen/schemas/biolink-appearance-config-header-config';
+import type {BiolinkTheme} from '@app/gen/schemas/biolink-theme';
+import {BiolinkLayout} from '@app/short-links/renderers/biolink-renderer/biolink-layout';
+import {UploadType} from '@app/site-config';
+import {useAuth} from '@common/auth/use-auth';
+import {NoFeaturePermissionPopover} from '@common/billing/upgrade/no-permission-button';
+import {
+  type BiolinkPlanFeature,
+  useBiolinkFeatureStatus,
+} from '@app/dashboard/upgrade/use-feature-status';
+import {
+  FontDisplayName,
+  FontSelector as CommonFontSelector,
+} from '@common/ui/font-selector/font-selector';
+import {ImageSelector} from '@common/uploads/components/image-selector';
+import {FileUploadProvider} from '@common/uploads/uploader/file-upload-provider';
+import {Alert} from '@shadcn/alert/alert';
+import {Button} from '@shadcn/button/button';
+import {Dialog} from '@shadcn/dialog/dialog';
+import {Input} from '@shadcn/forms/input/input';
+import {Slider} from '@shadcn/forms/slider/slider';
+import {Switch} from '@shadcn/forms/switch/switch';
+import {Textarea} from '@shadcn/forms/textarea/textarea';
+import {Select} from '@shadcn/forms/select/select';
+import {Tabs} from '@shadcn/tabs/tabs';
+import {toast} from '@shadcn/toast/toast';
+import {ColorField} from '@ui/color-picker/color-field';
+import {BrowserSafeFonts} from '@ui/fonts/font-picker/browser-safe-fonts';
+import {message} from '@ui/i18n/message';
+import {Trans} from '@ui/i18n/trans';
+import {useTrans} from '@ui/i18n/use-trans';
+import {useSettings} from '@ui/settings/use-settings';
+import {cn} from '@ui/utils/cn';
+import {FileInputType} from '@ui/utils/files/file-input-config';
+import {useQuery} from '@tanstack/react-query';
+import {
+  BadgeCheckIcon,
+  ChevronDownIcon,
+  ImageIcon,
+  LockIcon,
+  MonitorIcon,
+  MousePointerClickIcon,
+  PaletteIcon,
+  PaintbrushIcon,
+  ShuffleIcon,
+  SmartphoneIcon,
+  SparklesIcon,
+  TypeIcon,
+  UserRoundIcon,
+  XIcon,
+  type LucideIcon,
+} from 'lucide-react';
+import {ReactNode, useId, useMemo, useState} from 'react';
+
+type AppearancePanel =
+  | 'theme'
+  | 'header'
+  | 'wallpaper'
+  | 'buttons'
+  | 'desktop'
+  | 'effects'
+  | 'badges';
+type SetHeaderValue = (
+  partial: Partial<BiolinkAppearanceConfigHeaderConfig>,
+  markThemeModified?: boolean,
+) => void;
+type ThemePanelCategory = ThemeCategory;
+type DevicePreview = 'mobile' | 'desktop';
+type ModelMetadata = {
+  previewImage?: string;
+  isModel?: boolean;
+  device?: 'mobile' | 'desktop' | 'both';
+  tags?: string[];
+  requiredFeatures?: BiolinkPlanFeature[];
+};
+type ModelTheme = BiolinkTheme & {
+  metadata?: ModelMetadata | null;
+};
+
+const featuredBackgroundEffects: {
+  value: NonNullable<EffectsConfig['mediaEffect']>;
+  label: ReactNode;
+}[] = [
+  {value: 'none', label: <Trans message="None" />},
+  {value: 'aurora', label: <Trans message="Aurora boreal" />},
+  {value: 'tv', label: <Trans message="Old TV" />},
+  {value: 'blur', label: <Trans message="Blurred background" />},
+  {value: 'night', label: <Trans message="Night" />},
+  {value: 'spotlight', label: <Trans message="Spotlight" />},
+];
+
+const particlePresetEffects: {value: BackgroundEffect; label: ReactNode}[] = [
+  {value: 'stars', label: <Trans message="Stars" />},
+  {value: 'particles', label: <Trans message="Particles" />},
+  {value: 'snow', label: <Trans message="Snow" />},
+  {value: 'rain', label: <Trans message="Rain" />},
+  {value: 'ambient', label: <Trans message="Ambient" />},
+  {value: 'big-circles', label: <Trans message="Big circles" />},
+  {value: 'bubbles', label: <Trans message="Bubbles" />},
+  {value: 'confetti', label: <Trans message="Confetti" />},
+  {value: 'confetti-cannon', label: <Trans message="Confetti cannon" />},
+  {
+    value: 'confetti-explosions',
+    label: <Trans message="Confetti explosions" />,
+  },
+  {value: 'confetti-falling', label: <Trans message="Confetti falling" />},
+  {value: 'confetti-parade', label: <Trans message="Confetti parade" />},
+  {value: 'party', label: <Trans message="Party" />},
+  {value: 'fire', label: <Trans message="Fire" />},
+  {value: 'firefly', label: <Trans message="Firefly" />},
+  {value: 'fireworks', label: <Trans message="Fireworks" />},
+  {value: 'fountain', label: <Trans message="Fountain" />},
+  {value: 'hyperspace', label: <Trans message="Hyperspace" />},
+  {value: 'links', label: <Trans message="Links" />},
+  {value: 'matrix', label: <Trans message="Matrix" />},
+  {value: 'meteors', label: <Trans message="Meteors" />},
+  {value: 'ribbons', label: <Trans message="Ribbons" />},
+  {value: 'sea-anemone', label: <Trans message="Sea anemone" />},
+  {value: 'squares', label: <Trans message="Squares" />},
+  {value: 'triangles', label: <Trans message="Triangles" />},
+];
+
+const officialBadgeOptions = [
+  ['staff', 'Staff', '/images/svg/icons/New%20Badge.svg', '#8b5cf6'],
+  ['helper', 'Helper', '/images/svg/icons/Free%20Badge.svg', '#f59e0b'],
+  ['premium', 'Premium', '/images/svg/icons/New%20Badge.svg', '#a855f7'],
+  ['verified', 'Verified', '/images/svg/icons/Checkmark.svg', '#2da8ff'],
+  ['donor', 'Donor', '/images/svg/icons/Heart.svg', '#22c55e'],
+  ['gifter', 'Gifter', '/images/svg/icons/New%20Badge.svg', '#f97316'],
+  [
+    'image_host',
+    'Image Host',
+    '/images/svg/icons/Image%20(Single).svg',
+    '#10b981',
+  ],
+  [
+    'domain_legend',
+    'Domain Legend',
+    '/images/svg/icons/Location.svg',
+    '#06b6d4',
+  ],
+  ['og', 'OG', '/images/svg/icons/New%20Badge.svg', '#eab308'],
+  [
+    'server_booster',
+    'Server Booster',
+    '/images/svg/icons/Flash.svg',
+    '#f97316',
+  ],
+  ['hone_gg', 'Hone.gg', '/images/svg/icons/New%20Badge.svg', '#f59e0b'],
+  ['bug_hunter', 'Bug Hunter', '/images/svg/icons/Flash.svg', '#22c55e'],
+  ['summer_2026', 'Summer 2026', '/images/svg/icons/Sun.svg', '#facc15'],
+  ['easter_2026', 'Easter 2026', '/images/svg/icons/Sun.svg', '#a78bfa'],
+  [
+    'christmas_2025',
+    'Christmas 2025',
+    '/images/svg/icons/New%20Badge.svg',
+    '#14b8a6',
+  ],
+  ['easter_2025', 'Easter 2025', '/images/svg/icons/Sun.svg', '#f472b6'],
+  [
+    'christmas_2024',
+    'Christmas 2024',
+    '/images/svg/icons/New%20Badge.svg',
+    '#ef4444',
+  ],
+  [
+    'the_million',
+    'The Million',
+    '/images/svg/icons/New%20Badge.svg',
+    '#14b8a6',
+  ],
+  ['winner', 'Winner', '/images/svg/icons/New%20Badge.svg', '#eab308'],
+  [
+    'second_place',
+    'Second Place',
+    '/images/svg/icons/New%20Badge.svg',
+    '#94a3b8',
+  ],
+  [
+    'third_place',
+    'Third Place',
+    '/images/svg/icons/New%20Badge.svg',
+    '#f97316',
+  ],
+] as const;
+
+export function Component() {
+  const [panel, setPanel] = useState<AppearancePanel>('theme');
+
+  return (
+    <FileUploadProvider>
+      <div className="mx-auto flex max-w-2xl flex-col gap-8">
+        <PanelNav activePanel={panel} onChange={setPanel} />
+        {panel === 'theme' && <ThemePanel />}
+        {panel === 'header' && <HeaderPanel />}
+        {panel === 'wallpaper' && <WallpaperPanel />}
+        {panel === 'buttons' && <ButtonsPanel />}
+        {panel === 'desktop' && <DesktopPanel />}
+        {panel === 'effects' && <EffectsPanel />}
+        {panel === 'badges' && <BadgesPanel />}
+      </div>
+    </FileUploadProvider>
+  );
+}
+
+function PanelNav({
+  activePanel,
+  onChange,
+}: {
+  activePanel: AppearancePanel;
+  onChange: (panel: AppearancePanel) => void;
+}) {
+  const items: {
+    id: AppearancePanel;
+    label: ReactNode;
+    icon: LucideIcon;
+  }[] = [
+    {id: 'theme', label: <Trans message="Theme" />, icon: SparklesIcon},
+    {id: 'header', label: <Trans message="Header" />, icon: UserRoundIcon},
+    {id: 'wallpaper', label: <Trans message="Wallpaper" />, icon: ImageIcon},
+    {
+      id: 'buttons',
+      label: <Trans message="Buttons" />,
+      icon: MousePointerClickIcon,
+    },
+    {id: 'desktop', label: <Trans message="Desktop" />, icon: MonitorIcon},
+    {id: 'effects', label: <Trans message="Effects" />, icon: SparklesIcon},
+    {id: 'badges', label: <Trans message="Badges" />, icon: BadgeCheckIcon},
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {items.map(item => {
+        const Icon = item.icon;
+        const active = activePanel === item.id;
+
+        return (
+          <Button
+            key={item.id}
+            type="button"
+            variant={active ? 'default' : 'outline'}
+            color={active ? 'primary' : 'default'}
+            className="justify-start"
+            onClick={() => onChange(item.id)}
+          >
+            <Icon data-icon="inline-start" />
+            {item.label}
+          </Button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ThemePanel() {
+  const [category, setCategory] = useState<ThemePanelCategory>('customizable');
+  const [device, setDevice] = useState<DevicePreview>('mobile');
+  const [previewTheme, setPreviewTheme] = useState<ModelTheme | null>(null);
+  const appearance = useBiolinkEditorStore(s => s.appearance);
+  const updateAppearance = useBiolinkEditorStore(s => s.updateAppearance);
+  const themesQuery = useQuery({
+    staleTime: Infinity,
+    retry: 1,
+    queryKey: ['biolink-themes'],
+    queryFn: () => listBiolinkThemes(),
+  });
+  const themes = useMemo(
+    () => themesQuery.data?.data ?? [],
+    [themesQuery.data?.data],
+  );
+  const visibleThemes = useMemo(
+    () => themes.filter(theme => themeCategory(theme) === category),
+    [themes, category],
+  );
+  const activeSlug = appearance.theme?.slug;
+  const customActive = !activeSlug || appearance.theme?.modified;
+
+  const applyTheme = (theme: BiolinkTheme) => {
+    updateAppearance(applyThemeToAppearance(theme, appearance));
+  };
+
+  const shuffleTheme = () => {
+    if (!visibleThemes.length) return;
+    const theme =
+      visibleThemes[Math.floor(Math.random() * visibleThemes.length)];
+    applyTheme(theme);
+  };
+
+  return (
+    <section>
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <h2 className={appearanceHeaderClassnames.h2}>
+          <Trans message="Theme" />
+        </h2>
+        <Button
+          type="button"
+          variant="outline"
+          color="default"
+          onClick={shuffleTheme}
+          disabled={!visibleThemes.length}
+        >
+          <ShuffleIcon data-icon="inline-start" />
+          <Trans message="Shuffle" />
+        </Button>
+      </div>
+
+      <Tabs.Root
+        value={category}
+        onValueChange={value => setCategory(value as ThemePanelCategory)}
+        className="gap-6"
+      >
+        <Tabs.List variant="line">
+          <Tabs.Tab value="customizable">
+            <Trans message="Customizable" />
+          </Tabs.Tab>
+          <Tabs.Tab value="curated">
+            <Trans message="Curated" />
+          </Tabs.Tab>
+        </Tabs.List>
+
+        {themesQuery.isError ? (
+          <Alert.Root className="mb-6" fillStyle="subtleFill">
+            <Alert.Title>
+              <Trans message="Could not load themes" />
+            </Alert.Title>
+            <Alert.Description>
+              <Trans message="Run the biolink theme migration, then refresh this page." />
+            </Alert.Description>
+          </Alert.Root>
+        ) : null}
+
+        <Tabs.Panel value="customizable">
+          <ThemeGrid isLoading={themesQuery.isLoading && !themesQuery.isError}>
+            <ThemePreviewCard
+              custom
+              active={customActive}
+              label={<Trans message="Custom" />}
+              onClick={() =>
+                updateAppearance(unlockThemeForCustomization(appearance))
+              }
+            />
+            {visibleThemes.map(theme => (
+              <ThemeCardFromTheme
+                key={theme.slug}
+                theme={theme}
+                active={
+                  activeSlug === theme.slug && !appearance.theme?.modified
+                }
+                onClick={() => setPreviewTheme(theme as ModelTheme)}
+              />
+            ))}
+          </ThemeGrid>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="curated">
+          <Alert.Root className="mb-6" fillStyle="subtleFill">
+            <LockIcon />
+            <Alert.Description>
+              <Trans message="Curated themes are locked for visual editing. Use Customize from this theme when you want a personal copy." />
+            </Alert.Description>
+          </Alert.Root>
+          <ThemeGrid isLoading={themesQuery.isLoading && !themesQuery.isError}>
+            {visibleThemes.map(theme => (
+              <ThemeCardFromTheme
+                key={theme.slug}
+                theme={theme}
+                active={
+                  activeSlug === theme.slug && !appearance.theme?.modified
+                }
+                onClick={() => setPreviewTheme(theme as ModelTheme)}
+              />
+            ))}
+          </ThemeGrid>
+        </Tabs.Panel>
+      </Tabs.Root>
+      {previewTheme ? (
+        <ModelPreviewDialog
+          device={device}
+          theme={previewTheme}
+          open
+          onDeviceChange={setDevice}
+          onOpenChange={open => {
+            if (!open) setPreviewTheme(null);
+          }}
+        />
+      ) : null}
+    </section>
+  );
+}
+
+function ThemeGrid({
+  children,
+  isLoading,
+}: {
+  children: ReactNode;
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="rounded-card border p-6 text-sm text-muted-foreground">
+        <Trans message="Loading themes..." />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5">
+      {children}
+    </div>
+  );
+}
+
+function ModelPreviewDialog({
+  device,
+  onDeviceChange,
+  onOpenChange,
+  open,
+  theme,
+}: {
+  device: DevicePreview;
+  onDeviceChange: (device: DevicePreview) => void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  theme: ModelTheme;
+}) {
+  const biolink = useBiolinkEditorStore(s => s.biolink);
+  const content = useBiolinkEditorStore(s => s.content);
+  const appearance = useBiolinkEditorStore(
+    s => s.appearance as AdvancedAppearanceConfig,
+  );
+  const updateAppearance = useBiolinkEditorStore(s => s.updateAppearance);
+  const {disabled: galleryDisabled} = useBiolinkFeatureStatus('model_gallery');
+  const usageQuery = useUsage();
+  const missingFeatures = missingModelFeatures(
+    theme,
+    usageQuery.data?.data.biolinks as Record<string, boolean> | undefined,
+    galleryDisabled,
+  );
+  const nextAppearance = applyThemeToAppearance(theme, appearance);
+
+  const applyModel = () => {
+    updateAppearance(nextAppearance);
+    toast.success(<Trans message="Model applied. Save changes to publish." />);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Backdrop />
+        <Dialog.Content className="sm:max-w-6xl">
+          <Dialog.Header>
+            <Dialog.Title>
+              <SparklesIcon />
+              {theme.name}
+            </Dialog.Title>
+          </Dialog.Header>
+          <Dialog.Body>
+            <div className="mb-4 flex justify-end">
+              <DeviceTabs value={device} onChange={onDeviceChange} />
+            </div>
+            <div className="flex justify-center">
+              <div
+                className={cn(
+                  'overflow-hidden rounded-card border bg-black',
+                  device === 'mobile'
+                    ? 'h-181 w-87.5 rounded-[48px] border-8 border-[#444546]'
+                    : 'h-[70vh] w-full max-w-5xl',
+                )}
+              >
+                <BiolinkLayout
+                  biolink={biolink}
+                  content={content}
+                  appearance={nextAppearance}
+                  className="h-full"
+                />
+              </div>
+            </div>
+          </Dialog.Body>
+          <Dialog.Footer>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              <Trans message="Cancel" />
+            </Button>
+            <Button
+              type="button"
+              onClick={applyModel}
+              disabled={missingFeatures.length > 0}
+            >
+              <Trans message="Apply" />
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+function DeviceTabs({
+  onChange,
+  value,
+}: {
+  onChange: (value: DevicePreview) => void;
+  value: DevicePreview;
+}) {
+  return (
+    <Tabs.Root
+      value={value}
+      onValueChange={next => onChange(next as DevicePreview)}
+    >
+      <Tabs.List>
+        <Tabs.Tab value="mobile">
+          <SmartphoneIcon className="size-4" />
+          <Trans message="Mobile" />
+        </Tabs.Tab>
+        <Tabs.Tab value="desktop">
+          <MonitorIcon className="size-4" />
+          <Trans message="Desktop" />
+        </Tabs.Tab>
+      </Tabs.List>
+    </Tabs.Root>
+  );
+}
+
+function missingModelFeatures(
+  model: ModelTheme,
+  biolinkUsage: Record<string, boolean> | undefined,
+  galleryDisabled: boolean,
+): string[] {
+  if (galleryDisabled) {
+    return ['model_gallery'];
+  }
+
+  return (model.metadata?.requiredFeatures ?? []).filter(
+    feature => !biolinkUsage?.[feature],
+  );
+}
+
+function HeaderPanel() {
+  const appearance = useBiolinkEditorStore(s => s.appearance);
+  const biolink = useBiolinkEditorStore(s => s.biolink);
+  const updateAppearance = useBiolinkEditorStore(s => s.updateAppearance);
+  const {trans} = useTrans();
+  const locked = isThemeLocked(appearance);
+  const header = {
+    ...defaultHeaderConfig,
+    ...appearance.headerConfig,
+  };
+  const media = {
+    ...defaultMediaConfig,
+    ...(appearance as AdvancedAppearanceConfig).mediaConfig,
+  };
+  const titleLength = header.bio?.length ?? 0;
+
+  const setHeader = (
+    partial: Partial<BiolinkAppearanceConfigHeaderConfig>,
+    markThemeModified = false,
+  ) => {
+    updateAppearance(mergeHeaderConfig(appearance, partial), {
+      markThemeModified,
+    });
+  };
+  const setMedia = (partial: Partial<typeof media>) => {
+    updateAppearance(
+      {
+        mediaConfig: compactConfig({...media, ...partial}),
+      } as AppearanceConfig,
+      {markThemeModified: true},
+    );
+  };
+
+  return (
+    <section>
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <h2 className={appearanceHeaderClassnames.h2}>
+          <Trans message="Header" />
+        </h2>
+        {locked ? <CuratedLockTooltip /> : null}
+      </div>
+
+      <div className="flex flex-col gap-7">
+        <SettingRow label={<Trans message="Layout" />}>
+          <HeaderLayoutSelector
+            disabled={locked}
+            value={header.layout}
+            onChange={value =>
+              setHeader(
+                value === 'shape'
+                  ? {
+                      layout: value,
+                      shapeVariant:
+                        header.shapeVariant ?? defaultHeaderShapeVariant,
+                      shapeColor:
+                        header.shapeColor ??
+                        header.titleColor ??
+                        appearance.bgConfig?.color ??
+                        '#111111',
+                    }
+                  : {layout: value},
+                true,
+              )
+            }
+          />
+        </SettingRow>
+
+        {isShapeLayout(header.layout) ? (
+          <SettingRow label={<Trans message="Shape" />}>
+            <ShapeVariantSelector
+              disabled={locked}
+              value={header.shapeVariant}
+              shapeColor={
+                header.shapeColor ??
+                header.titleColor ??
+                appearance.bgConfig?.color ??
+                '#111111'
+              }
+              image={header.image}
+              onChange={value => setHeader({shapeVariant: value}, true)}
+            />
+          </SettingRow>
+        ) : null}
+
+        <SettingRow label={<Trans message="Profile image" />}>
+          <ImageSelector.Avatar
+            uploadType={UploadType.linkImages}
+            value={header.image}
+            onChange={value => setHeader({image: value})}
+          />
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Avatar side asset" />}>
+          <div className="flex flex-wrap items-center gap-3">
+            <ImageSelector.Square
+              className="size-14"
+              placeholderVariant="icon"
+              uploadType={UploadType.biolinkMedia}
+              value={media.avatarOverride}
+              onChange={value => setMedia({avatarOverride: value})}
+            />
+            <BiolinkAssetPickerDialog
+              value={media.avatarOverride}
+              categories={['emoji', 'threeD']}
+              title={<Trans message="Select avatar side asset" />}
+              onSelect={value => setMedia({avatarOverride: value ?? ''})}
+            >
+              <Dialog.Trigger
+                render={<Button variant="outline" type="button" />}
+              >
+                <ImageIcon data-icon="inline-start" />
+                <Trans message="Choose asset" />
+              </Dialog.Trigger>
+            </BiolinkAssetPickerDialog>
+            {media.avatarOverride ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setMedia({avatarOverride: ''})}
+              >
+                <XIcon data-icon="inline-start" />
+                <Trans message="Remove" />
+              </Button>
+            ) : null}
+          </div>
+        </SettingRow>
+
+        {isBannerLayout(header.layout) ? (
+          <SettingRow label={<Trans message="Banner background" />}>
+            <BannerBackgroundEditor
+              appearance={appearance}
+              disabled={locked}
+              header={header}
+              onChange={setHeader}
+            />
+          </SettingRow>
+        ) : null}
+
+        {isShapeLayout(header.layout) && !header.image ? (
+          <SettingRow label={<Trans message="Shape color" />}>
+            {locked ? (
+              <ColorReadOnly
+                value={
+                  header.shapeColor ??
+                  header.titleColor ??
+                  appearance.bgConfig?.color ??
+                  '#111111'
+                }
+              />
+            ) : (
+              <ColorField
+                label={null}
+                value={
+                  header.shapeColor ??
+                  header.titleColor ??
+                  appearance.bgConfig?.color ??
+                  '#111111'
+                }
+                onChange={value => setHeader({shapeColor: value}, true)}
+              />
+            )}
+          </SettingRow>
+        ) : null}
+
+        <SettingRow label={<Trans message="Title" />}>
+          <Input
+            bindToHookForm={false}
+            value={header.title ?? biolink.name ?? ''}
+            maxLength={100}
+            onChange={e => setHeader({title: e.target.value})}
+          />
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Bio" />}>
+          <div>
+            <Textarea
+              bindToHookForm={false}
+              rows={4}
+              maxLength={160}
+              value={header.bio ?? ''}
+              placeholder={trans(message('Add a short bio'))}
+              onChange={e => setHeader({bio: e.target.value})}
+            />
+            <div className="mt-1 text-right text-xs text-muted-foreground">
+              {titleLength}/160
+            </div>
+          </div>
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Title style" />}>
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <ChoiceCard
+                active={header.titleStyle !== 'logo'}
+                onClick={() => setHeader({titleStyle: 'text'})}
+              >
+                <TypeIcon />
+                <Trans message="Text" />
+              </ChoiceCard>
+              <ChoiceCard
+                active={header.titleStyle === 'logo'}
+                onClick={() => setHeader({titleStyle: 'logo'})}
+              >
+                <ImageIcon />
+                <Trans message="Logo" />
+              </ChoiceCard>
+            </div>
+            {header.titleStyle === 'logo' ? (
+              <ImageSelector.Input
+                uploadType={UploadType.linkImages}
+                value={header.logo}
+                onChange={value => setHeader({logo: value})}
+              />
+            ) : null}
+          </div>
+        </SettingRow>
+
+        {locked ? <LockedVisualNotice /> : null}
+
+        <SettingRow label={<Trans message="Alternative title font" />}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm text-muted-foreground">
+              <Trans message="Matches page font by default" />
+            </div>
+            <Switch
+              checked={!!header.alternativeFont}
+              disabled={locked}
+              onCheckedChange={checked =>
+                setHeader({alternativeFont: checked}, true)
+              }
+            />
+          </div>
+        </SettingRow>
+
+        {header.alternativeFont && (
+          <SettingRow label={<Trans message="Title font" />}>
+            <FontDialog
+              disabled={locked}
+              value={header.titleFontConfig ?? BrowserSafeFonts[0]}
+              onChange={font =>
+                setHeader(
+                  {
+                    titleFontConfig: compactFontConfig({
+                      ...header.titleFontConfig,
+                      ...font,
+                    }),
+                  },
+                  true,
+                )
+              }
+            />
+          </SettingRow>
+        )}
+
+        <SettingRow label={<Trans message="Title color" />}>
+          {locked ? (
+            <ColorReadOnly value={header.titleColor ?? '#111111'} />
+          ) : (
+            <ColorField
+              label={null}
+              value={header.titleColor ?? '#111111'}
+              onChange={value => setHeader({titleColor: value}, true)}
+            />
+          )}
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Page font" />}>
+          <PageFontSelector disabled={locked} />
+        </SettingRow>
+      </div>
+    </section>
+  );
+}
+
+function BannerBackgroundEditor({
+  appearance,
+  disabled,
+  header,
+  onChange,
+}: {
+  appearance: AppearanceConfig;
+  disabled?: boolean;
+  header: BiolinkAppearanceConfigHeaderConfig;
+  onChange: SetHeaderValue;
+}) {
+  const activeType =
+    header.bannerBackgroundType ?? (header.bannerImage ? 'image' : 'gradient');
+
+  if (disabled) {
+    return (
+      <BannerBackgroundPreview
+        appearance={appearance}
+        header={header}
+        className="max-w-80"
+      />
+    );
+  }
+
+  return (
+    <div className="flex max-w-100 flex-col gap-4">
+      <div className="grid grid-cols-2 gap-3">
+        <ChoiceCard
+          active={activeType === 'gradient'}
+          onClick={() => onChange({bannerBackgroundType: 'gradient'}, true)}
+        >
+          <PaletteIcon />
+          <Trans message="Gradient" />
+        </ChoiceCard>
+        <ChoiceCard
+          active={activeType === 'image'}
+          onClick={() => onChange({bannerBackgroundType: 'image'}, true)}
+        >
+          <ImageIcon />
+          <Trans message="Image" />
+        </ChoiceCard>
+      </div>
+
+      {activeType === 'image' ? (
+        <div>
+          <div className="mb-2 text-sm font-medium">
+            <Trans message="Banner image" />
+          </div>
+          <ImageSelector.Input
+            uploadType={UploadType.linkImages}
+            value={header.bannerImage}
+            previewClassName="w-full object-cover"
+            onChange={value =>
+              onChange(
+                {
+                  bannerBackgroundType: 'image',
+                  bannerImage: value,
+                },
+                true,
+              )
+            }
+          />
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ColorField
+            label={<Trans message="Start color" />}
+            value={bannerGradientFrom(header, appearance.bgConfig)}
+            onChange={value =>
+              onChange(
+                {
+                  bannerBackgroundType: 'gradient',
+                  bannerGradientFrom: value,
+                },
+                true,
+              )
+            }
+          />
+          <ColorField
+            label={<Trans message="End color" />}
+            value={bannerGradientTo(header, appearance.bgConfig)}
+            onChange={value =>
+              onChange(
+                {
+                  bannerBackgroundType: 'gradient',
+                  bannerGradientTo: value,
+                },
+                true,
+              )
+            }
+          />
+        </div>
+      )}
+
+      <BannerBackgroundPreview appearance={appearance} header={header} />
+    </div>
+  );
+}
+
+function BannerBackgroundPreview({
+  appearance,
+  className,
+  header,
+}: {
+  appearance: AppearanceConfig;
+  className?: string;
+  header: BiolinkAppearanceConfigHeaderConfig;
+}) {
+  return (
+    <div
+      className={cn(
+        'h-20 rounded-card-sm border bg-muted shadow-sm',
+        className,
+      )}
+      style={bannerBackgroundStyle(header, appearance.bgConfig)}
+    />
+  );
+}
+
+function WallpaperPanel() {
+  const appearance = useBiolinkEditorStore(s => s.appearance);
+  const locked = isThemeLocked(appearance);
+
+  return (
+    <section className="flex flex-col gap-8">
+      {locked ? <LockedVisualNotice /> : null}
+      {locked ? (
+        <ThemePreviewCard
+          config={appearance}
+          label={<Trans message="Current wallpaper" />}
+          locked
+        />
+      ) : (
+        <BackgroundStyle />
+      )}
+      <WallpaperMediaControls />
+    </section>
+  );
+}
+
+function ButtonsPanel() {
+  const appearance = useBiolinkEditorStore(s => s.appearance);
+  const locked = isThemeLocked(appearance);
+
+  return (
+    <section className="flex flex-col gap-8">
+      {locked ? <LockedVisualNotice /> : null}
+      {locked ? (
+        <ThemePreviewCard
+          config={appearance}
+          label={<Trans message="Current buttons" />}
+          locked
+        />
+      ) : (
+        <ButtonStyle />
+      )}
+      <BrandingStyle />
+    </section>
+  );
+}
+
+function WallpaperMediaControls() {
+  const appearance = useBiolinkEditorStore(
+    s => s.appearance as AdvancedAppearanceConfig,
+  );
+  const updateAppearance = useBiolinkEditorStore(s => s.updateAppearance);
+  const media = {...defaultMediaConfig, ...appearance.mediaConfig};
+  const {disabled: audioDisabled} = useBiolinkFeatureStatus('profile_audio');
+  const {disabled: cursorDisabled} = useBiolinkFeatureStatus('custom_cursor');
+  const {disabled: videoDisabled} = useBiolinkFeatureStatus('background_video');
+
+  const setMedia = (partial: Partial<typeof media>) => {
+    updateAppearance(
+      {
+        mediaConfig: compactConfig({...media, ...partial}),
+      } as AppearanceConfig,
+      {markThemeModified: true},
+    );
+  };
+
+  const audioPrompt = {
+    ...defaultMediaConfig.audioPrompt,
+    ...media.audioPrompt,
+  };
+
+  const setAudioPrompt = (partial: Partial<AudioPromptConfig>) => {
+    setMedia({
+      audioPrompt: compactConfig({...audioPrompt, ...partial}),
+    });
+  };
+
+  return (
+    <section className="flex flex-col gap-5">
+      <div>
+        <h3 className="text-base font-semibold">
+          <Trans message="Wallpaper media" />
+        </h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          <Trans message="Use the wallpaper selector above for colors, images and patterns. Add video, audio and cursor here." />
+        </p>
+      </div>
+      <div className="flex flex-col gap-7">
+        <SettingRow label={<Trans message="Background video" />}>
+          <div className="flex flex-col gap-3">
+            {videoDisabled ? (
+              <FeatureLockedNotice
+                feature={<Trans message="Background video" />}
+              />
+            ) : null}
+            <BiolinkFileSelector
+              disabled={videoDisabled}
+              accept={FileInputType.video}
+              uploadType={UploadType.biolinkMedia}
+              value={
+                media.backgroundMediaType === 'video'
+                  ? media.backgroundMedia
+                  : ''
+              }
+              icon={BiolinkFileSelectorIcons.video}
+              emptyLabel={<Trans message="Upload background video" />}
+              onChange={value =>
+                setMedia({
+                  backgroundMedia: value,
+                  backgroundMediaType: value ? 'video' : 'image',
+                })
+              }
+            />
+          </div>
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Profile audio" />}>
+          <div className="flex flex-col gap-3">
+            {audioDisabled ? (
+              <FeatureLockedNotice
+                feature={<Trans message="Profile audio" />}
+              />
+            ) : null}
+            <BiolinkFileSelector
+              disabled={audioDisabled}
+              accept={FileInputType.audio}
+              uploadType={UploadType.biolinkAudio}
+              value={media.audio}
+              icon={BiolinkFileSelectorIcons.audio}
+              emptyLabel={<Trans message="Upload audio" />}
+              onChange={value => setMedia({audio: value})}
+            />
+            {media.audio ? (
+              <div className="flex flex-col gap-4 rounded-card-sm border p-4">
+                <div>
+                  <h4 className="text-sm font-semibold">
+                    <Trans message="Audio click notice" />
+                  </h4>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    <Trans message="Browsers require an interaction before background audio can start." />
+                  </p>
+                </div>
+                <SettingRow label={<Trans message="Notice text" />}>
+                  <Input
+                    bindToHookForm={false}
+                    value={audioPrompt.text ?? ''}
+                    maxLength={160}
+                    disabled={audioDisabled}
+                    onChange={event =>
+                      setAudioPrompt({text: event.target.value})
+                    }
+                  />
+                </SettingRow>
+                <SettingRow label={<Trans message="Notice text color" />}>
+                  {audioDisabled ? (
+                    <ColorReadOnly value={audioPrompt.textColor ?? '#ffffff'} />
+                  ) : (
+                    <ColorField
+                      label={null}
+                      value={audioPrompt.textColor ?? '#ffffff'}
+                      onChange={value => setAudioPrompt({textColor: value})}
+                    />
+                  )}
+                </SettingRow>
+                <SettingRow label={<Trans message="Notice font" />}>
+                  <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <FontDialog
+                        disabled={audioDisabled}
+                        value={audioPrompt.fontConfig ?? BrowserSafeFonts[0]}
+                        onChange={font => setAudioPrompt({fontConfig: font})}
+                      />
+                    </div>
+                    {audioPrompt.fontConfig ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        disabled={audioDisabled}
+                        aria-label={message('Use page font').message}
+                        onClick={() => setAudioPrompt({fontConfig: undefined})}
+                      >
+                        <XIcon />
+                      </Button>
+                    ) : null}
+                  </div>
+                </SettingRow>
+              </div>
+            ) : null}
+          </div>
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Custom cursor" />}>
+          <div className="flex flex-col gap-3">
+            {cursorDisabled ? (
+              <FeatureLockedNotice
+                feature={<Trans message="Custom cursor" />}
+              />
+            ) : null}
+            <BiolinkFileSelector
+              disabled={cursorDisabled}
+              accept=".cur,image/png,image/webp,image/gif"
+              uploadType={UploadType.biolinkCursors}
+              value={media.cursor}
+              icon={BiolinkFileSelectorIcons.cursor}
+              emptyLabel={<Trans message="Upload cursor" />}
+              onChange={value => setMedia({cursor: value})}
+            />
+          </div>
+        </SettingRow>
+      </div>
+    </section>
+  );
+}
+
+function DesktopPanel() {
+  const appearance = useBiolinkEditorStore(
+    s => s.appearance as AdvancedAppearanceConfig,
+  );
+  const updateAppearance = useBiolinkEditorStore(s => s.updateAppearance);
+  const savedDesktop = appearance.desktopConfig ?? {};
+  const desktop = {
+    ...defaultDesktopConfig,
+    ...savedDesktop,
+    surfaceMode:
+      savedDesktop.surfaceMode ??
+      (savedDesktop.panelBackgroundColor &&
+      savedDesktop.panelBackgroundColor !== '#111111cc'
+        ? 'tinted'
+        : 'open'),
+  };
+  const {disabled} = useBiolinkFeatureStatus('desktop_layout');
+
+  const setDesktop = (partial: Partial<DesktopConfig>) => {
+    updateAppearance(
+      {
+        desktopConfig: compactConfig({...desktop, ...partial}),
+      } as AppearanceConfig,
+      {markThemeModified: true},
+    );
+  };
+
+  return (
+    <section>
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <h2 className={appearanceHeaderClassnames.h2}>
+          <Trans message="Desktop" />
+        </h2>
+        <Switch
+          checked={!!desktop.enabled}
+          disabled={disabled}
+          onCheckedChange={checked => setDesktop({enabled: checked})}
+        />
+      </div>
+
+      {disabled ? (
+        <FeatureLockedNotice feature={<Trans message="Desktop layout" />} />
+      ) : null}
+
+      <div className="flex flex-col gap-7">
+        <SettingRow label={<Trans message="Content mode" />}>
+          <ChoiceGrid
+            disabled={disabled}
+            items={[
+              {value: 'spotlight', label: <Trans message="Spotlight" />},
+              {value: 'stack', label: <Trans message="Stack" />},
+              {value: 'columns', label: <Trans message="Columns" />},
+            ]}
+            value={desktop.contentMode ?? 'spotlight'}
+            onChange={value =>
+              setDesktop({contentMode: value as DesktopConfig['contentMode']})
+            }
+          />
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Desktop columns" />}>
+          <ChoiceGrid
+            disabled={disabled}
+            items={[
+              {value: 'auto', label: <Trans message="Automatic" />},
+              {value: '1', label: <Trans message="1 column" />},
+              {value: '2', label: <Trans message="2 columns" />},
+              {value: '3', label: <Trans message="3 columns" />},
+            ]}
+            value={desktop.gridMode ?? 'auto'}
+            onChange={value =>
+              setDesktop({gridMode: value as DesktopConfig['gridMode']})
+            }
+          />
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Profile placement" />}>
+          <ChoiceGrid
+            disabled={disabled}
+            items={[
+              {value: 'center', label: <Trans message="Center" />},
+              {value: 'left', label: <Trans message="Left" />},
+              {value: 'right', label: <Trans message="Right" />},
+            ]}
+            value={desktop.profilePlacement ?? 'center'}
+            onChange={value =>
+              setDesktop({
+                profilePlacement: value as DesktopConfig['profilePlacement'],
+              })
+            }
+          />
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Desktop surface" />}>
+          <ChoiceGrid
+            disabled={disabled}
+            items={[
+              {value: 'open', label: <Trans message="Open layout" />},
+              {value: 'tinted', label: <Trans message="Tinted surface" />},
+            ]}
+            value={desktop.surfaceMode ?? 'open'}
+            onChange={value =>
+              setDesktop({surfaceMode: value as DesktopConfig['surfaceMode']})
+            }
+          />
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Profile opacity" />}>
+          <Slider
+            min={0.2}
+            max={1}
+            step={0.01}
+            value={desktop.profileOpacity ?? 0.9}
+            onValueChange={value => setDesktop({profileOpacity: Number(value)})}
+            disabled={disabled}
+          >
+            <Slider.Control>
+              <Slider.Track>
+                <Slider.Indicator />
+              </Slider.Track>
+              <Slider.Thumb />
+            </Slider.Control>
+          </Slider>
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Profile blur" />}>
+          <Slider
+            min={0}
+            max={80}
+            step={1}
+            value={desktop.profileBlur ?? 12}
+            onValueChange={value => setDesktop({profileBlur: Number(value)})}
+            disabled={disabled}
+          >
+            <Slider.Control>
+              <Slider.Track>
+                <Slider.Indicator />
+              </Slider.Track>
+              <Slider.Thumb />
+            </Slider.Control>
+          </Slider>
+        </SettingRow>
+
+        {desktop.surfaceMode === 'tinted' ? (
+          <SettingRow label={<Trans message="Surface colors" />}>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {disabled ? (
+                <ColorReadOnly
+                  value={desktop.panelBackgroundColor ?? '#111111cc'}
+                />
+              ) : (
+                <ColorField
+                  label={<Trans message="Background" />}
+                  value={desktop.panelBackgroundColor ?? '#111111cc'}
+                  onChange={value => setDesktop({panelBackgroundColor: value})}
+                />
+              )}
+              {disabled ? (
+                <ColorReadOnly value={desktop.panelTextColor ?? '#ffffff'} />
+              ) : (
+                <ColorField
+                  label={<Trans message="Text" />}
+                  value={desktop.panelTextColor ?? '#ffffff'}
+                  onChange={value => setDesktop({panelTextColor: value})}
+                />
+              )}
+            </div>
+          </SettingRow>
+        ) : null}
+
+        <SettingRow label={<Trans message="Decorative asset" />}>
+          <div className="flex flex-wrap items-center gap-3">
+            {desktop.decorativeAsset ? (
+              <span className="flex size-16 items-center justify-center rounded-card-sm border bg-card p-2">
+                <img
+                  src={desktop.decorativeAsset}
+                  alt=""
+                  className="max-h-full max-w-full object-contain"
+                />
+              </span>
+            ) : null}
+            <BiolinkAssetPickerDialog
+              value={desktop.decorativeAsset}
+              categories={['threeD', 'emoji', 'scribbles', 'icons']}
+              title={<Trans message="Select decorative asset" />}
+              onSelect={value => setDesktop({decorativeAsset: value ?? ''})}
+            >
+              <Dialog.Trigger
+                render={
+                  <Button variant="outline" type="button" disabled={disabled} />
+                }
+              >
+                <ImageIcon data-icon="inline-start" />
+                <Trans message="Choose asset" />
+              </Dialog.Trigger>
+            </BiolinkAssetPickerDialog>
+          </div>
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Asset position" />}>
+          <ChoiceGrid
+            disabled={disabled}
+            items={[
+              {value: 'left', label: <Trans message="Left" />},
+              {value: 'right', label: <Trans message="Right" />},
+              {value: 'background', label: <Trans message="Background" />},
+            ]}
+            value={desktop.decorativePlacement ?? 'right'}
+            onChange={value =>
+              setDesktop({
+                decorativePlacement:
+                  value as DesktopConfig['decorativePlacement'],
+              })
+            }
+          />
+        </SettingRow>
+      </div>
+    </section>
+  );
+}
+
+function EffectsPanel() {
+  const appearance = useBiolinkEditorStore(
+    s => s.appearance as AdvancedAppearanceConfig,
+  );
+  const updateAppearance = useBiolinkEditorStore(s => s.updateAppearance);
+  const configuredEffects = appearance.effectsConfig;
+  const effects = {...defaultEffectsConfig, ...configuredEffects};
+  const {disabled} = useBiolinkFeatureStatus('visual_effects');
+  const particlePreset = resolvedParticlePreset(configuredEffects);
+  const selectedPreset = particlePresetEffects.some(
+    item => item.value === particlePreset,
+  )
+    ? particlePreset
+    : null;
+  const mediaEffect = resolvedMediaEffect(configuredEffects);
+
+  const setEffects = (partial: Partial<EffectsConfig>) => {
+    updateAppearance(
+      {
+        effectsConfig: compactConfig({...configuredEffects, ...partial}),
+      } as AppearanceConfig,
+      {markThemeModified: true},
+    );
+  };
+
+  return (
+    <section>
+      <h2 className={appearanceHeaderClassnames.h2}>
+        <Trans message="Effects" />
+      </h2>
+      {disabled ? (
+        <FeatureLockedNotice feature={<Trans message="Visual effects" />} />
+      ) : null}
+
+      <div className="flex flex-col gap-7">
+        <SettingRow label={<Trans message="Background effect" />}>
+          <ChoiceGrid
+            disabled={disabled}
+            value={mediaEffect}
+            onChange={value =>
+              setEffects({
+                mediaEffect: value as EffectsConfig['mediaEffect'],
+              })
+            }
+            items={featuredBackgroundEffects}
+          />
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Particle presets" />}>
+          <Select.Root
+            disabled={disabled}
+            value={selectedPreset}
+            onValueChange={value =>
+              value &&
+              setEffects({
+                particlePreset: value as EffectsConfig['particlePreset'],
+              })
+            }
+          >
+            <Select.Trigger className="w-full">
+              <Select.Value
+                placeholder={<Trans message="Choose a particle preset" />}
+              />
+            </Select.Trigger>
+            <Select.Content>
+              {particlePresetEffects.map(item => (
+                <Select.Item key={item.value} value={item.value}>
+                  {item.label}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Username effect" />}>
+          <ChoiceGrid
+            disabled={disabled}
+            value={effects.usernameEffect ?? 'none'}
+            onChange={value =>
+              setEffects({
+                usernameEffect: value as EffectsConfig['usernameEffect'],
+              })
+            }
+            items={[
+              {value: 'none', label: <Trans message="None" />},
+              {value: 'glow', label: <Trans message="Glow" />},
+              {value: 'pulse', label: <Trans message="Pulse" />},
+              {value: 'scanline', label: <Trans message="Scanline" />},
+            ]}
+          />
+        </SettingRow>
+
+        <SettingRow label={<Trans message="Effect color" />}>
+          {disabled ? (
+            <ColorReadOnly value={effects.effectColor ?? '#ffffff'} />
+          ) : (
+            <ColorField
+              label={null}
+              value={effects.effectColor ?? '#ffffff'}
+              onChange={value => setEffects({effectColor: value})}
+            />
+          )}
+        </SettingRow>
+
+        {mediaEffect === 'aurora' && (
+          <SettingRow label={<Trans message="Aurora colors" />}>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                ['effectColor', effects.effectColor ?? '#ffffff', 'Primary'],
+                [
+                  'effectSecondaryColor',
+                  effects.effectSecondaryColor ?? '#6ee7b7',
+                  'Secondary',
+                ],
+                [
+                  'effectTertiaryColor',
+                  effects.effectTertiaryColor ?? '#3b82f6',
+                  'Tertiary',
+                ],
+              ].map(([key, value, label]) => (
+                <div key={key} className="min-w-0">
+                  {disabled ? (
+                    <ColorReadOnly value={value} />
+                  ) : (
+                    <ColorField
+                      label={<Trans message={label} />}
+                      value={value}
+                      onChange={nextValue =>
+                        setEffects({[key]: nextValue} as Partial<EffectsConfig>)
+                      }
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </SettingRow>
+        )}
+
+        <SettingRow label={<Trans message="Glow settings" />}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <SwitchRow
+              disabled={disabled}
+              checked={!!effects.glowUsername}
+              label={<Trans message="Username" />}
+              onChange={checked => setEffects({glowUsername: checked})}
+            />
+            <SwitchRow
+              disabled={disabled}
+              checked={!!effects.glowSocials}
+              label={<Trans message="Social icons" />}
+              onChange={checked => setEffects({glowSocials: checked})}
+            />
+            <SwitchRow
+              disabled={disabled}
+              checked={!!effects.glowBadges}
+              label={<Trans message="Badges" />}
+              onChange={checked => setEffects({glowBadges: checked})}
+            />
+            <SwitchRow
+              disabled={disabled}
+              checked={!!effects.showVolumeControl}
+              label={<Trans message="Volume control" />}
+              onChange={checked => setEffects({showVolumeControl: checked})}
+            />
+            <SwitchRow
+              disabled={disabled}
+              checked={!!effects.monochromeSocialIcons}
+              label={<Trans message="Monochrome social icons" />}
+              onChange={checked => setEffects({monochromeSocialIcons: checked})}
+            />
+            <SwitchRow
+              disabled={disabled}
+              checked={!!effects.invertBoxes}
+              label={<Trans message="Invert boxes" />}
+              onChange={checked => setEffects({invertBoxes: checked})}
+            />
+            <SwitchRow
+              disabled={disabled}
+              checked={!!effects.animatedTitle}
+              label={<Trans message="Animated title" />}
+              onChange={checked => setEffects({animatedTitle: checked})}
+            />
+          </div>
+        </SettingRow>
+      </div>
+    </section>
+  );
+}
+
+function BadgesPanel() {
+  const [selectedSystemBadge, setSelectedSystemBadge] = useState('verified');
+  const appearance = useBiolinkEditorStore(
+    s => s.appearance as AdvancedAppearanceConfig,
+  );
+  const updateAppearance = useBiolinkEditorStore(s => s.updateAppearance);
+  const badgeConfig = {...defaultBadgeConfig, ...appearance.badgeConfig};
+  const items = badgeConfig.items ?? [];
+  const {disabled: badgesDisabled} = useBiolinkFeatureStatus('badges');
+  const {disabled: customBadgesDisabled} =
+    useBiolinkFeatureStatus('custom_badges');
+
+  const setBadgeConfig = (partial: Partial<typeof badgeConfig>) => {
+    updateAppearance(
+      {
+        badgeConfig: compactConfig({...badgeConfig, ...partial}),
+      } as AppearanceConfig,
+      {markThemeModified: true},
+    );
+  };
+
+  const setItems = (nextItems: BadgeConfigItem[]) => {
+    setBadgeConfig({items: nextItems});
+  };
+
+  const updateItem = (id: string, partial: Partial<BadgeConfigItem>) => {
+    setItems(
+      items.map(item => (item.id === id ? {...item, ...partial} : item)),
+    );
+  };
+
+  const addBadge = (type: BadgeConfigItem['type']) => {
+    const nextIndex = items.length + 1;
+    setItems([
+      ...items,
+      {
+        id: `${type}-${Date.now()}`,
+        type,
+        label: type === 'custom' ? 'Custom badge' : 'Verified',
+        icon:
+          type === 'custom'
+            ? '/images/svg/icons/New%20Badge.svg'
+            : '/images/svg/icons/Checkmark.svg',
+        color: type === 'custom' ? '#7c3aed' : '#2da8ff',
+        active: true,
+        sort_order: nextIndex * 10,
+      },
+    ]);
+  };
+
+  const addSystemBadge = () => {
+    if (items.some(item => item.id === selectedSystemBadge)) return;
+    const option = officialBadgeOptions.find(
+      ([id]) => id === selectedSystemBadge,
+    );
+    if (!option) return;
+
+    const [id, label, icon, color] = option;
+    setItems([
+      ...items,
+      {
+        id,
+        type: 'system',
+        label,
+        icon,
+        color,
+        active: true,
+        sort_order: (items.length + 1) * 10,
+      },
+    ]);
+  };
+
+  return (
+    <section>
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <h2 className={appearanceHeaderClassnames.h2}>
+          <Trans message="Badges" />
+        </h2>
+        <div className="flex gap-2">
+          <Select.Root
+            value={selectedSystemBadge}
+            onValueChange={value => value && setSelectedSystemBadge(value)}
+            disabled={badgesDisabled}
+          >
+            <Select.Trigger className="w-44">
+              <Select.Value />
+            </Select.Trigger>
+            <Select.Content>
+              {officialBadgeOptions.map(([id, label]) => (
+                <Select.Item key={id} value={id}>
+                  <Trans message={label} />
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={badgesDisabled}
+            onClick={addSystemBadge}
+          >
+            <BadgeCheckIcon data-icon="inline-start" />
+            <Trans message="Add badge" />
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={badgesDisabled || customBadgesDisabled}
+            onClick={() => addBadge('custom')}
+          >
+            <SparklesIcon data-icon="inline-start" />
+            <Trans message="Custom" />
+          </Button>
+        </div>
+      </div>
+
+      {badgesDisabled ? (
+        <FeatureLockedNotice feature={<Trans message="Badges" />} />
+      ) : customBadgesDisabled ? (
+        <FeatureLockedNotice feature={<Trans message="Custom badges" />} />
+      ) : null}
+
+      <div className="flex flex-col gap-7">
+        <SettingRow label={<Trans message="Style" />}>
+          <ChoiceGrid
+            disabled={badgesDisabled}
+            value={badgeConfig.style ?? 'chips'}
+            onChange={value =>
+              setBadgeConfig({style: value as typeof badgeConfig.style})
+            }
+            items={[
+              {value: 'inline', label: <Trans message="Inline" />},
+              {value: 'chips', label: <Trans message="Chips" />},
+              {value: 'cards', label: <Trans message="Cards" />},
+            ]}
+          />
+        </SettingRow>
+
+        <div className="flex flex-col gap-3">
+          {items.length ? (
+            items.map(item => {
+              const systemLocked = item.type === 'system';
+
+              return (
+                <div
+                  key={item.id}
+                  className="rounded-card-sm border bg-card p-4"
+                >
+                  <div className="mb-4 flex items-center gap-3">
+                    <Switch
+                      checked={item.active !== false}
+                      disabled={badgesDisabled || systemLocked}
+                      onCheckedChange={checked =>
+                        updateItem(item.id, {active: checked})
+                      }
+                    />
+                    <Input
+                      bindToHookForm={false}
+                      value={item.label}
+                      disabled={badgesDisabled || systemLocked}
+                      onChange={event =>
+                        updateItem(item.id, {label: event.target.value})
+                      }
+                    />
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="outline"
+                      disabled={badgesDisabled || systemLocked}
+                      onClick={() =>
+                        setItems(
+                          items.filter(existing => existing.id !== item.id),
+                        )
+                      }
+                    >
+                      <XIcon />
+                    </Button>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-[1fr_160px_auto] sm:items-end">
+                    {badgesDisabled || systemLocked ? (
+                      <ColorReadOnly value={item.color ?? '#2da8ff'} />
+                    ) : (
+                      <ColorField
+                        label={<Trans message="Badge color" />}
+                        value={item.color ?? '#2da8ff'}
+                        onChange={value => updateItem(item.id, {color: value})}
+                      />
+                    )}
+                    <Input
+                      bindToHookForm={false}
+                      type="number"
+                      min={0}
+                      max={1000}
+                      value={item.sort_order ?? 0}
+                      disabled={badgesDisabled || systemLocked}
+                      onChange={event =>
+                        updateItem(item.id, {
+                          sort_order: Number(event.target.value),
+                        })
+                      }
+                    />
+                    <BiolinkAssetPickerDialog
+                      value={
+                        item.iconRef
+                          ? `${item.iconRef.library}:${item.iconRef.name}`
+                          : item.icon
+                      }
+                      categories={['icons', 'libraryIcons', 'emoji', 'threeD']}
+                      title={<Trans message="Select badge icon" />}
+                      onSelect={value => {
+                        if (value?.startsWith('lucide:')) {
+                          updateItem(item.id, {
+                            icon: undefined,
+                            iconRef: {
+                              library: 'lucide',
+                              name: value.slice('lucide:'.length),
+                            },
+                          });
+                        } else if (value?.startsWith('simple-icons:')) {
+                          updateItem(item.id, {
+                            icon: undefined,
+                            iconRef: {
+                              library: 'simple-icons',
+                              name: value.slice('simple-icons:'.length),
+                            },
+                          });
+                        } else {
+                          updateItem(item.id, {
+                            icon: value ?? '',
+                            iconRef: undefined,
+                          });
+                        }
+                      }}
+                    >
+                      <Dialog.Trigger
+                        render={
+                          <Button
+                            variant="outline"
+                            type="button"
+                            disabled={badgesDisabled || systemLocked}
+                          />
+                        }
+                      >
+                        <ImageIcon data-icon="inline-start" />
+                        <Trans message="Icon" />
+                      </Dialog.Trigger>
+                    </BiolinkAssetPickerDialog>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="rounded-card-sm border border-dashed p-6 text-center text-sm text-muted-foreground">
+              <Trans message="No badges configured yet." />
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HeaderLayoutSelector({
+  disabled,
+  onChange,
+  value,
+}: {
+  disabled?: boolean;
+  onChange: (value: HeaderLayout) => void;
+  value?: HeaderLayout;
+}) {
+  const layouts: {value: HeaderLayout; label: ReactNode}[] = [
+    {value: 'classic', label: <Trans message="Classic" />},
+    {value: 'hero', label: <Trans message="Hero" />},
+    {value: 'banner', label: <Trans message="Banner" />},
+    {value: 'cutout', label: <Trans message="Cutout" />},
+    {value: 'shape', label: <Trans message="Shape" />},
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      {layouts.map(layout => (
+        <ChoiceCard
+          key={layout.value}
+          disabled={disabled}
+          active={(value ?? 'classic') === layout.value}
+          onClick={() => onChange(layout.value)}
+        >
+          <HeaderLayoutIcon layout={layout.value} />
+          {layout.label}
+        </ChoiceCard>
+      ))}
+    </div>
+  );
+}
+
+function HeaderLayoutIcon({layout}: {layout: HeaderLayout}) {
+  return (
+    <span className="relative flex h-12 w-14 items-center justify-center overflow-hidden rounded-card-sm bg-accent">
+      <span
+        className={cn(
+          'absolute bg-primary/20',
+          layout === 'hero' && 'inset-x-2 top-1 h-6 rounded-b-full',
+          layout === 'banner' && 'inset-x-1 top-1 h-4 rounded-sm',
+          layout === 'cutout' && 'inset-x-4 top-1 h-9 rounded-b-full',
+          layout === 'shape' && 'top-1 h-8 w-10 rounded-[45%_55%_50%_35%]',
+          layout === 'classic' && 'hidden',
+        )}
+      />
+      <span className="relative z-2 size-8 rounded-full bg-primary" />
+    </span>
+  );
+}
+
+function ShapeVariantSelector({
+  disabled,
+  image,
+  onChange,
+  shapeColor,
+  value,
+}: {
+  disabled?: boolean;
+  image?: string | null;
+  onChange: (value: HeaderShapeVariant) => void;
+  shapeColor: string;
+  value?: string | null;
+}) {
+  const activeVariant = normalizeHeaderShapeVariant(value);
+
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      {headerShapeVariants.map(variant => (
+        <ChoiceCard
+          key={variant}
+          disabled={disabled}
+          active={activeVariant === variant}
+          onClick={() => onChange(variant)}
+        >
+          <ShapeVariantIcon
+            variant={variant}
+            color={shapeColor}
+            image={image}
+          />
+          <ShapeVariantLabel variant={variant} />
+        </ChoiceCard>
+      ))}
+    </div>
+  );
+}
+
+function ShapeVariantIcon({
+  color,
+  image,
+  variant,
+}: {
+  color: string;
+  image?: string | null;
+  variant: HeaderShapeVariant;
+}) {
+  const rawId = useId();
+  const clipId = `header-shape-option-${variant}-${rawId.replace(/:/g, '')}`;
+  const imageUrl = resolveImageUrl(image);
+  const path = headerShapePath(variant);
+
+  return (
+    <svg aria-hidden className="h-10 w-12 drop-shadow-sm" viewBox="0 0 100 100">
+      <defs>
+        <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
+          <path d={path} />
+        </clipPath>
+      </defs>
+      {imageUrl ? (
+        <image
+          clipPath={`url(#${clipId})`}
+          height="100"
+          href={imageUrl}
+          preserveAspectRatio="xMidYMid slice"
+          width="100"
+        />
+      ) : (
+        <path d={path} fill={color} />
+      )}
+      <path
+        d={path}
+        fill="none"
+        stroke="rgb(0 0 0 / 0.16)"
+        strokeWidth="2"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
+function ShapeVariantLabel({variant}: {variant: HeaderShapeVariant}) {
+  switch (variant) {
+    case 'flower':
+      return <Trans message="Flower" />;
+    case 'oval':
+      return <Trans message="Oval" />;
+    case 'rounded':
+      return <Trans message="Rounded" />;
+    case 'burst':
+      return <Trans message="Burst" />;
+    case 'loop':
+    default:
+      return <Trans message="Loop" />;
+  }
+}
+
+function ChoiceCard({
+  active,
+  children,
+  disabled,
+  onClick,
+}: {
+  active: boolean;
+  children: ReactNode;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      data-active={active}
+      onClick={onClick}
+      className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-card border bg-card px-3 py-3 text-sm outline-offset-3 outline-primary transition hover:bg-accent disabled:pointer-events-none disabled:opacity-50 data-active:outline-2"
+    >
+      {children}
+    </button>
+  );
+}
+
+function ChoiceGrid({
+  disabled,
+  items,
+  onChange,
+  value,
+}: {
+  disabled?: boolean;
+  items: {value: string; label: ReactNode}[];
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {items.map(item => (
+        <ChoiceCard
+          key={item.value}
+          disabled={disabled}
+          active={item.value === value}
+          onClick={() => onChange(item.value)}
+        >
+          {item.label}
+        </ChoiceCard>
+      ))}
+    </div>
+  );
+}
+
+function SwitchRow({
+  checked,
+  disabled,
+  label,
+  onChange,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  label: ReactNode;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex min-h-11 items-center justify-between gap-3 rounded-card-sm border bg-card px-3 py-2 text-sm">
+      <span>{label}</span>
+      <Switch
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={onChange}
+      />
+    </label>
+  );
+}
+
+function FeatureLockedNotice({feature}: {feature: ReactNode}) {
+  return (
+    <Alert.Root className="mb-4" fillStyle="subtleFill">
+      <LockIcon />
+      <Alert.Title>{feature}</Alert.Title>
+      <Alert.Description>
+        <Trans message="This customization is not included in the current plan." />
+      </Alert.Description>
+    </Alert.Root>
+  );
+}
+
+function compactConfig<T extends Record<string, unknown>>(value: T): T {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => {
+      if (entry === undefined || entry === null || entry === '') {
+        return false;
+      }
+      if (Array.isArray(entry)) {
+        return entry.length > 0;
+      }
+      return true;
+    }),
+  ) as T;
+}
+
+function SettingRow({
+  children,
+  label,
+}: {
+  children: ReactNode;
+  label: ReactNode;
+}) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-[180px_1fr] sm:items-center">
+      <div className="text-sm font-semibold">{label}</div>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+function LockedVisualNotice() {
+  const appearance = useBiolinkEditorStore(s => s.appearance);
+  const updateAppearance = useBiolinkEditorStore(s => s.updateAppearance);
+
+  return (
+    <Alert.Root className="mb-6" fillStyle="subtleFill">
+      <LockIcon />
+      <Alert.Title>
+        <Trans message="Curated theme is locked" />
+      </Alert.Title>
+      <Alert.Description>
+        <Trans message="Header content can still be edited. To change visual settings, customize a copy of this theme." />
+      </Alert.Description>
+      <Alert.Action>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            updateAppearance(unlockThemeForCustomization(appearance))
+          }
+        >
+          <PaintbrushIcon data-icon="inline-start" />
+          <Trans message="Customize" />
+        </Button>
+      </Alert.Action>
+    </Alert.Root>
+  );
+}
+
+function ColorReadOnly({value}: {value: string}) {
+  return (
+    <div className="inline-flex h-9 items-center gap-2 rounded-input border px-3 text-sm">
+      <span
+        className="size-4 rounded-full border"
+        style={{backgroundColor: value}}
+      />
+      {value}
+    </div>
+  );
+}
+
+function FontDialog({
+  disabled,
+  onChange,
+  value,
+}: {
+  disabled?: boolean;
+  onChange: (font: {family: string; google?: boolean}) => void;
+  value: {family: string; google?: boolean};
+}) {
+  return (
+    <Dialog.Root>
+      <Dialog.Trigger
+        render={
+          <Button
+            variant="outline"
+            color="default"
+            disabled={disabled}
+            className="w-full justify-between rounded-input"
+          />
+        }
+      >
+        <FontDisplayName font={value} />
+        <ChevronDownIcon data-icon="inline-end" />
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Backdrop className="supports-backdrop-filter:backdrop-blur-none" />
+        <Dialog.Content className="sm:max-w-xl">
+          <Dialog.Header>
+            <Dialog.Title>
+              <Trans message="Select a font" />
+            </Dialog.Title>
+          </Dialog.Header>
+          <Dialog.Body>
+            <CommonFontSelector value={value} onChange={onChange} />
+          </Dialog.Body>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+function PageFontSelector({disabled}: {disabled?: boolean}) {
+  const updateAppearance = useBiolinkEditorStore(s => s.updateAppearance);
+  const currentValue =
+    useBiolinkEditorStore(s => s.appearance?.fontConfig) ?? BrowserSafeFonts[0];
+
+  return (
+    <FontDialog
+      disabled={disabled}
+      value={currentValue}
+      onChange={newValue => {
+        updateAppearance(
+          {
+            fontConfig: compactFontConfig({
+              ...currentValue,
+              ...newValue,
+            }),
+          },
+          {markThemeModified: true},
+        );
+      }}
+    />
+  );
+}
+
+function BrandingStyle() {
+  const updateAppearance = useBiolinkEditorStore(s => s.updateAppearance);
+  const {branding, biolink} = useSettings();
+  const {isSubscribed} = useAuth();
+  const {billing} = useSettings();
+  const currentValue =
+    useBiolinkEditorStore(s => s.appearance?.hideBranding) || false;
+
+  if (!biolink?.show_branding) {
+    return null;
+  }
+
+  return (
+    <div>
+      <h2 className={appearanceHeaderClassnames.h2}>
+        <Trans message="Branding" />
+      </h2>
+
+      {billing?.enable && !isSubscribed && (
+        <NoFeaturePermissionPopover.Root
+          message={
+            <Trans
+              message="Upgrade to remove :site logo."
+              values={{site: branding.site_name}}
+            />
+          }
+        >
+          <NoFeaturePermissionPopover.ButtonTrigger className="mb-3.5" />
+        </NoFeaturePermissionPopover.Root>
+      )}
+
+      <label className="flex items-center gap-3 text-sm">
+        <Switch
+          disabled={!isSubscribed}
+          checked={currentValue}
+          onCheckedChange={checked => {
+            updateAppearance({
+              hideBranding: checked,
+            });
+          }}
+        />
+        <Trans message="Hide :site logo" values={{site: branding.site_name}} />
+      </label>
+    </div>
+  );
+}

@@ -1,0 +1,2 @@
+import{n as e}from"./query-client-DZzHQFAr.js";var t=(t,n)=>e({url:`/biolink-themes`,method:`GET`,params:t},n),n=(t,n)=>e({url:`/biolink-themes`,method:`POST`,headers:{"Content-Type":`application/json`},data:t},n),r=(t,n,r)=>e({url:`/biolink-themes/${t}`,method:`PUT`,headers:{"Content-Type":`application/json`},data:n},r),i=(t,n)=>e({url:`/biolink-themes/${t}`,method:`DELETE`},n);export{r as i,i as n,t as r,n as t};
+//# sourceMappingURL=biolink-themes-D0KSdf1-.js.map

@@ -1,0 +1,593 @@
+{
+    "analytics-dashboard": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/analytics-dashboard.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/analytics-dashboard.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "apps-phone": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/apps-phone.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/apps-phone.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "audience": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/audience.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/audience.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "calendar": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/calendar.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/calendar.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "chat": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/chat.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/chat.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "cloud-sync": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/cloud-sync.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/cloud-sync.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "coins": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/coins.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/coins.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "content-page": {
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/content-page.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "crown": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/crown.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/crown.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "cursor-click": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/cursor-click.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/cursor-click.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "discount-tag": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/discount-tag.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/discount-tag.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "discount-ticket": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/discount-ticket.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/discount-ticket.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "domain": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/domain.webp",
+            "width": 532,
+            "height": 532
+        }
+    },
+    "email": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/email.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/email.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "gift": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/gift.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/gift.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "growth-chart": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/growth-chart.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/growth-chart.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "image": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/image.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/image.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "integration-puzzle": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/integration-puzzle.webp",
+            "width": 532,
+            "height": 532
+        }
+    },
+    "link": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/link.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/link.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "location": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/location.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/location.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "lock": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/lock.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/lock.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "magic-wand": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/magic-wand.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/magic-wand.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "medal": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/medal.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/medal.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "megaphone": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/megaphone.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/megaphone.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "menu": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/menu.webp",
+            "width": 532,
+            "height": 532
+        }
+    },
+    "microphone": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/microphone.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/microphone.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "music": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/music.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/music.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "network": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/network.webp",
+            "width": 532,
+            "height": 532
+        }
+    },
+    "newsletter": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/newsletter.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/newsletter.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "notification": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/notification.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/notification.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "package": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/package.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/package.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "paint-brush": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/paint-brush.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/paint-brush.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "palette": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/palette.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/palette.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "payment-card": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/payment-card.webp",
+            "width": 532,
+            "height": 532
+        }
+    },
+    "plugin": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/plugin.webp",
+            "width": 532,
+            "height": 532
+        }
+    },
+    "podcast": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/podcast.webp",
+            "width": 532,
+            "height": 532
+        }
+    },
+    "profile-phone": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/profile-phone.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/profile-phone.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "qr-code": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/qr-code.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/qr-code.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "rocket": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/rocket.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/rocket.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "share": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/share.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/share.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "shield-check": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/shield-check.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/shield-check.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "shopping-bag": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/shopping-bag.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/shopping-bag.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "shopping-cart": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/shopping-cart.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/shopping-cart.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "star": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/star.webp",
+            "width": 533,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/star.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "storefront": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/storefront.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/storefront.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "target": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/target.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/target.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "trend-line": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/trend-line.webp",
+            "width": 532,
+            "height": 532
+        }
+    },
+    "trophy": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/trophy.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/trophy.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "verified": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/verified.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/verified.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "video": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/video.webp",
+            "width": 533,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/video.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "webpage": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/webpage.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/webpage.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "whatsapp": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/whatsapp.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/whatsapp.webp",
+            "width": 160,
+            "height": 160
+        }
+    },
+    "world": {
+        "v2": {
+            "path": "/images/icons/meulinkbio/v2/world.webp",
+            "width": 532,
+            "height": 532
+        },
+        "v3": {
+            "path": "/images/icons/meulinkbio/v3/world.webp",
+            "width": 160,
+            "height": 160
+        }
+    }
+}

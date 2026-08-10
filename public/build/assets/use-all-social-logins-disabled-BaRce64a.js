@@ -1,0 +1,2 @@
+import{t as e}from"./use-settings-CDrL4v0x.js";function t(){let{social:t}=e();return!t?.google?.enable&&!t?.facebook?.enable&&!t?.twitter?.enable}export{t};
+//# sourceMappingURL=use-all-social-logins-disabled-BaRce64a.js.map

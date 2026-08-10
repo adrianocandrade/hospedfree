@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" role="img" aria-labelledby="title">
+  <title id="title">Restaurante e Delivery</title>
+  <rect width="480" height="300" rx="24" fill="#090604"/>
+  <rect x="18" y="18" width="444" height="102" rx="18" fill="#1d1009"/>
+  <circle cx="240" cy="70" r="39" fill="#090604" stroke="#f59e0b" stroke-width="3"/>
+  <path d="M214 67h52c-3-13-13-21-26-21s-23 8-26 21Zm-4 8h60M218 86h44" fill="none" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
+  <g>
+    <rect x="28" y="140" width="132" height="108" rx="13" fill="#1d1009" stroke="#7b431c"/>
+    <rect x="174" y="140" width="132" height="108" rx="13" fill="#1d1009" stroke="#7b431c"/>
+    <rect x="320" y="140" width="132" height="108" rx="13" fill="#1d1009" stroke="#7b431c"/>
+  </g>
+  <g fill="#c2410c">
+    <ellipse cx="94" cy="174" rx="46" ry="18"/>
+    <ellipse cx="240" cy="174" rx="46" ry="18"/>
+    <ellipse cx="386" cy="174" rx="46" ry="18"/>
+  </g>
+  <g fill="#f59e0b">
+    <rect x="55" y="168" width="78" height="9" rx="4.5"/>
+    <rect x="201" y="168" width="78" height="9" rx="4.5"/>
+    <rect x="347" y="168" width="78" height="9" rx="4.5"/>
+  </g>
+  <g fill="#fff4df">
+    <rect x="44" y="207" width="82" height="8" rx="4"/>
+    <rect x="190" y="207" width="82" height="8" rx="4"/>
+    <rect x="336" y="207" width="82" height="8" rx="4"/>
+  </g>
+  <rect x="122" y="268" width="236" height="14" rx="7" fill="#f59e0b"/>
+</svg>

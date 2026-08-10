@@ -1,0 +1,2 @@
+import{ta as e}from"./icons-DFfxS4V_.js";import{On as t}from"./composite-TLKCZGS_.js";import{n,t as r}from"./lp-header-Ck-PSaso.js";var i=e();function a({children:e,className:a,mainClassName:o,...s}){return(0,i.jsxs)(`div`,{className:t(`lp flex min-h-screen flex-col overflow-x-clip bg-[var(--lp-surface)] text-[var(--lp-text)]`,a),...s,children:[(0,i.jsx)(r,{}),(0,i.jsx)(`main`,{className:t(`flex-auto`,o),children:e}),(0,i.jsx)(n,{})]})}export{a as t};
+//# sourceMappingURL=public-content-shell-DggmNmf-.js.map

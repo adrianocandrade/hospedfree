@@ -1,0 +1,2 @@
+import{jn as e,ta as t}from"./icons-DFfxS4V_.js";import{On as n}from"./composite-TLKCZGS_.js";var r=t();function i({className:t,...i}){return(0,r.jsx)(e,{role:`status`,"aria-label":`Loading`,className:n(`size-4 animate-spin`,t),...i})}export{i as t};
+//# sourceMappingURL=spinner-B2fq8J5G.js.map

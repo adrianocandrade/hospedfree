@@ -1,0 +1,2 @@
+import{T as e,di as t,ta as n}from"./icons-DFfxS4V_.js";var r=n();function i({value:n}){return n?(0,r.jsx)(t,{className:`size-4 text-positive`}):(0,r.jsx)(e,{className:`size-4 text-destructive`})}export{i as t};
+//# sourceMappingURL=boolean-indicator-aJ8aWIeH.js.map

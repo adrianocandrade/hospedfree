@@ -1,0 +1,13 @@
+**/routes/*.php
+*.min.css
+node_modules
+vendor
+storage
+bootstrap/cache
+public/build
+.phpunit.cache
+.cursor/skills/impeccable
+.agents/skills/impeccable
+resources/client/gen
+composer.lock
+package-lock.json

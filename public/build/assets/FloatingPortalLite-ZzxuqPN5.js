@@ -1,0 +1,2 @@
+import{a as e}from"./rolldown-runtime-Cyuzqnbw.js";import{na as t,ta as n}from"./icons-DFfxS4V_.js";import{Dn as r}from"./composite-TLKCZGS_.js";import{u as i}from"./ReactStore-C0FO2cEo.js";var a=e(t()),o=e(r()),s=n(),c=a.forwardRef(function(e,t){let{children:n,container:r,className:c,render:l,style:u,...d}=e,{portalNode:f,portalSubtree:p}=i({container:r,ref:t,componentProps:e,elementProps:d});return!p&&!f?null:(0,s.jsxs)(a.Fragment,{children:[p,f&&o.createPortal(n,f)]})});export{c as t};
+//# sourceMappingURL=FloatingPortalLite-ZzxuqPN5.js.map

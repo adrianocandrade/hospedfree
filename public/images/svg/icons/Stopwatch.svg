@@ -1,0 +1,15 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Stopwatch">
+<g id="Group">
+<path id="Vector" d="M12 21.25C16.5398 21.25 20.22 17.5698 20.22 13.03C20.22 8.49022 16.5398 4.81 12 4.81C7.46022 4.81 3.78 8.49022 3.78 13.03C3.78 17.5698 7.46022 21.25 12 21.25Z" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M12 2.75V4.81" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_3" d="M4.73001 5.75999L5.82999 6.86" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_4" d="M19.27 5.75999L18.17 6.86" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<g id="Group_2">
+<path id="Vector_5" d="M12 14.06C12.5689 14.06 13.03 13.5989 13.03 13.03C13.03 12.4611 12.5689 12 12 12C11.4311 12 10.97 12.4611 10.97 13.03C10.97 13.5989 11.4311 14.06 12 14.06Z" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_6" d="M12 13.03L14.57 10.46" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<path id="Vector_7" d="M10.97 2.75H13.03" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+</svg>

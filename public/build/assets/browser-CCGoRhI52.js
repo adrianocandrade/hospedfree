@@ -1,0 +1,2 @@
+import{n as e}from"./browser-BX01vbW_.js";import{t}from"./browser-D52F4U_r.js";import{t as n}from"./browser-CMYXdjqp2.js";var r={background:{color:`#000000`},particles:{number:{value:100},links:{distance:150,enable:!0},move:{enable:!0},paint:{fill:{color:{value:`#ffffff`}}},size:{value:1},shape:{type:`circle`}}},i=`links`;async function a(a){await a.pluginManager.register(async a=>{await Promise.all([t(a),(async()=>{await e(a),await n(a)})()]),a.pluginManager.addPreset(i,r)})}export{a as loadLinksPreset};
+//# sourceMappingURL=browser-CCGoRhI52.js.map

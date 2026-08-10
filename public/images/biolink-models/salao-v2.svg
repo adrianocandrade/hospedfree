@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" role="img" aria-labelledby="title">
+  <title id="title">Salão e Beleza</title>
+  <rect width="480" height="300" rx="24" fill="#fff8fa"/>
+  <path d="M0 0h480v96c-74 30-135-18-211 10-72 27-137-26-269 2Z" fill="#f3d2dd"/>
+  <g transform="translate(240 67)" fill="none" stroke="#d84878" stroke-width="3">
+    <ellipse rx="13" ry="31"/>
+    <ellipse rx="13" ry="31" transform="rotate(60)"/>
+    <ellipse rx="13" ry="31" transform="rotate(120)"/>
+    <circle r="9" fill="#fff8fa"/>
+  </g>
+  <g fill="#fffdfd" stroke="#e9bdcd">
+    <rect x="28" y="138" width="96" height="104" rx="14"/>
+    <rect x="137" y="138" width="96" height="104" rx="14"/>
+    <rect x="246" y="138" width="96" height="104" rx="14"/>
+    <rect x="355" y="138" width="96" height="104" rx="14"/>
+  </g>
+  <g fill="#d84878" opacity=".7">
+    <path d="M50 192c10-31 42-31 52 0-13 17-39 17-52 0Z"/>
+    <path d="M159 192c10-31 42-31 52 0-13 17-39 17-52 0Z"/>
+    <path d="M268 192c10-31 42-31 52 0-13 17-39 17-52 0Z"/>
+    <path d="M377 192c10-31 42-31 52 0-13 17-39 17-52 0Z"/>
+  </g>
+  <g fill="#3e202d">
+    <rect x="44" y="218" width="64" height="7" rx="3.5"/>
+    <rect x="153" y="218" width="64" height="7" rx="3.5"/>
+    <rect x="262" y="218" width="64" height="7" rx="3.5"/>
+    <rect x="371" y="218" width="64" height="7" rx="3.5"/>
+  </g>
+  <rect x="126" y="267" width="228" height="14" rx="7" fill="#d84878"/>
+</svg>

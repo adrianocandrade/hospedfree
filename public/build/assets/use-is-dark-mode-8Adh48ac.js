@@ -1,0 +1,2 @@
+import{a as e}from"./rolldown-runtime-Cyuzqnbw.js";import{na as t}from"./icons-DFfxS4V_.js";import{t as n}from"./color-scheme-provider-CU-vUH21.js";var r=e(t());function i(){let{colorScheme:e}=(0,r.use)(n);return e===`dark`}export{i as t};
+//# sourceMappingURL=use-is-dark-mode-8Adh48ac.js.map

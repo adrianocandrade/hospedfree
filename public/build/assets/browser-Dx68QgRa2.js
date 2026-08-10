@@ -1,0 +1,2 @@
+import{Nn as e,p as t}from"./browser-B0-gCI_h.js";import{t as n}from"./browser-D52F4U_r.js";var r={background:{color:`#000`},particles:{number:{value:100},move:{direction:e.none,enable:!0,outModes:{default:t.out},random:!0,speed:.1,straight:!1},paint:{fill:{color:{value:`#ffffff`}}},opacity:{animation:{enable:!0,speed:1,sync:!1},value:{min:0,max:1}},size:{value:{min:1,max:3}}}},i=`stars`;async function a(e){await e.pluginManager.register(async e=>{await n(e),e.pluginManager.addPreset(i,r)})}export{a as loadStarsPreset};
+//# sourceMappingURL=browser-Dx68QgRa2.js.map

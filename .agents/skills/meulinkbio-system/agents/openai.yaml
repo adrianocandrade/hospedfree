@@ -1,0 +1,4 @@
+interface:
+  display_name: "MeuLinkBio Legacy (Deprecated)"
+  short_description: "Audit inherited modules; use HospedFree System for new work"
+  default_prompt: "Audit this inherited MeuLinkBio module safely, then route product decisions to $hospedfree-system."

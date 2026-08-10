@@ -1,0 +1,2 @@
+import{Xn as e}from"./main-CqMJxonF.js";function t(t){let{data:n}=e();return{disabled:n?!n.data.links[t]:!1}}function n(t){let{data:n}=e();return{disabled:n?!n.data.qr_codes[t]:!1}}function r(t){let{data:n}=e(),r=n?.data.biolinks;return{disabled:r?!r[t]:!1}}export{t as n,n as r,r as t};
+//# sourceMappingURL=use-feature-status-BPqUqfPh.js.map

@@ -1,0 +1,2 @@
+import{o as e}from"./toast-CCWK7eES.js";import{n as t,t as n}from"./bootstrap-data-store--e6KmXCR.js";import{tt as r,zt as i}from"./main-CqMJxonF.js";function a(){return e({mutationFn:e=>i(e),onSuccess:e=>{t({i18n:{locales:n().i18n.locales.map(t=>t.language===e.data.language?{...t,lines:e.data.lines??{}}:t),active:e.data.language,direction:e.data.direction}}),document.documentElement.dir=e.data.direction,document.documentElement.lang=e.data.language},onError:e=>r(e)})}export{a as t};
+//# sourceMappingURL=change-locale-BwfdWfPS.js.map

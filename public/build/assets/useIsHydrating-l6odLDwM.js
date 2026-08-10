@@ -1,0 +1,2 @@
+import{Nt as e}from"./composite-TLKCZGS_.js";import{s as t}from"./ReactStore-C0FO2cEo.js";var n=t();function r(){return e}function i(){return!1}function a(){return!0}function o(){return(0,n.useSyncExternalStore)(r,i,a)}export{o as t};
+//# sourceMappingURL=useIsHydrating-l6odLDwM.js.map

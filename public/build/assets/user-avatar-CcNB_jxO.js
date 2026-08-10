@@ -1,0 +1,2 @@
+import{a as e}from"./rolldown-runtime-Cyuzqnbw.js";import{na as t,ta as n}from"./icons-DFfxS4V_.js";import{et as r}from"./main-CqMJxonF.js";import{t as i}from"./avatar-BWsE67p0.js";var a=e(t()),o=n();function s({user:e,withLink:t=!0,...n}){let{auth:s}=(0,a.useContext)(r);return(0,o.jsx)(i,{...n,label:e?.name,src:e?.image,link:t&&e?.id&&e?.name?s?.getUserProfileLink?.(e):void 0})}export{s as t};
+//# sourceMappingURL=user-avatar-CcNB_jxO.js.map

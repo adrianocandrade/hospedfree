@@ -1,0 +1,11 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M6.86 15.08H2.75V21.25H6.86V15.08Z" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 7.89V3.78" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16.11 2.75H12V5.83H16.11V2.75Z" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 11.25C11.748 11.248 11.5011 11.3211 11.2907 11.4599C11.0803 11.5986 10.916 11.7969 10.8186 12.0294C10.7213 12.2618 10.6953 12.518 10.744 12.7653C10.7926 13.0126 10.9138 13.2398 11.092 13.418C11.2702 13.5962 11.4974 13.7174 11.7447 13.766C11.992 13.8147 12.2482 13.7887 12.4806 13.6914C12.7131 13.594 12.9114 13.4297 13.0501 13.2193C13.1889 13.0089 13.262 12.762 13.26 12.51C13.26 12.1758 13.1273 11.8553 12.891 11.619C12.6547 11.3828 12.3342 11.25 12 11.25Z" fill="black"/>
+<path d="M13.41 17.14H10.33V21.25H13.41V17.14Z" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9.75 9.94H4.62C4.38177 9.93654 4.15013 10.0182 3.96679 10.1704C3.78346 10.3226 3.66048 10.5352 3.62 10.77L2.75 15.08H6.86" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M17.14 21.25H21.25V15.08H17.14V21.25Z" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.21 9.94H19.38C19.6182 9.93654 19.8499 10.0182 20.0332 10.1704C20.2165 10.3226 20.3395 10.5352 20.38 10.77L21.24 15.08H17.14" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6.86 21.25V13.88C6.85989 13.6107 6.91282 13.3441 7.01577 13.0953C7.11871 12.8465 7.26967 12.6204 7.46 12.43L10.55 9.34C10.7404 9.14951 10.9664 8.9984 11.2152 8.8953C11.464 8.7922 11.7307 8.73914 12 8.73914C12.2693 8.73914 12.536 8.7922 12.7848 8.8953C13.0336 8.9984 13.2596 9.14951 13.45 9.34L16.54 12.43C16.7303 12.6204 16.8813 12.8465 16.9842 13.0953C17.0872 13.3441 17.1401 13.6107 17.14 13.88V21.25H6.86Z" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

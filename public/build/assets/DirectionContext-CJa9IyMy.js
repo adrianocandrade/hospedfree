@@ -1,0 +1,2 @@
+import{a as e}from"./rolldown-runtime-Cyuzqnbw.js";import{na as t}from"./icons-DFfxS4V_.js";var n=e(t()),r=n.createContext(void 0);function i(){return n.useContext(r)?.direction??`ltr`}export{i as t};
+//# sourceMappingURL=DirectionContext-CJa9IyMy.js.map

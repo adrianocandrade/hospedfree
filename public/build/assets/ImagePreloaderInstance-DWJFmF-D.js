@@ -1,0 +1,2 @@
+var e=class{#e;#t;constructor(e,t){this.#t=e,this.#e=t}destroy(){this.#t.images?.delete(this.#e)}};export{e as ImagePreloaderInstance};
+//# sourceMappingURL=ImagePreloaderInstance-DWJFmF-D.js.map

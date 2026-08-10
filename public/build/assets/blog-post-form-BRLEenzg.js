@@ -1,0 +1,2 @@
+var e={draft:`draft`,published:`published`};function t(e){return e.normalize(`NFD`).replace(/[\u0300-\u036f]/g,``).toLowerCase().replace(/[^a-z0-9]+/g,`-`).replace(/^-+|-+$/g,``).slice(0,220)}function n(n){return{blog_category_id:Number(n.blog_category_id),title:n.title,slug:t(n.slug||n.title),excerpt:n.excerpt||null,body:n.body,featured_image:n.featured_image||null,seo_title:n.seo_title||null,seo_description:n.seo_description||null,status:n.status||e.draft,published_at:n.published_at||null}}export{t as n,e as r,n as t};
+//# sourceMappingURL=blog-post-form-BRLEenzg.js.map

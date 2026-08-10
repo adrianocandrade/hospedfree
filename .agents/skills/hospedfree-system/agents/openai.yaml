@@ -1,0 +1,4 @@
+interface:
+  display_name: "HospedFree System"
+  short_description: "Safe HospedFree product and system guidance"
+  default_prompt: "Use $hospedfree-system to plan a safe HospedFree module change."

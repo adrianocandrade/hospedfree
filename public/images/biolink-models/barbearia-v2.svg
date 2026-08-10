@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" role="img" aria-labelledby="title">
+  <title id="title">Barbearia Premium</title>
+  <rect width="480" height="300" rx="24" fill="#070706"/>
+  <path d="M20 18h440v94l-34 24H54l-34-24Z" fill="#14130f" stroke="#8c6a32" stroke-width="2"/>
+  <circle cx="240" cy="70" r="36" fill="#070706" stroke="#d6aa55" stroke-width="3"/>
+  <path d="m222 53 36 34m0-34-36 34" stroke="#d6aa55" stroke-width="4" stroke-linecap="round"/>
+  <g fill="#14130f" stroke="#8c6a32" stroke-width="2">
+    <rect x="26" y="154" width="428" height="44" rx="8"/>
+    <rect x="26" y="213" width="428" height="44" rx="8"/>
+  </g>
+  <g fill="#8c6a32">
+    <rect x="34" y="162" width="66" height="28" rx="6"/>
+    <rect x="34" y="221" width="66" height="28" rx="6"/>
+  </g>
+  <g fill="#fff7e5">
+    <rect x="118" y="168" width="132" height="8" rx="4"/>
+    <rect x="118" y="181" width="82" height="6" rx="3" opacity=".55"/>
+    <rect x="118" y="227" width="146" height="8" rx="4"/>
+    <rect x="118" y="240" width="92" height="6" rx="3" opacity=".55"/>
+  </g>
+  <g fill="#d6aa55">
+    <path d="m430 169 8 7-8 7" fill="none" stroke="#d6aa55" stroke-width="3"/>
+    <path d="m430 228 8 7-8 7" fill="none" stroke="#d6aa55" stroke-width="3"/>
+  </g>
+  <rect x="166" y="275" width="148" height="8" fill="#d6aa55"/>
+</svg>

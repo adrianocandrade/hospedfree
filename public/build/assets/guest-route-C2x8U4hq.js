@@ -1,0 +1,2 @@
+import{k as e}from"./query-client-DZzHQFAr.js";import{ta as t}from"./icons-DFfxS4V_.js";import{n}from"./use-auth-CIfPV-go.js";import{i as r,p as i,r as a}from"./chunk-6CSD65Y2-dReXBpgA.js";var o=t();function s({children:t}){let{isLoggedIn:s,getRedirectUri:c}=n(),{isInsideSettingsPreview:l}=e(),u=c(),{pathname:d}=i();return s&&!l&&u!==d?(0,o.jsx)(a,{to:u,replace:!0}):t||(0,o.jsx)(r,{})}export{s as t};
+//# sourceMappingURL=guest-route-C2x8U4hq.js.map
