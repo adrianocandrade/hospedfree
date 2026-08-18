@@ -154,7 +154,9 @@ export function BlogPostEditorSidebar({
             <Field.Label>
               <Trans message="Featured image" />
             </Field.Label>
-            <ImageSelector.Input
+            <ImageSelector.Square
+              className="h-40 w-full"
+              placeholderVariant="dropzone"
               uploadType={UploadType.articleImages}
               value={imageValue}
               onChange={value => {

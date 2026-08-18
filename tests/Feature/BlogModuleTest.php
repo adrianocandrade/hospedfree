@@ -9,10 +9,12 @@ use App\Models\User;
 use Common\Auth\Middleware\OptionalAuthenticate;
 use Common\Auth\Middleware\VerifyApiAccessMiddleware;
 use Common\Core\Rendering\CrawlerDetector;
+use Common\Files\FileEntry;
 use Common\Permissions\Models\Permission;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -42,6 +44,15 @@ class BlogModuleTest extends TestCase
         );
 
         $this->createSchema();
+        $this->app->instance(
+            'guestRole',
+            new class {
+                public function hasPermission(string $permission): bool
+                {
+                    return $permission === 'api.access';
+                }
+            },
+        );
     }
 
     protected function tearDown(): void
@@ -111,6 +122,19 @@ class BlogModuleTest extends TestCase
             ->assertNoContent();
 
         $this->assertSoftDeleted('blog_posts', ['id' => $postId]);
+    }
+
+    public function test_blog_editor_can_upload_article_images(): void
+    {
+        $user = $this->adminUser();
+
+        $this->assertTrue(
+            Gate::forUser($user)->allows('store', [
+                FileEntry::class,
+                null,
+                'articleImages',
+            ]),
+        );
     }
 
     public function test_public_api_only_returns_published_posts_due_now(): void
@@ -240,7 +264,7 @@ class BlogModuleTest extends TestCase
                 'title' => 'Post seguro',
                 'slug' => 'post-seguro',
                 'body' =>
-                    '<p onclick="alert(1)">Texto seguro</p><script>alert(1)</script><a href="javascript:alert(1)">link</a>',
+                    '<p onclick="alert(1)">Texto seguro</p><script>alert(1)</script><a href="javascript:alert(1)">link</a><img src="https://cdn.example.test/storage/article-images/post.jpg" alt="Imagem segura" onerror="alert(1)">',
                 'status' => BlogPost::STATUS_PUBLISHED,
                 'published_at' => now()->subMinute()->toISOString(),
             ])
@@ -256,6 +280,14 @@ class BlogModuleTest extends TestCase
         );
         $this->assertStringNotContainsString(
             'javascript:',
+            $response->json('data.body'),
+        );
+        $this->assertStringNotContainsString(
+            'onerror',
+            $response->json('data.body'),
+        );
+        $this->assertStringContainsString(
+            'https://cdn.example.test/storage/article-images/post.jpg',
             $response->json('data.body'),
         );
 

@@ -62,6 +62,16 @@ class FakeCache
 {
     public int $flushes = 0;
 
+    public function get(string $key): mixed
+    {
+        return null;
+    }
+
+    public function set(string $key, mixed $value, mixed $ttl = null): bool
+    {
+        return true;
+    }
+
     public function flush(): bool
     {
         $this->flushes++;

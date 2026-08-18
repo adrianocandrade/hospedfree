@@ -86,6 +86,16 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci --no-audit --no-fund
 
+      - name: Prepare test environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\n' 'INSTALLED=true' > .env
+          touch database/database.sqlite
+          rm -f bootstrap/cache/config.php
+          rm -f bootstrap/cache/events.php
+          rm -f bootstrap/cache/routes-v7.php
+
       - name: Run PHP test suite
         run: composer test:php
 

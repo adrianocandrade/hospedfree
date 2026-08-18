@@ -9,6 +9,7 @@ import {
   ServerCogIcon,
   LifeBuoyIcon,
   BookOpenIcon,
+  NewspaperIcon,
   SparklesIcon,
 } from 'lucide-react';
 import {ComponentProps, ReactElement} from 'react';
@@ -29,6 +30,7 @@ export const AdminSidebarIcons: Record<
   '/admin/settings/hosting': <ServerCogIcon />,
   '/admin/support': <LifeBuoyIcon />,
   '/admin/knowledge': <BookOpenIcon />,
+  '/admin/blog': <NewspaperIcon />,
 };
 
 // settings nav config

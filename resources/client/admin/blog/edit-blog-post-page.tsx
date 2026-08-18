@@ -63,7 +63,11 @@ export function Component() {
       onClick={handleSave}
       disabled={updatePost.isPending}
     >
-      <Trans message="Save" />
+      {updatePost.isPending ? (
+        <Trans message="Saving..." />
+      ) : (
+        <Trans message="Save" />
+      )}
     </Button>
   );
 

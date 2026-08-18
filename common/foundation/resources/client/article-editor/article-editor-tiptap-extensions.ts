@@ -10,7 +10,6 @@ import Superscript from '@tiptap/extension-superscript';
 import {TableKit} from '@tiptap/extension-table';
 import TextAlign from '@tiptap/extension-text-align';
 import {Color, TextStyle} from '@tiptap/extension-text-style';
-import {Placeholder} from '@tiptap/extensions';
 import {AnyExtension} from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
@@ -25,9 +24,6 @@ export const articleEditorTipTapExtensions: AnyExtension[] = [
   }),
   TableKit.configure({
     table: {resizable: true},
-  }),
-  Placeholder.configure({
-    placeholder: 'Write something...',
   }),
   Image,
   Superscript,

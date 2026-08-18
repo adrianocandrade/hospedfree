@@ -13,7 +13,9 @@ import {
   useFileUploadStore,
 } from '@common/uploads/uploader/file-upload-provider';
 import FileHandler from '@tiptap/extension-file-handler';
+import {Placeholder} from '@tiptap/extensions';
 import type {Editor} from '@tiptap/react';
+import {useTrans} from '@ui/i18n/use-trans';
 import {getImageSize} from '@ui/utils/files/get-image-size';
 import {ReactNode, use, useMemo} from 'react';
 
@@ -42,6 +44,8 @@ function Content({
   rightSidebar,
 }: Props) {
   const {rightSidebar: rightSidebarState} = use(DashboardLayoutContext);
+  const {trans} = useTrans();
+  const editorPlaceholder = trans({message: 'Start writing...'});
 
   const uploadMultiple = useFileUploadStore(s => s.uploadMultiple);
   const articleExtensions = useMemo(() => {
@@ -69,6 +73,9 @@ function Content({
 
     return [
       ...articleEditorTipTapExtensions,
+      Placeholder.configure({
+        placeholder: editorPlaceholder,
+      }),
       FileHandler.configure({
         onDrop: (editor: Editor, files: File[], pos: number) => {
           handleImageUpload(files, editor, pos);
@@ -78,7 +85,7 @@ function Content({
         },
       }),
     ];
-  }, [uploadMultiple, imageUploadType]);
+  }, [editorPlaceholder, imageUploadType, uploadMultiple]);
 
   return (
     <TipTapEditorProvider

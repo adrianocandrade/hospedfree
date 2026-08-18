@@ -61,7 +61,11 @@ export function Component() {
       onClick={handleSave}
       disabled={createPost.isPending}
     >
-      <Trans message="Create" />
+      {createPost.isPending ? (
+        <Trans message="Creating..." />
+      ) : (
+        <Trans message="Create" />
+      )}
     </Button>
   ) : (
     <Button

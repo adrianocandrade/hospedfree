@@ -4,6 +4,7 @@ import {commonAdminSettingsRoutes} from '@common/admin/settings/common-admin-set
 import {adminBillingRoutes} from '@common/admin/subscriptions/admin-billing-routes';
 import {adminLocalizationsRoutes} from '@common/admin/translations/admin-localizations-routes';
 import {adminUsersRoutes} from '@common/admin/users/admin-users-routes';
+import {adminBlogRoutes} from '@app/admin/blog/admin-blog-routes';
 import {authGuard} from '@common/auth/guards/auth-route';
 import {redirect, RouteObject} from 'react-router';
 
@@ -47,6 +48,7 @@ export const adminRoutes: RouteObject[] = [
       ...Object.values(adminBillingRoutes),
       ...Object.values(adminLocalizationsRoutes),
       ...Object.values(adminLogsRoutes),
+      ...Object.values(adminBlogRoutes),
       commonAdminSettingsRoutes(
         [
           {

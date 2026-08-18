@@ -90,6 +90,7 @@ return [
                     ['type' => 'route', 'label' => 'Nomes premium', 'action' => '/admin/hosting/premium-subdomains', 'id' => 'hf-admin-premium-subdomains', 'permissions' => ['hosting.settings']],
                     ['type' => 'route', 'label' => 'Chamados', 'action' => '/admin/support', 'id' => 'hf-admin-support', 'permissions' => ['support.manage']],
                     ['type' => 'route', 'label' => 'Base de conhecimento', 'action' => '/admin/knowledge', 'id' => 'hf-admin-knowledge', 'permissions' => ['knowledge.manage']],
+                    ['type' => 'route', 'label' => 'Blog', 'action' => '/admin/blog', 'id' => 'hf-admin-blog', 'permissions' => ['blog.update']],
                     ['type' => 'route', 'label' => 'Assinaturas', 'action' => '/admin/subscriptions', 'id' => 'hf-admin-subscriptions', 'permissions' => ['subscriptions.update']],
                     ['type' => 'route', 'label' => 'Pagamentos', 'action' => '/admin/settings/subscriptions', 'id' => 'hf-admin-payments', 'permissions' => ['settings.update']],
                     ['type' => 'route', 'label' => 'Usuários', 'action' => '/admin/users', 'id' => 'hf-admin-users', 'permissions' => ['users.update']],

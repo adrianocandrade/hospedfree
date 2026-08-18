@@ -98,6 +98,13 @@ class FileEntryPolicy extends BasePolicy
             return true;
         }
 
+        if (
+            $uploadType === 'articleImages' &&
+            $user->hasPermission('blog.update')
+        ) {
+            return true;
+        }
+
         return $user->hasPermission('files.create') ||
             $user->hasPermission('files.update');
     }

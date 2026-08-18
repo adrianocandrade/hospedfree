@@ -39,13 +39,17 @@ export function ImageButton({uploadType}: Props) {
           <Button
             variant="ghost"
             color="default"
-            size="icon-sm"
+            size="sm"
+            className="px-2"
             disabled={!editor}
           />
         }
         onClick={handleUpload}
       >
         <ImageUpIcon />
+        <span className="sr-only xl:not-sr-only">
+          <Trans message="Insert image" />
+        </span>
       </Tooltip.Trigger>
       <Tooltip.Content>
         <Trans message="Insert image" />
