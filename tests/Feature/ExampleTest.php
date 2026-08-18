@@ -8,7 +8,7 @@ class ExampleTest extends TestCase
 {
     public function test_application_boots(): void
     {
-        $response = $this->get('/');
+        $response = $this->get('/up');
 
         $response->assertStatus(200);
     }

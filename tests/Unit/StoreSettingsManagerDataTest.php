@@ -3,10 +3,12 @@
 namespace Tests\Unit;
 
 use Common\Settings\DotEnvEditor;
+use Common\Settings\Events\SettingsSaved;
 use Common\Settings\Manager\StoreSettingsManagerData;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class StoreSettingsManagerDataTest extends TestCase
@@ -26,6 +28,7 @@ class StoreSettingsManagerDataTest extends TestCase
 
         $artisan = new FakeArtisan();
         $cache = new FakeCache();
+        Event::fake([SettingsSaved::class]);
         Artisan::swap($artisan);
         Cache::swap($cache);
 
