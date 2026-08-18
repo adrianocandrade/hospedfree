@@ -30,6 +30,42 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
+      - name: Validate FTPS configuration
+        shell: bash
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER || vars.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PORT: ${{ vars.FTP_PORT || '21' }}
+          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || './' }}
+        run: |
+          set -euo pipefail
+          missing=()
+
+          [[ -n "${FTP_SERVER}" ]] || missing+=(FTP_SERVER)
+          [[ -n "${FTP_USERNAME}" ]] || missing+=(FTP_USERNAME)
+          [[ -n "${FTP_PASSWORD}" ]] || missing+=(FTP_PASSWORD)
+
+          if (( ${#missing[@]} > 0 )); then
+            printf '::error::Missing production environment configuration: %s\n' "${missing[*]}"
+            exit 1
+          fi
+
+          if [[ "${FTP_SERVER}" == *://* ]]; then
+            echo '::error::FTP_SERVER must contain only the host name, without a protocol.'
+            exit 1
+          fi
+
+          if [[ ! "${FTP_PORT}" =~ ^[0-9]+$ ]]; then
+            echo '::error::FTP_PORT must be numeric.'
+            exit 1
+          fi
+
+          if [[ "${FTP_SERVER_DIR}" != */ ]]; then
+            echo '::error::FTP_SERVER_DIR must end with a slash.'
+            exit 1
+          fi
+
       - name: Set up PHP
         uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45 # v2
         with:
@@ -126,8 +162,8 @@ jobs:
         if: ${{ inputs.mode == 'deploy' }}
         shell: bash
         env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_SERVER: ${{ secrets.FTP_SERVER || vars.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PORT: ${{ vars.FTP_PORT || '21' }}
           FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || './' }}
@@ -148,8 +184,8 @@ jobs:
       - name: Publish package by FTPS
         uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
+          server: ${{ secrets.FTP_SERVER || vars.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ vars.FTP_PORT || '21' }}
           protocol: ftps

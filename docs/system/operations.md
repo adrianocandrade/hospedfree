@@ -48,13 +48,18 @@ Production deployment must apply the premium-address schema and navigation migra
 
 The manual `Build and deploy production` workflow builds a clean Linux artifact, runs the PHP and TypeScript checks, compiles `public/build`, installs Composer dependencies without development packages and publishes the resulting package by explicit FTPS. It is manual by design: run it first with `dry-run`, review the file plan and then run it with `deploy`.
 
-Create a protected GitHub environment named `production` and configure these environment secrets:
+Create a protected GitHub environment named exactly `production`. Do not use a configuration key such as `FTP_SERVER` as the environment name. Configure this required environment secret:
 
-- `FTP_SERVER`
-- `FTP_USERNAME`
 - `FTP_PASSWORD`
 
-Configure `FTP_SERVER_DIR` as an environment variable with the FTP-visible project root, ending in `/` (for example `/www/hospedfree.com/` only when that is the path shown by the KeyHelp FTP account). `FTP_PORT` is optional and defaults to `21`. The workflow requires explicit FTPS with certificate verification; it does not fall back to unencrypted FTP.
+Configure these environment variables:
+
+- `FTP_SERVER`: FTP host name without `ftp://` or `ftps://`;
+- `FTP_USERNAME`: FTP account user;
+- `FTP_SERVER_DIR`: FTP-visible project root ending in `/` (`./` is valid when the FTP account already opens in the project root);
+- `FTP_PORT`: optional, defaults to `21`.
+
+`FTP_SERVER` and `FTP_USERNAME` may instead be stored as environment secrets; secrets take precedence when both forms exist. The password is accepted only through the `FTP_PASSWORD` secret. The workflow requires explicit FTPS with certificate verification; it does not fall back to unencrypted FTP.
 
 The deployment never uploads `.env`, local databases, backups, logs, tests, `node_modules` or environment-specific Laravel caches. Before a real publish it removes only the known remote cache files `bootstrap/cache/config.php`, `bootstrap/cache/events.php` and `bootstrap/cache/routes-v7.php`. This prevents a package built locally from forcing a development `APP_URL` in production. Keep the production `.env` on KeyHelp and use `APP_URL=https://www.hospedfree.com` without a trailing slash.
 
