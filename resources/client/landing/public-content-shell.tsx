@@ -1,12 +1,9 @@
-import {LpFooter} from '@app/landing/sections/lp-footer';
-import {LpHeader} from '@app/landing/sections/lp-header';
+import {ProductEclipseShell} from '@app/landing/product-eclipse-shell';
 import {cn} from '@ui/utils/cn';
-import {ComponentProps, ReactNode} from 'react';
+import type {ComponentProps} from 'react';
+import './public-editorial.css';
 
-interface PublicContentShellProps extends ComponentProps<'div'> {
-  children: ReactNode;
-  mainClassName?: string;
-}
+type PublicContentShellProps = ComponentProps<typeof ProductEclipseShell>;
 
 export function PublicContentShell({
   children,
@@ -15,16 +12,12 @@ export function PublicContentShell({
   ...props
 }: PublicContentShellProps) {
   return (
-    <div
-      className={cn(
-        'lp flex min-h-screen flex-col overflow-x-clip bg-[var(--lp-surface)] text-[var(--lp-text)]',
-        className,
-      )}
+    <ProductEclipseShell
+      className={cn('lp hf-editorial', className)}
+      mainClassName={cn('hf-editorial-main', mainClassName)}
       {...props}
     >
-      <LpHeader />
-      <main className={cn('flex-auto', mainClassName)}>{children}</main>
-      <LpFooter />
-    </div>
+      {children}
+    </ProductEclipseShell>
   );
 }

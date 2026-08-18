@@ -1,4 +1,9 @@
-import {LayoutDashboardIcon, SettingsIcon, UserPenIcon} from 'lucide-react';
+import {
+  LayoutDashboardIcon,
+  SettingsIcon,
+  ShieldCheckIcon,
+  UserPenIcon,
+} from 'lucide-react';
 import {ComponentProps, ReactElement} from 'react';
 
 export const authDropdownIcons: Record<
@@ -6,6 +11,8 @@ export const authDropdownIcons: Record<
   ReactElement<ComponentProps<'svg'>>
 > = {
   '/admin/insights': <SettingsIcon />,
+  '/admin/hosting': <ShieldCheckIcon />,
   '/account-settings': <UserPenIcon />,
   '/dashboard': <LayoutDashboardIcon />,
+  '/dashboard/hosting': <LayoutDashboardIcon />,
 };

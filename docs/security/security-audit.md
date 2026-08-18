@@ -159,3 +159,11 @@ A estabilização anterior:
 - atualizou dependências Composer auditadas na época.
 
 Isso é registro histórico, não substitui nova auditoria após a conversão.
+
+# HospedFree current security note
+
+Updated: 2026-08-13
+
+Implemented controls now include provider-neutral DTOs, fake and MOFH providers, hsite.top validation, up to two Free accounts per workspace, idempotent provider operations, encrypted/hidden hosting credentials, password-confirmed credential reveal, scoped and expiring tokens, an HTTP owner/attacker matrix, safe tool URLs, sanitized knowledge articles, text-only support messages, a customer-safe communication projection, explicit security events with masked IP addresses, notification of the previous address after an e-mail change, granular audited access to technical MIME logs, configurable retention, verified/deduped Stripe and PayPal webhooks, and disabled public short-link fallback.
+
+Before public launch, still add focused rate limits, run authorized MOFH smoke testing with TLS enabled, audit/remove privileged legacy link/biolink/ad surfaces, publish HospedFree-specific legal/abuse policies, and regenerate/review API docs/client.

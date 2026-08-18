@@ -26,8 +26,8 @@ const templateOptions = [
     label: <Trans message="Email verification code" />,
   },
   {
-    value: TestEmailTemplate.workspace_invitation,
-    label: <Trans message="Workspace invitation" />,
+    value: TestEmailTemplate.password_reset,
+    label: <Trans message="Password reset" />,
   },
   {
     value: TestEmailTemplate.contact_message,
@@ -42,16 +42,40 @@ const templateOptions = [
     label: <Trans message="Invoice available" />,
   },
   {
-    value: TestEmailTemplate.click_quota_exhausted,
-    label: <Trans message="Click quota exhausted" />,
+    value: TestEmailTemplate.hosting_ready,
+    label: <Trans message="Hosting account ready" />,
   },
   {
-    value: TestEmailTemplate.webhook_disabled,
-    label: <Trans message="Webhook disabled" />,
+    value: TestEmailTemplate.hosting_suspended,
+    label: <Trans message="Hosting account suspended" />,
   },
   {
-    value: TestEmailTemplate.booking_confirmation,
-    label: <Trans message="Booking confirmation" />,
+    value: TestEmailTemplate.hosting_reactivated,
+    label: <Trans message="Hosting account reactivated" />,
+  },
+  {
+    value: TestEmailTemplate.hosting_password_changed,
+    label: <Trans message="Hosting password changed" />,
+  },
+  {
+    value: TestEmailTemplate.hosting_action_required,
+    label: <Trans message="Hosting action required" />,
+  },
+  {
+    value: TestEmailTemplate.ticket_created,
+    label: <Trans message="Support ticket created" />,
+  },
+  {
+    value: TestEmailTemplate.ticket_reply,
+    label: <Trans message="Support reply" />,
+  },
+  {
+    value: TestEmailTemplate.ticket_status_changed,
+    label: <Trans message="Support ticket resolved" />,
+  },
+  {
+    value: TestEmailTemplate.ticket_staff_activity,
+    label: <Trans message="Support staff alert" />,
   },
 ] as const;
 

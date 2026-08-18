@@ -1,8 +1,3 @@
-import {listBiolinksOptions} from '@app/dashboard/biolink/biolinks-queries';
-import {adminBlogRoutes} from '@app/admin/blog/admin-blog-routes';
-import {sharedDashboardRoutes} from '@app/dashboard/dashboard-routes';
-import {adminCustomPagesRoutes} from '@common/admin/custom-pages/admin-custom-pages-routes';
-import {adminFileEntriesRoutes} from '@common/admin/file-entry/admin-file-entries-routes';
 import {adminLogsRoutes} from '@common/admin/logging/admin-logs-routes';
 import {adminRolesRoutes} from '@common/admin/roles/admin-roles-routes';
 import {commonAdminSettingsRoutes} from '@common/admin/settings/common-admin-settings-routes';
@@ -10,10 +5,7 @@ import {adminBillingRoutes} from '@common/admin/subscriptions/admin-billing-rout
 import {adminLocalizationsRoutes} from '@common/admin/translations/admin-localizations-routes';
 import {adminUsersRoutes} from '@common/admin/users/admin-users-routes';
 import {authGuard} from '@common/auth/guards/auth-route';
-import {queryClient} from '@common/http/query-client';
-import {searchParamsFromUrl} from '@ui/utils/urls/search-params-from-url';
 import {redirect, RouteObject} from 'react-router';
-import {Fragment} from 'react/jsx-runtime';
 
 export const adminRoutes: RouteObject[] = [
   {
@@ -23,66 +15,44 @@ export const adminRoutes: RouteObject[] = [
     children: [
       {
         index: true,
-        element: <Fragment />,
-        middleware: [() => redirect('/admin/insights')],
+        loader: () => redirect('/admin/hosting'),
       },
       {
-        path: 'insights',
-        lazy: () => import('@app/admin/reports/admin-insights-page-layout'),
-        children: [
-          {
-            index: true,
-            lazy: () =>
-              import('@app/admin/reports/admin-tracked-events-insights'),
-          },
-          {
-            path: 'events',
-            lazy: () =>
-              import('@app/admin/reports/admin-tracked-events-insights'),
-          },
-          {
-            path: 'visitors',
-            lazy: () => import('@app/admin/reports/admin-visitors-insights'),
-          },
-        ],
+        path: 'hosting',
+        lazy: () => import('@app/admin/hosting/admin-hosting-page'),
+        loader: () => authGuard({permission: 'hosting.operations'}),
+      },
+      {
+        path: 'hosting/plans',
+        lazy: () => import('@app/admin/hosting/admin-hosting-plans-page'),
+        loader: () => authGuard({permission: 'hosting.settings'}),
+      },
+      {
+        path: 'hosting/premium-subdomains',
+        lazy: () => import('@app/admin/hosting/admin-premium-subdomains-page'),
+        loader: () => authGuard({permission: 'hosting.settings'}),
+      },
+      {
+        path: 'support',
+        lazy: () => import('@app/admin/hosting/admin-support-page'),
+        loader: () => authGuard({permission: 'support.manage'}),
+      },
+      {
+        path: 'knowledge',
+        lazy: () => import('@app/admin/hosting/admin-knowledge-page'),
+        loader: () => authGuard({permission: 'knowledge.manage'}),
       },
       ...Object.values(adminUsersRoutes),
       ...Object.values(adminRolesRoutes),
       ...Object.values(adminBillingRoutes),
-      ...Object.values(adminBlogRoutes),
-      ...Object.values(adminCustomPagesRoutes),
       ...Object.values(adminLocalizationsRoutes),
-      ...Object.values(adminFileEntriesRoutes),
       ...Object.values(adminLogsRoutes),
-
       commonAdminSettingsRoutes(
         [
           {
-            path: 'search',
+            path: 'hosting',
             lazy: () =>
-              import('@common/admin/settings/pages/search-settings/search-settings'),
-          },
-          {
-            path: 'links',
-            lazy: () =>
-              import('@app/admin/settings/link-settings/link-settings'),
-          },
-          {
-            path: 'biolinks',
-            lazy: () => import('@app/admin/settings/biolink-settings'),
-          },
-          {
-            path: 'biolink-themes',
-            lazy: () =>
-              import('@app/admin/settings/biolink-themes-settings'),
-          },
-          {
-            path: 'landing-page',
-            lazy: () => import('@app/admin/settings/landing-page-settings'),
-          },
-          {
-            path: 'ads',
-            lazy: () => import('@common/admin/settings/pages/ads-settings'),
+              import('@app/admin/hosting/admin-hosting-settings-page'),
           },
         ],
         {
@@ -94,19 +64,6 @@ export const adminRoutes: RouteObject[] = [
           },
         },
       ),
-      ...sharedDashboardRoutes('admin'),
-      {
-        path: 'biolinks',
-        lazy: () =>
-          import('@app/admin/biolinks-datatable-page/biolinks-datatable-page'),
-        loader: ({request}) =>
-          queryClient.ensureQueryData(
-            listBiolinksOptions('admin', {
-              ...searchParamsFromUrl(request.url),
-              fields_preset: 'datatable',
-            }),
-          ),
-      },
     ],
   },
 ];

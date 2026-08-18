@@ -1,246 +1,160 @@
 # HospedFree Design Contract
 
-## Status and authority
+## Status
 
-This document defines the target product experience. It does not claim that the inherited interface already follows these rules.
+This file describes the HospedFree experience contract after the first conversion pass and the updated Bixa parity target. It is grounded in the implemented landing, customer hosting dashboard, support/knowledge pages and admin hosting operations, while marking unfinished parity capabilities as target work.
 
-Authority order:
+PRODUCT.md owns product scope. docs/brand-hospedfree.md owns logo, colors and identity rules.
 
-1. PRODUCT.md for product intent and scope.
-2. docs/brand-hospedfree.md for brand identity.
-3. DESIGN.md for system-wide experience rules.
-4. docs/brand/ for detailed content, components and site structure.
-5. Current code for actual implementation status.
+## Visual Foundation
 
-## Experience model
+Use the official HospedFree assets:
 
-HospedFree has three connected surfaces:
+| Asset                            | Use                                        |
+| -------------------------------- | ------------------------------------------ |
+| `public/images/icon.png`         | Main isolated icon                         |
+| `public/images/icon-150x150.png` | Compact icon/favicon source                |
+| `public/images/logo-white.png`   | Horizontal logo for dark/brand surfaces    |
+| `public/images/logo-1.png`       | Horizontal logo for light/neutral surfaces |
 
-- Public site: explains free and paid hosting, removes uncertainty and leads to signup.
-- Customer panel: helps customers publish, monitor and maintain their hosting.
-- Admin/operations: manages plans, customers, provisioning, providers, support and incidents.
+The UI uses semantic Tailwind tokens and the existing shadcn/foundation components. Public and app surfaces should feel like a practical hosting system: clear, restrained, status-led and Portuguese-first.
 
-The public site is light-first and spacious. The customer panel is task-oriented and calm. A dark dashboard theme may exist, but it is optional and cannot replace the canonical light brand or reduce legibility.
+The authenticated application and admin use the same Product Eclipse color roles as the landing in dark mode: near-black navy canvas, restrained blue-violet surfaces, low-contrast cool borders, clear off-white text and HospedFree violet for primary actions and selection. This alignment is implemented through the global semantic theme tokens, never by copying landing-only selectors into operational screens. Success, warning, error and information colors keep their semantic roles. The light theme remains independently composed.
 
-## Visual foundation
+## Current Surfaces
 
-### Color
+| Surface                | Route                               | State                                                      |
+| ---------------------- | ----------------------------------- | ---------------------------------------------------------- |
+| Public landing         | `/`                                 | Implemented with HospedFree copy and dynamic hosting plans |
+| Public hosting plans   | `/planos`                           | Implemented as the public plan comparison                  |
+| Public site builder    | `/construtor-de-sites`              | Implemented as the public builder presentation             |
+| Login/register         | `/login`, `/register`               | Rebranded for hosting                                      |
+| Customer hosting       | `/dashboard/hosting`                | Implemented                                                |
+| New hosting/address    | `/dashboard/hosting/new`            | Implemented, including short premium address states        |
+| Customer domains       | `/dashboard/hosting` tabs           | Bixa parity target                                         |
+| Customer files/WebFTP  | `/dashboard/hosting` tabs           | Bixa parity target                                         |
+| Customer databases     | `/dashboard/hosting` tabs           | Bixa parity target                                         |
+| Customer SSL           | `/dashboard/hosting` tabs           | Partial; Bixa parity target                                |
+| Customer tools/stats   | `/dashboard/hosting` tabs           | Partial; Bixa parity target                                |
+| Customer support       | `/dashboard/support`                | Implemented                                                |
+| Public FAQ/knowledge   | `/faq` and `/knowledge`             | Implemented as public help surface                         |
+| Admin operations       | `/admin/hosting`                    | Implemented                                                |
+| Admin hosting plans    | `/admin/hosting/plans`              | Implemented                                                |
+| Admin premium names    | `/admin/hosting/premium-subdomains` | Implemented                                                |
+| Admin support          | `/admin/support`                    | Implemented                                                |
+| Admin knowledge        | `/admin/knowledge`                  | Implemented                                                |
+| Legacy link/biolink UI | former dashboard/admin routes       | Hidden from navigation and public fallback                 |
 
-Use the canonical HospedFree tokens:
+## Customer Panel
 
-| Role | Value |
-| --- | --- |
-| Primary | #5C5AA4 |
-| Secondary | #766CAF |
-| Soft lavender | #ACA9D4 |
-| Ink | #202034 |
-| Background | #F8F8FC |
-| Surface | #FFFFFF |
-| Muted | #F0EFF8 |
-| Border | #DDDCEA |
-| Muted text | #6F7083 |
+The customer panel is task-first:
 
-Functional success, warning, error and information colors are defined in docs/brand-hospedfree.md. They communicate state and never become plan branding.
+- `/dashboard` is the planned customer home and must become a real overview instead of a redirect. It summarizes the selected hosting account, operational attention, real resource usage, plan, quick actions, recent activity and help. See `docs/system/customer-dashboard-improvement-plan.md`.
+- The dashboard references supplied on 2026-08-12 guide hierarchy and composition only: the overview reference owns the home direction and the domain reference owns hosting/domain detail. Illustrative numbers, benefits, dark colors, icons and 3D assets are not product truth.
+- The expanded desktop sidebar may contain a contextual paid-plan card and compact resource summary. Both are data-driven, disappear or relocate responsively, and must not compete with operational alerts.
+- Upgrade content is shown only when an eligible paid product has a configured price, remote package and enabled gateway. Benefits come from the product/plan configuration, not frontend constants.
+- Resource UI must use hosting statistics and quotas, never the inherited links/biolinks usage payload. Unknown limits are shown as unknown, not unlimited.
 
-### Typography
+- Show hosting status, domain and next action before secondary data.
+- Organize account management into real dashboard tabs: Hospedagem, Domínios, Arquivos, Bancos de dados, SSL, Ferramentas, Planos and Suporte.
+- Keep credentials masked by default.
+- Require password confirmation for credential reveal.
+- Auto-hide revealed credentials.
+- Open external tools only through authorized server-side links.
+- Require successful deactivation, password confirmation and an explicit typed phrase before permanent deletion. Keep only legacy scheduled deletions reversible until their existing due date.
+- Show provider failures as recoverable states, not generic crashes.
+- In the new-hosting flow, standard addresses use 5 to 63 characters. Short addresses with 3 or 4 characters must clearly show their annual price or granted entitlement.
+- Keep unlisted, reserved, unavailable and provider-failure address states distinct. A reservation or successful checkout never means that hosting was provisioned.
+- After a short-address checkout returns, reconfirm both provider availability and the customer's entitlement before enabling hosting creation.
+- In SSL surfaces, show certificate issuance and remote installation as separate states. Never label HTTPS as active from issuance alone, and never expose private keys in the browser to compensate for a missing panel installation API.
+- Customer hosting and support pages still live inside the standard dashboard shell. Use existing dashboard content containers, headers, empty states and form controls; only introduce custom layout when the hosting task cannot be expressed with the existing dashboard patterns.
+- FAQ/knowledge for customers is a public read surface at `/faq`: simple header, no dashboard sidebar, no marketing navigation menu, searchable article groups and a footer. The index links to individual article pages such as `/faq/:slug`; full answers must not be hidden in accordions. Each article page needs its own title, meta description, canonical URL and share metadata. `/dashboard/knowledge` exists only as a redirect/compatibility path.
+- Customer plan comparison and upgrade entrypoints inside the dashboard must stay inside dashboard routes first. Public pricing is a marketing surface for visitors and must not be the primary destination for an authenticated customer trying to manage hosting.
+- Domain, file, database, SSL, statistics and Site Builder management surfaces must stay in the customer dashboard shell. They should feel like one hosting control panel, not disconnected public pages. `/construtor-de-sites` is the public marketing explanation of the builder and never replaces the authenticated management flow.
+- New customer screens must reuse the current dashboard layout, section hierarchy, tabs, form controls, empty states, responsive behavior and translation patterns. If an existing HospedFree customer screen does not follow that architecture, refactor it before adding new capability to it.
 
-- Interface and body: Inter, with Manrope and the system sans stack as fallbacks.
-- Use 400 for body, 500 for labels/navigation, 600 for controls and subtitles, and 700–800 for display hierarchy.
-- Keep reading lines near 65–75 characters.
-- The logo is an image asset and must not be recreated with HTML text.
+The personal workspace is internal. Do not expose workspace selectors or workspace management in customer navigation unless a future identity migration explicitly changes this.
 
-### Shape and spacing
+## Admin UI
 
-- Use the existing Tailwind spacing scale.
-- Controls and touch targets are at least 44 px.
-- Interface cards generally use 12–16 px radii.
-- Large marketing surfaces may use up to 24 px when the composition benefits.
-- Pills are reserved for status, filters and compact labels.
-- Use either a subtle border or a subtle shadow as the primary depth cue.
+Admin screens should be dense and operational:
 
-### Motion
+- Accounts and operations prioritize status, domain, plan and safe action.
+- Provider terminology may appear only in restricted admin screens.
+- Plan/package mapping lives in `/admin/hosting/plans`.
+- Billing products, prices, subscriptions and invoices remain in the foundation billing area.
+- Knowledge articles and ticket replies use plain controls and safe content handling.
+- Actions that affect remote hosting must be auditable and idempotent.
+- Admin CRUD/list pages must reuse the same shell and components as the existing foundation admin: section content headers, table search, sortable tables, pagination, empty states, dropdown row actions and dialogs/crupdate flows. Avoid standalone centered form cards unless the matching legacy admin pattern does the same.
+- Hosting plan and package screens should visually and behaviorally align with existing subscription plan screens. Support and knowledge admin screens should behave like operational tables with explicit row actions, not isolated custom workspaces.
+- Admin settings for MOFH, VistaPanel, WebFTP, Site.Pro, Cloudflare, ACME and allowed domains must follow foundation admin settings/table/dialog patterns. Provider terminology is acceptable here, but raw payloads and secrets are not.
+- "Planos e pacotes" must be an adaptation layer over the existing product/plan/subscription model, with hosting-specific package mapping added in context. It must not behave like an unrelated custom product catalog.
+- The premium-name catalog uses the operational states draft, for sale, reserved, granted, active subscription, expired subscription and inactive. It reuses annual Billing prices and must not be presented as a hosting-plan catalog.
+- Admin hosting and provider configuration must expose the operational settings required by the system: provider API credentials, MOFH/VistaPanel, WebFTP/File Manager, Cloudflare, ACME/SSL, Site.Pro/Site Builder, allowed domains, tool enablement and health checks.
 
-- Functional transitions: 160–240 ms.
-- Motion explains change; it never hides essential content.
-- Respect prefers-reduced-motion.
-- Loading work that can take seconds must show state, progress when possible and a safe exit.
+## Public Site
 
-## Brand assets
+The landing page must not invent prices, quotas, uptime, testimonials or provider claims. Active paid plans remain visible in comparison so the upgrade path is understandable; when price, gateway or provider package is incomplete, the card explicitly says the commercial configuration is pending and does not expose a checkout action.
 
-The approved source files are:
+The marketing home uses the Product Eclipse editorial dark composition grounded in real HospedFree dashboard and site-editor images from `public/images`. Wide, deliberate chapters alternate concrete copy with a single product visual. Desktop display headings must use the available horizontal space and stay within two lines. Avoid narrow headline columns, repeated generic card grids, decorative statistics and abstract AI-style imagery. Motion is restrained and respects reduced-motion preferences.
 
-| Asset | Intended use |
-| --- | --- |
-| public/images/icon.png | Main isolated HF symbol |
-| public/images/icon-150x150.png | Compact icon/favicon source |
-| public/images/logo-white.png | Horizontal signature for light/neutral surfaces |
-| public/images/logo-1.png | Horizontal signature with white Hosped lettering for dark/brand surfaces |
+Plan cards and help content are data-driven. Plan names, prices, quotas and benefits come from the hosting catalog, while help links open exactly one public SEO article page through normal document navigation. Do not restore inherited LinkBio marketing blocks, fake counters, anonymous testimonials or FAQ accordions.
 
-Preserve aspect ratio, clear space, colors and geometry. Never add Powered by AMVHost or expose a provider in the logo.
+The public story follows the customer journey: choose an address, publish files or an application, use the visual builder when appropriate, compare Free and paid hosting, find a specific help article, then create the account. Free and eligible paid plans must appear in the same comparison; asynchronous catalog content must remain visible after loading and must not depend on a reveal observer registered before the data exists.
 
-## Public site
+The first viewport must make the offer clear:
 
-The public experience should answer, in order:
+- free hsite.top hosting;
+- upgrade path without changing product;
+- one obvious account creation action.
 
-1. What can I publish with HospedFree?
-2. What does the free plan include?
-3. How do I get from signup to a live site?
-4. When and why would I choose paid hosting?
-5. What limits, requirements and support paths apply?
+The public website-builder page lives at `/construtor-de-sites` and follows the same Product Eclipse shell and editorial rhythm as the home and pricing pages. Its public brand is HospedFree. Site.pro may appear only as a factual technology attribution or as the source of the approved official demonstration video; it must not replace the HospedFree product name, expose provider configuration or reveal credentials, session tokens or direct authenticated editor URLs.
 
-Preferred home sequence:
+The builder story may communicate the capabilities confirmed for the product direction: visual no-code editing, more than 200 templates, responsive layouts, multilingual sites, existing-site import, virtual-store creation, design freedom and SEO tooling. These capabilities must be described as editor features, not as unconditional guarantees for every account. The page must always include the availability note: models and advanced features vary according to the editor version enabled for the account, and upgrades, when available, appear inside the editor.
 
-1. Header with product, plans, help, blog/status when available, login and signup.
-2. Hero with a specific publication outcome and one primary CTA.
-3. Trust/proof strip using only verifiable facts.
-4. How it works: account, hsite.top site, publish.
-5. Free-hosting capability grid.
-6. Honest free versus paid plan comparison.
-7. Real panel preview or workflow explanation.
-8. Knowledge/support entry points.
-9. FAQ.
-10. Final CTA and complete footer.
+The approved builder demonstration is `https://www.youtube.com/watch?v=jzbqVK8s6jI`. Interactive pages may embed the privacy-enhanced YouTube player without autoplay. Prerendered and crawler-oriented output should use an accessible external link instead of loading a heavy iframe.
 
-Do not use fake uptime, customer counts, reviews, logos, resource limits or screenshots. If data is unavailable, use a factual empty state or omit the claim.
+## Content Rules
 
-## Customer panel
+- Primary language is Portuguese (Brazil).
+- Use concrete action labels: Criar hospedagem, Abrir painel, Revelar credenciais, Redefinir senha, Solicitar exclusao.
+- Explain hosting terms where needed.
+- Never use MOFH in public brand copy.
+- Never put credentials in URLs, logs, notifications or ordinary API serializations.
 
-### Information architecture
+## Interaction States
 
-The initial navigation model should prioritize:
+Every hosting surface needs loading, empty, error, disabled and permission-denied states where relevant. Long-running provider work should show one of the normalized states:
 
-- Overview
-- Hosting accounts
-- Domains
-- Files and deployments
-- Databases
-- SSL and DNS
-- Plans and billing
-- Support
-- Knowledge base
-- Account and security
-
-Only show modules that are implemented and allowed for the current user/plan.
-
-### Hosting overview
-
-The first screen should prioritize:
-
-- site and account status;
-- main domain or hsite.top address;
-- next action;
-- SSL and DNS state;
-- resource/plan limits when available;
-- recent deployments or operational events;
-- support route.
-
-Status combines label, icon and color. Provider-specific codes are translated into customer language, with technical detail available only when useful.
-
-### Credentials
-
-- Mask values by default.
-- Reveal requires an explicit action and may require recent authentication.
-- Copy actions announce success without exposing the value in logs or analytics.
-- Reset/regenerate actions explain impact and require confirmation.
-- Never send hosting passwords in routine email or notification bodies.
-
-### Provisioning and long-running work
-
-Hosting orders move through explicit states such as pending payment, payment confirmed, provisioning, active, failed, suspended and canceled. Exact state names may change during implementation, but payment and provisioning must remain separate.
-
-Each long-running operation needs:
-
-- current state;
-- last update time;
-- safe retry or support action when appropriate;
-- idempotency protection;
-- an audit reference that contains no secret.
-
-## Plans and billing
-
-- Free and paid plans share the same identity.
-- Paid hosting may receive stronger hierarchy, not a separate gold/premium aesthetic.
-- Show billing period, renewal behavior, limits and unavailable capabilities.
-- Do not use the historical R$ 5,90 value.
-- Upgrade and downgrade behavior must explain service impact before confirmation.
-- A payment success screen must not claim the hosting is active until provisioning succeeds.
-
-## Admin and operations
-
-Admin screens should be dense, predictable and auditable:
-
-- tables with useful filters, pagination and persistent context;
-- clear customer/account/plan/provider relationships;
-- status history and redacted request diagnostics;
-- permission-protected actions;
-- confirmation for suspend, delete, package change, credential reset and migration actions;
-- no raw provider payloads or secrets in the browser.
-
-Provider terminology may appear in restricted operational screens where necessary, but not in customer marketing.
-
-## Core components
-
-Detailed contracts live in docs/brand/components.md. The minimum reusable set is:
-
-- HostingStatusCard
-- DomainCard
-- ResourceUsage
-- ProvisioningTimeline
-- CredentialField
-- PlanCard and PlanComparison
-- DeploymentCard
-- SupportTicketCard
-- KnowledgeArticleCard
-- EmptyState
-- InlineAlert and Toast
-- ConfirmDialog
-
-Components need loading, empty, error, disabled, permission-denied and plan-limited states where relevant.
-
-## Responsive behavior
-
-- Validate at 360, 430, 768 and 1440 px.
-- Mobile keeps the semantic order and primary action.
-- Tables collapse into meaningful records rather than horizontal data loss.
-- Long domains, usernames, paths and error messages wrap or truncate with accessible access to the full value.
-- No horizontal overflow in authentication, plan, hosting or support flows.
+- account: `pending`, `provisioning`, `active`, `suspended`, `pending_downgrade`, `pending_deletion`, `deleting`, `deleted`, `failed`, `action_required`
+- order: `requested`, `awaiting_payment`, `paid`, `provisioning`, `fulfilled`, `failed`, `cancelled`
+- operation: `queued`, `running`, `succeeded`, `retryable_failed`, `permanent_failed`
 
 ## Accessibility
 
-- Target WCAG 2.2 AA.
-- Full keyboard access and visible focus.
-- Form errors associated with fields and summarized when useful.
-- Status is never color-only.
-- Dialogs manage focus and provide an escape route unless a critical transaction is actively committing.
-- Charts and usage meters include textual values.
-- External consoles, downloads and new tabs are labeled.
+Target WCAG 2.2 AA:
 
-## Content
+- visible keyboard focus;
+- status not color-only;
+- long domains wrap or truncate safely;
+- dialogs manage focus;
+- buttons have accessible names;
+- mobile layouts keep the same task order;
+- touch targets are at least 44 px where practical.
 
-- Portuguese (Brazil) is the primary product language.
-- Use concrete actions: Criar hospedagem, Abrir site, Configurar domínio, Ver detalhes.
-- Explain necessary terms such as DNS, SSL, FTP and nameserver at the point of use.
-- Avoid vague performance language, fear-based upgrade copy and claims like unlimited without an exact contract.
-- Use the internal provider name only in restricted diagnostic/admin contexts.
+## Bixa Parity Targets
 
-## Anti-patterns
+The design may show these capabilities only when the corresponding backend/API is implemented or when a disabled target state is explicit:
 
-- Generic SaaS gradients as the main identity.
-- A black or neon visual world across the whole product.
-- Nested cards for every piece of content.
-- Decorative server illustrations that displace real plan or workflow information.
-- Fake terminal output, fake dashboards or fake metrics.
-- Showing credentials by default.
-- Conflating payment, provisioning and site availability.
-- Treating free users as a degraded or neglected audience.
+- custom domains and additional subdomains;
+- Cloudflare or managed DNS;
+- SSL/ACME automation;
+- native WebFTP/File Manager;
+- ZIP upload and archive extraction;
+- MySQL database management;
+- account statistics and quotas;
+- Site.Pro/Site Builder;
+- Softaculous and panel tools;
+- ticket attachments and full support flow.
 
-## Implementation discipline
-
-Before changing UI:
-
-1. Verify whether the capability is current, planned or reference-only.
-2. Reuse shadcn and semantic tokens.
-3. Use the official assets and Trans for visible copy.
-4. Implement all material states.
-5. Validate responsive behavior, keyboard access and contrast.
-6. Update the relevant document when the product contract changes.
+Git deploy and automatic inactivity suspension remain separate decisions and are not required for Bixa parity unless approved later.

@@ -1,0 +1,1 @@
+function e(e){if(!e)return`Aguardando sincronização`;let t=new Date(e);return Number.isNaN(t.getTime())?`Data indisponível`:new Intl.DateTimeFormat(`pt-BR`,{dateStyle:`medium`,timeStyle:`short`}).format(t)}export{e as t};

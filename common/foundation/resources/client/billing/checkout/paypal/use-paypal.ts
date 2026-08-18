@@ -1,4 +1,5 @@
 import {listProductsOptions} from '@common/admin/subscriptions/products-queries';
+import {apiClient} from '@common/http/query-client';
 import {loadScript} from '@paypal/paypal-js';
 import {useSuspenseQuery} from '@tanstack/react-query';
 import {useSettings} from '@ui/settings/use-settings';
@@ -7,8 +8,17 @@ import {useEffect, useRef, useState} from 'react';
 interface UsePaypalProps {
   productId?: string;
   priceId?: string;
+  returnPath?: string;
+  hostingOrder?: string;
+  premiumPurchase?: string;
 }
-export function usePaypal({productId, priceId}: UsePaypalProps) {
+export function usePaypal({
+  productId,
+  priceId,
+  returnPath,
+  hostingOrder,
+  premiumPurchase,
+}: UsePaypalProps) {
   const productsQuery = useSuspenseQuery(listProductsOptions());
   const products = productsQuery.data?.data;
   const paypalLoadStarted = useRef<boolean>(false);
@@ -53,36 +63,79 @@ export function usePaypal({productId, priceId}: UsePaypalProps) {
       return;
     }
 
+    const doneUrl = (status: 'success' | 'error', subscriptionId?: unknown) => {
+      const params = new URLSearchParams({status});
+      if (typeof subscriptionId === 'string' && subscriptionId) {
+        params.set('subscriptionId', subscriptionId);
+      }
+      if (returnPath) params.set('returnTo', returnPath);
+      if (hostingOrder) params.set('hostingOrder', hostingOrder);
+      if (premiumPurchase) params.set('premiumPurchase', premiumPurchase);
+      return `${base_url}/checkout/${productId}/${priceId}/paypal/done?${params}`;
+    };
+
     window.paypal
       .Buttons({
         style: {
           label: 'pay',
         },
-        createSubscription: (data, actions) => {
-          return actions.subscription.create({
+        createSubscription: async (data, actions) => {
+          const subscriptionId = await actions.subscription.create({
             application_context: {
               shipping_preference: 'NO_SHIPPING',
-              return_url: `${base_url}/checkout/${productId}/${priceId}/paypal/done?subscriptionId=${data.subscriptionID}&status=success`,
-              cancel_url: `${base_url}/checkout/${productId}/${priceId}/paypal/done?status=error`,
+              return_url: doneUrl('success', data.subscriptionID),
+              cancel_url: doneUrl('error'),
             },
             plan_id: price.paypal_id!,
+            custom_id: hostingOrder
+              ? `hosting_order:${hostingOrder}`
+              : premiumPurchase
+                ? `premium_subdomain_purchase:${premiumPurchase}`
+                : undefined,
           });
+
+          if (hostingOrder) {
+            await apiClient.post(
+              'billing/paypal/register-hosting-subscription-attempt',
+              {
+                paypal_subscription_id: subscriptionId,
+                hosting_order: hostingOrder,
+              },
+            );
+          } else if (premiumPurchase) {
+            await apiClient.post(
+              'billing/paypal/register-premium-subdomain-subscription-attempt',
+              {
+                paypal_subscription_id: subscriptionId,
+                premium_purchase: premiumPurchase,
+              },
+            );
+          }
+
+          return subscriptionId;
         },
         onApprove: (data, actions) => {
-          actions.redirect(
-            `${base_url}/checkout/${productId}/${priceId}/paypal/done?subscriptionId=${data.subscriptionID}&status=success`,
-          );
+          actions.redirect(doneUrl('success', data.subscriptionID));
           return Promise.resolve();
         },
-        onError: e => {
-          location.href = `${base_url}/checkout/${productId}/${priceId}/paypal/done?status=error`;
+        onError: () => {
+          location.href = doneUrl('error');
         },
       })
       .render(paypalElementRef.current)
       .then(() => {
         paypalButtonsRendered.current = true;
       });
-  }, [productId, priceId, paypalIsLoaded, base_url, products]);
+  }, [
+    productId,
+    priceId,
+    paypalIsLoaded,
+    base_url,
+    products,
+    returnPath,
+    hostingOrder,
+    premiumPurchase,
+  ]);
 
   return {
     paypalElementRef,

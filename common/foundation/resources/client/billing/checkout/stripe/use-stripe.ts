@@ -15,8 +15,16 @@ interface UseStripeProps {
   type: 'createSetupIntent' | 'createSubscription';
   productId?: string | number;
   priceId?: string | number;
+  hostingOrder?: string;
+  premiumPurchase?: string;
 }
-export function useStripe({type, productId, priceId}: UseStripeProps) {
+export function useStripe({
+  type,
+  productId,
+  priceId,
+  hostingOrder,
+  premiumPurchase,
+}: UseStripeProps) {
   const {user} = useAuth();
   const isDarkMode = useIsDarkMode();
   const isInitiatedRef = useRef<boolean>(false);
@@ -47,10 +55,13 @@ export function useStripe({type, productId, priceId}: UseStripeProps) {
       // create partial subscription for clientSecret
       type === 'createSetupIntent'
         ? createStripeSetupIntent()
-        : createPartialStripeSubscription({
-            product_id: Number(productId),
-            price_id: priceId ? Number(priceId) : undefined,
-          }),
+        : createPartialStripeSubscription(
+            {
+              product_id: Number(productId),
+              price_id: priceId ? Number(priceId) : undefined,
+            },
+            checkoutHeaders(hostingOrder, premiumPurchase),
+          ),
     ]).then(([stripe, _backendResult]) => {
       const backendResult = _backendResult as
         | CreatePartialStripeSubscription200
@@ -95,6 +106,8 @@ export function useStripe({type, productId, priceId}: UseStripeProps) {
   }, [
     productId,
     priceId,
+    hostingOrder,
+    premiumPurchase,
     billing?.stripe_public_key,
     billing?.stripe?.enable,
     isDarkMode,
@@ -112,4 +125,17 @@ export function useStripe({type, productId, priceId}: UseStripeProps) {
       billing?.stripe_public_key != null && billing?.stripe?.enable,
     subscriptionId,
   };
+}
+
+function checkoutHeaders(
+  hostingOrder?: string,
+  premiumPurchase?: string,
+): {headers: Record<string, string>} | undefined {
+  if (hostingOrder) return {headers: {'X-Hosting-Order': hostingOrder}};
+  if (premiumPurchase) {
+    return {
+      headers: {'X-Premium-Subdomain-Purchase': premiumPurchase},
+    };
+  }
+  return undefined;
 }

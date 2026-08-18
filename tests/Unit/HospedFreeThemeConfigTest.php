@@ -51,6 +51,40 @@ class HospedFreeThemeConfigTest extends TestCase
         }
     }
 
+    public function test_dark_theme_uses_the_product_eclipse_palette(): void
+    {
+        $theme = require dirname(__DIR__, 2) . '/config/themes.php';
+        $dark = $theme['dark'];
+
+        $this->assertSame('#080916', $dark['--be-background']);
+        $this->assertSame('#111426', $dark['--be-card']);
+        $this->assertSame('#625DEB', $dark['--be-primary']);
+        $this->assertSame('#A4A7BB', $dark['--be-muted-foreground']);
+        $this->assertSame('#0D1020', $dark['--be-sidebar']);
+        $this->assertSame('#222148', $dark['--be-sidebar-accent']);
+
+        $this->assertGreaterThanOrEqual(
+            3,
+            $this->contrast($dark['--be-input'], $dark['--be-card']),
+        );
+        $this->assertGreaterThanOrEqual(
+            3,
+            $this->contrast($dark['--be-input'], $dark['--be-muted']),
+        );
+
+        $landingCss = strtolower(
+            file_get_contents(
+                dirname(__DIR__, 2) .
+                    '/resources/client/landing/landing-tokens.css',
+            ),
+        );
+
+        $this->assertStringContainsString(
+            '--hf-accent: #625deb',
+            $landingCss,
+        );
+    }
+
     public function test_landing_and_manifest_no_longer_use_the_inherited_cyan_palette(): void
     {
         $root = dirname(__DIR__, 2);

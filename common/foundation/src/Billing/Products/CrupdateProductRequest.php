@@ -42,7 +42,7 @@ class CrupdateProductRequest extends FormRequest
                     $this->isCreating() && !$this->boolean('free'),
                 ),
             ],
-            'prices.*.id' => 'integer',
+            'prices.*.id' => 'integer|distinct',
             'prices.*.currency' => [
                 Rule::when($this->isCreating(), 'required'),
                 'string',

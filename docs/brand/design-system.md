@@ -4,24 +4,26 @@
 
 ## Tokens
 
-| Papel | Claro |
-| --- | ---: |
-| Background | #F8F8FC |
-| Foreground | #202034 |
-| Card / Popover | #FFFFFF |
-| Primary | #5C5AA4 |
-| Primary foreground | #FFFFFF |
-| Secondary | #F0EFF8 |
-| Secondary foreground | #202034 |
-| Muted | #F0EFF8 |
-| Muted foreground | #6F7083 |
-| Accent | #766CAF |
-| Accent foreground | #FFFFFF |
-| Border / Input | #DDDCEA |
-| Ring | #5C5AA4 |
-| Destructive | #B91C1C |
+| Papel | Claro | Escuro Product Eclipse |
+| --- | ---: | ---: |
+| Background | #F8F8FC | #080916 |
+| Foreground | #202034 | #F5F4FB |
+| Card | #FFFFFF | #111426 |
+| Popover | #FFFFFF | #15182C |
+| Primary | #5C5AA4 | #625DEB |
+| Primary foreground | #FFFFFF | #FFFFFF |
+| Secondary | #F0EFF8 | #181B31 |
+| Secondary foreground | #202034 | #F5F4FB |
+| Muted | #F0EFF8 | #15182C |
+| Muted foreground | #6F7083 | #A4A7BB |
+| Accent | #766CAF | #222148 |
+| Accent foreground | #FFFFFF | #F5F4FB |
+| Border | #DDDCEA | #292C44 |
+| Input | #8E8AA7 | #606487 |
+| Ring | #5C5AA4 | #625DEB |
+| Destructive | #B91C1C | #FCA5A5 |
 
-O tema escuro deve ser derivado semanticamente e validado no produto real. Não manter duas paletas independentes nem mapear tokens por semelhança visual sem teste de contraste.
+O tema escuro usa os mesmos papéis Product Eclipse na landing, no painel e no admin. A composição de cada superfície continua própria: a landing persuade; as áreas autenticadas priorizam operação, leitura e estado. Não copiar seletores da landing para telas de produto.
 
 ## Tipografia
 

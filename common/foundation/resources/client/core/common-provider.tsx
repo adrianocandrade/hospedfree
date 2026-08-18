@@ -3,6 +3,7 @@ import {PwaInstallPrompt} from '@app/pwa/pwa-install-prompt';
 import {SettingsPreviewListener} from '@common/admin/settings/preview/settings-preview-listener';
 import {auth, useAuth} from '@common/auth/use-auth';
 import {ColorSchemeProvider} from '@common/core/color-scheme-provider';
+import {GoogleAnalyticsConsentGate} from '@common/core/analytics/google-analytics-consent-gate';
 import {BaseSiteConfig} from '@common/core/settings/base-site-config';
 import {SiteConfigContext} from '@common/core/settings/site-config-context';
 import {useShowGlobalLoadingBar} from '@common/core/use-show-global-loading-bar';
@@ -65,6 +66,7 @@ export function RootRoute() {
       <GlobalTopLoadingBar />
       <Outlet />
       <SettingsPreviewListener />
+      <GoogleAnalyticsConsentGate />
       <CookieNotice />
       <PwaInstallPrompt />
       <ToastContainer />

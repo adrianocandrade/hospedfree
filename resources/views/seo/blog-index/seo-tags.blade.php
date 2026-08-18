@@ -1,6 +1,6 @@
 @php
   $title = 'Blog - ' . settings('branding.site_name');
-  $description = 'Guias e novidades sobre presenca digital, links, QR codes e analytics.';
+  $description = 'Guias práticos da HospedFree sobre hospedagem, domínios, arquivos, bancos MySQL, SSL e publicação de sites.';
   $url = urls()->blogIndex();
   $postItems = $posts['data'] ?? [];
   $schema = [

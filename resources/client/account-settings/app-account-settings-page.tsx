@@ -1,7 +1,10 @@
 import {AccountSettingsPageLayout} from '@app/account-settings/account-settings-page-layout';
+import {CustomerCommunicationsPanel} from '@app/account-settings/customer-communications-panel';
+import {CustomerSecurityEventsPanel} from '@app/account-settings/customer-security-events-panel';
 import {UpgradeButton} from '@app/dashboard/layout/sidenav/upgrade-button';
 import {getAccountSettingsOptions} from '@common/auth/ui/account-settings/account-settings-queries';
 import {BasicInfoPanel} from '@common/auth/ui/account-settings/basic-info-panel';
+import {AccessTokenPanel} from '@common/auth/ui/account-settings/access-token-panel/access-token-panel';
 import {ChangePasswordPanel} from '@common/auth/ui/account-settings/change-password-panel';
 import {DangerZonePanel} from '@common/auth/ui/account-settings/danger-zone-panel/danger-zone-panel';
 import {LocalizationPanel} from '@common/auth/ui/account-settings/localization-panel';
@@ -9,7 +12,6 @@ import {SessionsPanel} from '@common/auth/ui/account-settings/sessions-panel';
 import {SocialLoginPanel} from '@common/auth/ui/account-settings/social-login-panel';
 import {TwoFactorPanel} from '@common/auth/ui/account-settings/two-factor-panel';
 import {ConfirmPasswordDialogProvider} from '@common/auth/ui/confirm-password/confirm-password-dialog';
-import {useAuth} from '@common/auth/use-auth';
 import {DashboardLayout} from '@common/ui/dashboard/dashboard-layout';
 import {DashboardLayoutContext} from '@common/ui/dashboard/dashboard-layout-context';
 import {Sidebar} from '@common/ui/dashboard/sidebar';
@@ -21,12 +23,10 @@ import {useSettings} from '@ui/settings/use-settings';
 import {useMediaQuery} from '@ui/utils/hooks/use-media-query';
 import {
   ChevronLeftIcon,
-  KeyIcon,
+  HistoryIcon,
   LockIcon,
   SettingsIcon,
   StoreIcon,
-  UsersIcon,
-  WebhookIcon,
 } from 'lucide-react';
 import {use} from 'react';
 import {Link, NavLink, Outlet} from 'react-router';
@@ -68,7 +68,7 @@ function AppNavbar() {
 export function GeneralSettingsPanel() {
   const query = useSuspenseQuery(getAccountSettingsOptions());
   return (
-    <AccountSettingsPageLayout title={<Trans message="General" />}>
+    <AccountSettingsPageLayout title={<Trans message="Minha conta" />}>
       <BasicInfoPanel user={query.data.data} />
       <SocialLoginPanel user={query.data.data} />
       <LocalizationPanel user={query.data.data} />
@@ -80,17 +80,26 @@ export function GeneralSettingsPanel() {
 export function SecuritySettingsPanel() {
   const query = useSuspenseQuery(getAccountSettingsOptions());
   return (
-    <AccountSettingsPageLayout title={<Trans message="Security" />}>
+    <AccountSettingsPageLayout title={<Trans message="Segurança" />}>
       <ChangePasswordPanel />
       <TwoFactorPanel user={query.data.data} />
+      <AccessTokenPanel user={query.data.data} />
+    </AccountSettingsPageLayout>
+  );
+}
+
+export function ActivitySettingsPanel() {
+  return (
+    <AccountSettingsPageLayout title={<Trans message="Atividade da conta" />}>
       <SessionsPanel />
+      <CustomerSecurityEventsPanel />
+      <CustomerCommunicationsPanel />
     </AccountSettingsPageLayout>
   );
 }
 
 function AccountSettingsSidebar() {
   const {isMobileMode} = use(DashboardLayoutContext);
-  const {hasPermission} = useAuth();
   const {billing} = useSettings();
 
   return (
@@ -110,14 +119,14 @@ function AccountSettingsSidebar() {
           icon={<ChevronLeftIcon />}
           className="text-base font-semibold"
         >
-          <Trans message="Settings" />
+          <Trans message="Minha conta" />
         </Sidebar.MenuButton>
       </Sidebar.Header>
 
       <Sidebar.Content>
         <Sidebar.Group>
           <Sidebar.GroupLabel>
-            <Trans message="Account" />
+            <Trans message="Conta" />
           </Sidebar.GroupLabel>
           <Sidebar.GroupContent>
             <Sidebar.Menu>
@@ -126,7 +135,7 @@ function AccountSettingsSidebar() {
                   render={<NavLink to="/account-settings/general" />}
                   icon={<SettingsIcon />}
                 >
-                  <Trans message="General" />
+                  <Trans message="Dados pessoais" />
                 </Sidebar.MenuButton>
               </Sidebar.MenuItem>
               <Sidebar.MenuItem>
@@ -134,15 +143,15 @@ function AccountSettingsSidebar() {
                   render={<NavLink to="/account-settings/security" />}
                   icon={<LockIcon />}
                 >
-                  <Trans message="Security" />
+                  <Trans message="Segurança" />
                 </Sidebar.MenuButton>
               </Sidebar.MenuItem>
               <Sidebar.MenuItem>
                 <Sidebar.MenuButton
-                  render={<NavLink to="/account-settings/workspaces" />}
-                  icon={<UsersIcon />}
+                  render={<NavLink to="/account-settings/activity" />}
+                  icon={<HistoryIcon />}
                 >
-                  <Trans message="Workspaces" />
+                  <Trans message="Atividade" />
                 </Sidebar.MenuButton>
               </Sidebar.MenuItem>
               {billing?.enable && (
@@ -151,38 +160,10 @@ function AccountSettingsSidebar() {
                     render={<NavLink to="/account-settings/billing" />}
                     icon={<StoreIcon />}
                   >
-                    <Trans message="Billing" />
+                    <Trans message="Faturamento" />
                   </Sidebar.MenuButton>
                 </Sidebar.MenuItem>
               )}
-            </Sidebar.Menu>
-          </Sidebar.GroupContent>
-        </Sidebar.Group>
-
-        <Sidebar.Group>
-          <Sidebar.GroupLabel>
-            <Trans message="Developer" />
-          </Sidebar.GroupLabel>
-          <Sidebar.GroupContent>
-            <Sidebar.Menu>
-              {hasPermission('api.access') && (
-                <Sidebar.MenuItem>
-                  <Sidebar.MenuButton
-                    render={<NavLink to="/account-settings/api-keys" />}
-                    icon={<KeyIcon />}
-                  >
-                    <Trans message="API keys" />
-                  </Sidebar.MenuButton>
-                </Sidebar.MenuItem>
-              )}
-              <Sidebar.MenuItem>
-                <Sidebar.MenuButton
-                  render={<NavLink to="/account-settings/webhooks" />}
-                  icon={<WebhookIcon />}
-                >
-                  <Trans message="Webhooks" />
-                </Sidebar.MenuButton>
-              </Sidebar.MenuItem>
             </Sidebar.Menu>
           </Sidebar.GroupContent>
         </Sidebar.Group>

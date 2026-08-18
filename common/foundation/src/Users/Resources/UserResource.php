@@ -108,6 +108,11 @@ class UserResource extends JsonResource
                     fn(PersonalAccessToken $token) => [
                         'id' => $token->id,
                         'name' => $token->name,
+                        'abilities' => array_values(array_map(
+                            fn(mixed $ability): string => (string) $ability,
+                            (array) $token->abilities,
+                        )),
+                        'expires_at' => $token->expires_at,
                         'last_used_at' => $token->last_used_at,
                         'created_at' => $token->created_at,
                     ],
@@ -129,6 +134,10 @@ class UserResource extends JsonResource
                     : null,
             ),
             'email_verified_at' => $this->email_verified_at,
+            'pending_email' => $this->when(
+                $loadAccountSettingsData,
+                $this->pending_email,
+            ),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'latest_user_session' => $this->whenLoaded('latestUserSession'),

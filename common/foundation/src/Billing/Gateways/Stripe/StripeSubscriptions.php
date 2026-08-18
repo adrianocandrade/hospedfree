@@ -4,6 +4,7 @@ namespace Common\Billing\Gateways\Stripe;
 
 use App\Models\User;
 use Carbon\Carbon;
+use Common\Billing\Checkout\CheckoutReference;
 use Common\Billing\Invoices\Invoice;
 use Common\Billing\Models\Price;
 use Common\Billing\Models\Product;
@@ -34,7 +35,7 @@ class StripeSubscriptions
             StripeSubscription::STATUS_PAST_DUE;
     }
 
-    public function sync(string $stripeSubscriptionId): void
+    public function sync(string $stripeSubscriptionId): Subscription
     {
         $stripeSubscription = $this->client->subscriptions->retrieve(
             $stripeSubscriptionId,
@@ -53,6 +54,20 @@ class StripeSubscriptions
             'gateway_name' => 'stripe',
             'gateway_id' => $stripeSubscription->id,
         ]);
+        $checkoutReference = CheckoutReference::normalize(
+            $stripeSubscription->metadata['checkout_reference'] ?? null,
+        );
+
+        if (
+            $subscription->exists &&
+            $subscription->checkout_reference &&
+            $checkoutReference &&
+            $subscription->checkout_reference !== $checkoutReference
+        ) {
+            throw new \DomainException(
+                'The checkout reference for this subscription cannot be changed.',
+            );
+        }
 
         // Cancellation date...
         if ($stripeSubscription->cancel_at_period_end) {
@@ -81,8 +96,7 @@ class StripeSubscriptions
                 ? StripeSubscription::STATUS_INCOMPLETE
                 : $stripeSubscription->status;
 
-        $subscription
-            ->fill([
+        $subscriptionData = [
                 'price_id' => $price->id,
                 'product_id' => $price->product_id,
                 'gateway_name' => 'stripe',
@@ -101,8 +115,13 @@ class StripeSubscriptions
                             $stripeSubscription->trial_end,
                         )
                         : null,
-            ])
-            ->save();
+            ];
+
+        if ($checkoutReference) {
+            $subscriptionData['checkout_reference'] = $checkoutReference;
+        }
+
+        $subscription->fill($subscriptionData)->save();
 
         if (
             $stripeSubscription->latest_invoice &&
@@ -114,18 +133,32 @@ class StripeSubscriptions
                 $stripeSubscription->latest_invoice->toArray(),
             );
         }
+
+        return $subscription;
     }
 
     public function createPartial(
         Product $product,
         User $user,
         ?int $priceId = null,
+        ?string $checkoutReference = null,
     ): array {
         $price = $priceId
             ? $product->prices()->findOrFail($priceId)
             : $product->prices->firstOrFail();
 
         $user = $this->syncStripeCustomer($user);
+        if ($checkoutReference !== null) {
+            $checkoutReference = CheckoutReference::normalize(
+                $checkoutReference,
+            );
+
+            if (!$checkoutReference) {
+                throw new \InvalidArgumentException(
+                    'Invalid checkout reference.',
+                );
+            }
+        }
 
         // find incomplete subscriptions for this customer and price
         $stripeSubscriptions = $this->client->subscriptions->all([
@@ -139,14 +172,21 @@ class StripeSubscriptions
 
         $stripeSubscription = null;
         foreach ($stripeSubscriptions as $subscription) {
+            $remoteCheckoutReference = CheckoutReference::normalize(
+                $subscription->metadata['checkout_reference'] ?? null,
+            );
+            $referenceMatches = $checkoutReference
+                ? $remoteCheckoutReference === $checkoutReference
+                : $remoteCheckoutReference === null;
             $isIncompleteTrial =
                 $subscription->status === StripeSubscription::STATUS_TRIALING &&
                 $subscription->pending_setup_intent !== null;
             $isIncomplete =
                 $subscription->status === StripeSubscription::STATUS_INCOMPLETE;
             if (
-                ($product->trial_period_days && $isIncompleteTrial) ||
-                $isIncomplete
+                $referenceMatches &&
+                (($product->trial_period_days && $isIncompleteTrial) ||
+                    $isIncomplete)
             ) {
                 $stripeSubscription = $subscription;
                 break;
@@ -155,7 +195,7 @@ class StripeSubscriptions
 
         // if matching subscription was not created yet, do it now
         if (!$stripeSubscription) {
-            $stripeSubscription = $this->client->subscriptions->create([
+            $params = [
                 'customer' => $user->stripe_id,
                 'items' => [
                     [
@@ -175,7 +215,24 @@ class StripeSubscriptions
                     // needed if using trial period, because payment_intent on latest_invoice will not exist
                     'pending_setup_intent',
                 ],
-            ]);
+            ];
+
+            if ($checkoutReference) {
+                $params['metadata'] = [
+                    'checkout_reference' => $checkoutReference,
+                ];
+            }
+
+            $requestOptions = $checkoutReference
+                ? [
+                    'idempotency_key' =>
+                        'hosting_checkout_' . hash('sha256', $checkoutReference),
+                ]
+                : [];
+            $stripeSubscription = $this->client->subscriptions->create(
+                $params,
+                $requestOptions,
+            );
         }
 
         // return client secret, needed in frontend to complete subscription

@@ -2,7 +2,12 @@
 
 namespace Common\Billing\Gateways\Paypal;
 
+use App\Hosting\Models\HostingOrder;
+use App\Hosting\Models\HostingPremiumSubdomainPurchase;
+use App\Hosting\Services\HostingCheckoutService;
+use App\Hosting\Services\HostingPremiumSubdomainService;
 use App\Models\User;
+use Common\Billing\Checkout\CheckoutReference;
 use Common\Billing\Gateways\Stripe\FormatsMoney;
 use Common\Billing\Invoices\Invoice;
 use Common\Billing\Models\Price;
@@ -11,11 +16,18 @@ use Common\Billing\Notifications\NewInvoiceAvailable;
 use Common\Billing\Subscription;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PaypalSubscriptions
 {
     use InteractsWithPaypalRestApi, FormatsMoney;
+
+    public function __construct(
+        private HostingCheckoutService $hostingCheckout,
+        private HostingPremiumSubdomainService $premiumSubdomains,
+    ) {}
 
     public function isIncomplete(Subscription $subscription): bool
     {
@@ -32,85 +44,407 @@ class PaypalSubscriptions
     public function sync(
         string $paypalSubscriptionId,
         ?int $userId = null,
-    ): void {
+        ?string $expectedHostingOrderUuid = null,
+        ?string $expectedPremiumPurchaseUuid = null,
+    ): Subscription {
+        $response = $this->remoteSubscription($paypalSubscriptionId);
+
+        $price = Price::where('paypal_id', $response['plan_id'])->firstOrFail();
+        $checkoutReference = CheckoutReference::normalize(
+            $response['custom_id'] ?? null,
+        );
+        $hostingOrderUuid = $this->hostingCheckout->orderUuidFromReference(
+            $checkoutReference,
+        );
+        $premiumPurchaseUuid = $this->premiumSubdomains->purchaseUuidFromReference(
+            $checkoutReference,
+        );
+
+        if ($expectedHostingOrderUuid && $expectedPremiumPurchaseUuid) {
+            throw ValidationException::withMessages([
+                'checkout' => __(
+                    'A checkout cannot contain two billing references.',
+                ),
+            ]);
+        }
+
+        if (
+            $expectedHostingOrderUuid &&
+            $hostingOrderUuid !== $expectedHostingOrderUuid
+        ) {
+            throw ValidationException::withMessages([
+                'hosting_order' => __(
+                    'This payment does not belong to this hosting order.',
+                ),
+            ]);
+        }
+        if (
+            $expectedPremiumPurchaseUuid &&
+            $premiumPurchaseUuid !== $expectedPremiumPurchaseUuid
+        ) {
+            throw ValidationException::withMessages([
+                'premium_purchase' => __(
+                    'This payment does not belong to this premium address checkout.',
+                ),
+            ]);
+        }
+
+        return DB::transaction(function () use (
+            $response,
+            $price,
+            $checkoutReference,
+            $hostingOrderUuid,
+            $premiumPurchaseUuid,
+            $userId,
+        ): Subscription {
+            $subscription = Subscription::query()
+                ->where('gateway_name', 'paypal')
+                ->where('gateway_id', $response['id'])
+                ->lockForUpdate()
+                ->first();
+
+            if (
+                $subscription &&
+                $userId &&
+                $subscription->user_id !== $userId
+            ) {
+                throw ValidationException::withMessages([
+                    'paypal_subscription_id' => __(
+                        'This PayPal subscription belongs to another account.',
+                    ),
+                ]);
+            }
+
+            if ($premiumPurchaseUuid) {
+                $user = $this->premiumSubdomains->resolvePurchaseOwnerForPayment(
+                    $premiumPurchaseUuid,
+                    $price,
+                    $userId,
+                    $subscription,
+                );
+            } elseif ($hostingOrderUuid) {
+                $order = $this->validateHostingOrderIdentity(
+                    $hostingOrderUuid,
+                    $price,
+                    $userId,
+                    $subscription,
+                );
+                $user = $order->user;
+            } elseif ($subscription) {
+                $user = $subscription->user;
+            } else {
+                $user = $this->resolveGenericCheckoutUser($response, $userId);
+            }
+
+            $payerId = Arr::get($response, 'subscriber.payer_id');
+            if (!is_string($payerId) || $payerId === '') {
+                throw ValidationException::withMessages([
+                    'paypal_subscription_id' => __(
+                        'PayPal did not return a verified payer for this subscription.',
+                    ),
+                ]);
+            }
+
+            $payerOwner = User::query()
+                ->where('paypal_id', $payerId)
+                ->whereKeyNot($user->id)
+                ->exists();
+
+            if (
+                $payerOwner ||
+                ($user->paypal_id && $user->paypal_id !== $payerId)
+            ) {
+                throw ValidationException::withMessages([
+                    'paypal_subscription_id' => __(
+                        'This PayPal payer is already linked to another account.',
+                    ),
+                ]);
+            }
+
+            if (!$user->paypal_id) {
+                $user->forceFill(['paypal_id' => $payerId])->save();
+            }
+
+            $subscription ??= $user->subscriptions()->make([
+                'gateway_name' => 'paypal',
+                'gateway_id' => $response['id'],
+            ]);
+
+            if (
+                $subscription->exists &&
+                $subscription->checkout_reference &&
+                $checkoutReference &&
+                $subscription->checkout_reference !== $checkoutReference
+            ) {
+                throw new \DomainException(
+                    'The checkout reference for this subscription cannot be changed.',
+                );
+            }
+
+            $isOnTrial =
+                // subscription has 2 cycles, first is trial, second is regular
+                count(
+                    Arr::get($response, 'billing_info.cycle_executions', []),
+                ) === 2 &&
+                // first cycle is trial
+                Arr::get(
+                    $response,
+                    'billing_info.cycle_executions.0.tenure_type',
+                ) === 'TRIAL' &&
+                // trial cycle has been completed
+                Arr::get(
+                    $response,
+                    'billing_info.cycle_executions.0.cycles_completed',
+                ) === 1 &&
+                // regular cycle has not completed yet
+                Arr::get(
+                    $response,
+                    'billing_info.cycle_executions.1.cycles_completed',
+                ) === 0;
+
+            $nextBillingTime = Arr::get(
+                $response,
+                'billing_info.next_billing_time',
+                null,
+            );
+
+            $trialEndsAt =
+                $isOnTrial && $nextBillingTime
+                    ? Carbon::parse($nextBillingTime)
+                    : null;
+
+            $data = [
+                'price_id' => $price->id,
+                'product_id' => $price->product_id,
+                'gateway_name' => 'paypal',
+                'gateway_id' => $paypalSubscriptionId,
+                'gateway_status' => $response['status'],
+                'trial_ends_at' => $trialEndsAt,
+                'renews_at' =>
+                    $response['status'] === 'ACTIVE' && $nextBillingTime
+                        ? Carbon::parse($nextBillingTime)
+                        : null,
+            ];
+
+            if ($response['status'] === 'ACTIVE') {
+                $data['ends_at'] = null;
+            }
+
+            if (
+                in_array(
+                    $response['status'],
+                    ['CANCELLED', 'EXPIRED', 'SUSPENDED'],
+                    true,
+                )
+            ) {
+                $data['ends_at'] = $subscription->renews_at;
+                $data['renews_at'] = null;
+            }
+
+            if ($checkoutReference) {
+                $data['checkout_reference'] = $checkoutReference;
+            }
+
+            $subscription->fill($data)->save();
+
+            $this->createOrUpdateInvoice($subscription, $response);
+
+            return $subscription;
+        }, attempts: 3);
+    }
+
+    public function validateHostingAttempt(
+        string $paypalSubscriptionId,
+        string $hostingOrderUuid,
+        int $userId,
+    ): HostingOrder {
+        $response = $this->remoteSubscription($paypalSubscriptionId);
+        $price = Price::where('paypal_id', $response['plan_id'])->firstOrFail();
+        $reference = CheckoutReference::normalize(
+            $response['custom_id'] ?? null,
+        );
+
+        if (
+            $this->hostingCheckout->orderUuidFromReference($reference) !==
+            $hostingOrderUuid
+        ) {
+            throw ValidationException::withMessages([
+                'hosting_order' => __(
+                    'This payment attempt does not belong to this hosting order.',
+                ),
+            ]);
+        }
+
+        return $this->hostingCheckout->resolvePendingOrder(
+            $hostingOrderUuid,
+            $userId,
+            $price->product_id,
+            $price->id,
+        );
+    }
+
+    public function validatePremiumSubdomainAttempt(
+        string $paypalSubscriptionId,
+        string $premiumPurchaseUuid,
+        int $userId,
+    ): HostingPremiumSubdomainPurchase {
+        $response = $this->remoteSubscription($paypalSubscriptionId);
+        $price = Price::where('paypal_id', $response['plan_id'])->firstOrFail();
+        $reference = CheckoutReference::normalize(
+            $response['custom_id'] ?? null,
+        );
+
+        if (
+            $this->premiumSubdomains->purchaseUuidFromReference($reference) !==
+            $premiumPurchaseUuid
+        ) {
+            throw ValidationException::withMessages([
+                'premium_purchase' => __(
+                    'This payment attempt does not belong to this premium address checkout.',
+                ),
+            ]);
+        }
+
+        return $this->premiumSubdomains->resolvePendingPurchase(
+            $premiumPurchaseUuid,
+            $userId,
+            $price->product_id,
+            $price->id,
+        );
+    }
+
+    public function inspectRemoteSubscription(
+        string $paypalSubscriptionId,
+    ): ?array {
         $response = $this->paypal()->get(
             "billing/subscriptions/$paypalSubscriptionId",
         );
 
-        $price = Price::where('paypal_id', $response['plan_id'])->firstOrFail();
-
-        if ($userId != null) {
-            $user = User::where('id', $userId)->firstOrFail();
-            $user->update(['paypal_id' => $response['subscriber']['payer_id']]);
-        } else {
-            $user = User::where(
-                'paypal_id',
-                $response['subscriber']['payer_id'],
-            )->firstOrFail();
+        if ($response->status() === 404) {
+            return null;
         }
 
-        $subscription = $user->subscriptions()->firstOrNew([
-            'gateway_name' => 'paypal',
-            'gateway_id' => $response['id'],
-        ]);
+        $response->throw();
+
+        $payload = $response->json();
 
         if (
-            in_array($response['status'], ['CANCELLED', 'EXPIRED', 'SUSPENDED'])
+            !is_array($payload) ||
+            ($payload['id'] ?? null) !== $paypalSubscriptionId ||
+            !is_string($payload['plan_id'] ?? null)
         ) {
-            $subscription->markAsCancelled();
+            throw ValidationException::withMessages([
+                'paypal_subscription_id' => __(
+                    'PayPal returned an invalid subscription response.',
+                ),
+            ]);
         }
 
-        $isOnTrial =
-            // subscription has 2 cycles, first is trial, second is regular
-            count(Arr::get($response, 'billing_info.cycle_executions', [])) ===
-                2 &&
-            // first cycle is trial
-            Arr::get(
-                $response,
-                'billing_info.cycle_executions.0.tenure_type',
-            ) === 'TRIAL' &&
-            // trial cycle has been completed
-            Arr::get(
-                $response,
-                'billing_info.cycle_executions.0.cycles_completed',
-            ) === 1 &&
-            // regular cycle has not completed yet
-            Arr::get(
-                $response,
-                'billing_info.cycle_executions.1.cycles_completed',
-            ) === 0;
+        return $payload;
+    }
 
-        $nextBillingTime = Arr::get(
-            $response,
-            'billing_info.next_billing_time',
-            null,
+    public function cancelPendingHostingAttempt(
+        string $paypalSubscriptionId,
+    ): bool {
+        $response = $this->paypal()->post(
+            "billing/subscriptions/$paypalSubscriptionId/cancel",
+            ['reason' => 'Hosting checkout expired before approval.'],
         );
 
-        $trialEndsAt =
-            $isOnTrial && $nextBillingTime
-                ? Carbon::parse($nextBillingTime)
-                : null;
-
-        $data = [
-            'price_id' => $price->id,
-            'product_id' => $price->product_id,
-            'gateway_name' => 'paypal',
-            'gateway_id' => $paypalSubscriptionId,
-            'gateway_status' => $response['status'],
-            'trial_ends_at' => $trialEndsAt,
-            'renews_at' =>
-                $response['status'] === 'ACTIVE' && $nextBillingTime
-                    ? Carbon::parse($nextBillingTime)
-                    : null,
-        ];
-
-        if ($response['status'] === 'ACTIVE') {
-            $data['ends_at'] = null;
+        if ($response->status() === 404) {
+            // A missing resource is ambiguous when merchant credentials or
+            // sandbox/live mode changed. The caller must keep the local
+            // reservation blocked for manual verification.
+            return false;
         }
 
-        $subscription->fill($data)->save();
+        $response->throw();
 
-        $this->createOrUpdateInvoice($subscription, $response->json());
+        return $response->successful();
+    }
+
+    private function remoteSubscription(string $paypalSubscriptionId): array
+    {
+        $payload = $this->inspectRemoteSubscription($paypalSubscriptionId);
+
+        if (!$payload) {
+            throw ValidationException::withMessages([
+                'paypal_subscription_id' => __(
+                    'The PayPal subscription could not be found.',
+                ),
+            ]);
+        }
+
+        return $payload;
+    }
+
+    private function validateHostingOrderIdentity(
+        string $orderUuid,
+        Price $price,
+        ?int $requestedUserId,
+        ?Subscription $subscription,
+    ): HostingOrder {
+        $order = HostingOrder::query()
+            ->with(['user', 'account'])
+            ->where('uuid', $orderUuid)
+            ->lockForUpdate()
+            ->first();
+
+        $alreadyLinked =
+            $subscription &&
+            ($order?->subscription_id === $subscription->id ||
+                $order?->account?->subscription_id === $subscription->id);
+
+        if (
+            !$order ||
+            ($requestedUserId && $order->user_id !== $requestedUserId) ||
+            ($subscription && $subscription->user_id !== $order->user_id) ||
+            ($order->subscription_id && !$alreadyLinked) ||
+            ($order->account && !$alreadyLinked) ||
+            (!$alreadyLinked &&
+                ($order->product_id !== $price->product_id ||
+                    $order->price_id !== $price->id))
+        ) {
+            throw ValidationException::withMessages([
+                'hosting_order' => __(
+                    'This payment does not belong to this hosting order.',
+                ),
+            ]);
+        }
+
+        return $order;
+    }
+
+    private function resolveGenericCheckoutUser(
+        array $response,
+        ?int $requestedUserId,
+    ): User {
+        $payerId = Arr::get($response, 'subscriber.payer_id');
+
+        if (!$requestedUserId) {
+            return User::query()
+                ->where('paypal_id', $payerId)
+                ->lockForUpdate()
+                ->firstOrFail();
+        }
+
+        $user = User::query()->lockForUpdate()->findOrFail($requestedUserId);
+        $payerEmail = Str::lower(
+            trim((string) Arr::get($response, 'subscriber.email_address', '')),
+        );
+
+        if (
+            (!$user->paypal_id || $user->paypal_id !== $payerId) &&
+            (!$payerEmail || $payerEmail !== Str::lower($user->email))
+        ) {
+            throw ValidationException::withMessages([
+                'paypal_subscription_id' => __(
+                    'The PayPal payer could not be verified for this account.',
+                ),
+            ]);
+        }
+
+        return $user;
     }
 
     public function createOrUpdateInvoice(
@@ -135,10 +469,10 @@ class PaypalSubscriptions
             ? 0
             : $this->priceToCents($subscription->price);
 
-        $invoice = Invoice::whereBetween('created_at', [
-            $startTime,
-            $renewsAt,
-        ])->first();
+        $invoice = Invoice::query()
+            ->where('subscription_id', $subscription->id)
+            ->whereBetween('created_at', [$startTime, $renewsAt])
+            ->first();
 
         if ($invoice) {
             // paid invoices should never be set to unpaid,

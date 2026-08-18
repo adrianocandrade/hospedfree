@@ -1,12 +1,9 @@
-import {CompactUsageTrigger} from '@app/dashboard/layout/sidenav/compact-usage-trigger';
 import {dashboardSidebarIcons} from '@app/dashboard/layout/sidenav/dashboard-sidebar-icons';
 import {DashboardLayoutContext} from '@common/ui/dashboard/dashboard-layout-context';
 import {Sidebar} from '@common/ui/dashboard/sidebar';
 import {Logo} from '@common/ui/navigation/navbar/logo';
-import {WorkspaceSelector} from '@common/workspace/workspace-selector';
-import {Trans} from '@ui/i18n/trans';
 import {use} from 'react';
-import {UsageMeter} from './usage-meter';
+import {HostingSidebarSummary} from './hosting-sidebar-summary';
 
 export function AppDashboardSidebar() {
   const {isMobileMode, leftSidebar} = use(DashboardLayoutContext);
@@ -35,28 +32,9 @@ export function AppDashboardSidebar() {
           </Sidebar.GroupContent>
         </Sidebar.Group>
 
-        <Sidebar.Group>
-          <Sidebar.GroupLabel>
-            <Trans message="Resources" />
-          </Sidebar.GroupLabel>
-          <Sidebar.GroupContent>
-            <Sidebar.MenuFromConfig
-              position="dashboard-secondary"
-              defaultIcons={dashboardSidebarIcons}
-              end={item => item.action === '/dashboard'}
-            />
-          </Sidebar.GroupContent>
-        </Sidebar.Group>
-
-        {leftSidebar.status === 'expanded' && <UsageMeter />}
+        {leftSidebar.status === 'expanded' && <HostingSidebarSummary />}
       </Sidebar.Content>
-      <Sidebar.Footer>
-        {leftSidebar.status === 'collapsed' ? (
-          <CompactUsageTrigger className="mx-auto mb-2.5 shrink-0" />
-        ) : (
-          <WorkspaceSelector />
-        )}
-      </Sidebar.Footer>
+      <Sidebar.Footer />
     </Sidebar.Root>
   );
 }

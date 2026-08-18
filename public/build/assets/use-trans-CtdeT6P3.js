@@ -1,2 +1,0 @@
-import{a as e}from"./rolldown-runtime-Cyuzqnbw.js";import{na as t}from"./icons-DFfxS4V_.js";import{a as n,i as r,n as i,r as a}from"./trans-BIcHQJKD.js";var o=e(t());function s(){let{lines:e,localeCode:t}=a();return{trans:(0,o.useCallback)(n=>c({...n,lines:e,localeCode:t}),[e,t])}}var c=n(e=>{let{lines:t,message:n,values:i,localeCode:a}=e;return n==null?``:(n=t?.[n]||t?.[n.toLowerCase()]||n,i?(n=r(a,e),Object.entries(i).forEach(([e,t])=>{n=n.replace(`:${e}`,`${t}`)}),n):n)},{equals:i});export{s as t};
-//# sourceMappingURL=use-trans-CtdeT6P3.js.map

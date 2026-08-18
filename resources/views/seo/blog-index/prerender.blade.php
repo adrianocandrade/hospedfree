@@ -7,7 +7,7 @@
 @section('body')
   <main>
     <h1>Blog</h1>
-    <p>Guias e novidades sobre presenca digital, links, QR codes e analytics.</p>
+    <p>Guias práticos sobre hospedagem, domínios, arquivos, bancos MySQL, SSL e publicação de sites.</p>
 
     @if (!empty($categories['data']))
       <nav>

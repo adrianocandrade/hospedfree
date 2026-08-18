@@ -2,13 +2,11 @@
 
 namespace App\Mail;
 
-use App\Bookings\Mail\BookingAppointmentMailable;
-use App\Bookings\Models\BookingAppointment;
-use App\Bookings\Models\BookingService;
+use App\Hosting\Enums\HostingAccountNotificationType;
+use App\Hosting\Notifications\HostingAccountNotification;
 use App\Models\User;
-use App\Notifications\ClickQuotaExhausted;
-use App\Notifications\WebhookDisabledAfterFailures;
-use App\Webhooks\Models\Webhook;
+use App\Support\Enums\SupportTicketNotificationType;
+use App\Support\Notifications\SupportTicketNotification;
 use Common\Auth\Notifications\VerifyEmailWithOtp;
 use Common\Billing\Invoices\Invoice;
 use Common\Billing\Models\Product;
@@ -17,8 +15,7 @@ use Common\Billing\Notifications\PaymentFailed;
 use Common\Billing\Subscription;
 use Common\Notifications\ContactPageMessage;
 use Common\Settings\Validators\MailCredentials\MailCredentialsMailable;
-use Common\Workspaces\Models\Workspace;
-use Common\Workspaces\Notifications\WorkspaceInvitation;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Contracts\Mail\Mailable;
 use Illuminate\Notifications\Notification as NotificationTemplate;
 use Illuminate\Support\Facades\Mail;
@@ -49,14 +46,27 @@ class TestEmailTemplateSender
             return;
         }
 
-        Notification::sendNow(
-            $notifiable,
-            new TestEmailNotification(
-                $this->notificationFor($template, $actor),
-                $template,
-            ),
-            ['mail'],
-        );
+        $previousResetUrlCallback = ResetPassword::$createUrlCallback;
+        if ($template === TestEmailTemplate::PasswordReset) {
+            ResetPassword::createUrlUsing(
+                fn(mixed $user, string $token) => url("password/reset/{$token}"),
+            );
+        }
+
+        try {
+            Notification::sendNow(
+                $notifiable,
+                new TestEmailNotification(
+                    $this->notificationFor($template),
+                    $template,
+                ),
+                ['mail'],
+            );
+        } finally {
+            if ($template === TestEmailTemplate::PasswordReset) {
+                ResetPassword::$createUrlCallback = $previousResetUrlCallback;
+            }
+        }
     }
 
     private function mailableFor(
@@ -66,23 +76,19 @@ class TestEmailTemplateSender
             TestEmailTemplate::MailSetup => new MailCredentialsMailable(
                 config('mail.primary', config('mail.default')),
             ),
-            TestEmailTemplate::BookingConfirmation => $this->bookingMailable(),
             default => null,
         };
     }
 
     private function notificationFor(
         TestEmailTemplate $template,
-        User $actor,
     ): NotificationTemplate {
         return match ($template) {
             TestEmailTemplate::EmailVerification => new VerifyEmailWithOtp(
                 '123456',
             ),
-            TestEmailTemplate::WorkspaceInvitation => new WorkspaceInvitation(
-                new Workspace(['name' => __('Example workspace')]),
-                $actor->name ?: __('Administrator'),
-                'test-invitation',
+            TestEmailTemplate::PasswordReset => new ResetPassword(
+                'test-password-reset-token',
             ),
             TestEmailTemplate::ContactMessage => new ContactPageMessage([
                 'email' => 'visitor@example.com',
@@ -97,9 +103,33 @@ class TestEmailTemplateSender
             TestEmailTemplate::InvoiceAvailable => new NewInvoiceAvailable(
                 new Invoice(['uuid' => 'test-invoice']),
             ),
-            TestEmailTemplate::ClickQuotaExhausted => new ClickQuotaExhausted(),
-            TestEmailTemplate::WebhookDisabled => new WebhookDisabledAfterFailures(
-                new Webhook(['name' => __('Example webhook')]),
+            TestEmailTemplate::HostingReady => $this->hostingNotification(
+                HostingAccountNotificationType::Ready,
+            ),
+            TestEmailTemplate::HostingSuspended => $this->hostingNotification(
+                HostingAccountNotificationType::Suspended,
+            ),
+            TestEmailTemplate::HostingReactivated => $this->hostingNotification(
+                HostingAccountNotificationType::Reactivated,
+            ),
+            TestEmailTemplate::HostingPasswordChanged => $this->hostingNotification(
+                HostingAccountNotificationType::PasswordChanged,
+            ),
+            TestEmailTemplate::HostingActionRequired => $this->hostingNotification(
+                HostingAccountNotificationType::ActionRequired,
+            ),
+            TestEmailTemplate::TicketCreated => $this->supportNotification(
+                SupportTicketNotificationType::Created,
+            ),
+            TestEmailTemplate::TicketReply => $this->supportNotification(
+                SupportTicketNotificationType::Reply,
+            ),
+            TestEmailTemplate::TicketStatusChanged => $this->supportNotification(
+                SupportTicketNotificationType::StatusChanged,
+            ),
+            TestEmailTemplate::TicketStaffActivity => $this->supportNotification(
+                SupportTicketNotificationType::StaffActivity,
+                'customer_reply',
             ),
             default => throw new \LogicException(
                 "Template {$template->value} must be sent as a mailable.",
@@ -118,22 +148,29 @@ class TestEmailTemplateSender
         return $subscription;
     }
 
-    private function bookingMailable(): BookingAppointmentMailable
+    private function hostingNotification(
+        HostingAccountNotificationType $type,
+    ): HostingAccountNotification
     {
-        $appointment = new BookingAppointment([
-            'starts_at' => now()->addDay()->startOfHour(),
-            'timezone' => config('app.timezone', 'UTC'),
-            'meeting_url' => rtrim(config('app.url'), '/') . '/meeting/test',
-            'manage_token' => 'test-booking',
-        ]);
-        $appointment->setRelation(
-            'service',
-            new BookingService(['name' => __('Example consultation')]),
+        return new HostingAccountNotification(
+            type: $type,
+            accountId: 1,
+            domain: 'example.hsite.top',
+            planName: __('HospedFree Pro'),
+            effectiveAt: now()->addDays(7)->toIso8601String(),
         );
+    }
 
-        return new BookingAppointmentMailable(
-            $appointment,
-            BookingAppointment::CONFIRMED,
+    private function supportNotification(
+        SupportTicketNotificationType $type,
+        ?string $activity = null,
+    ): SupportTicketNotification
+    {
+        return new SupportTicketNotification(
+            type: $type,
+            ticketId: 123,
+            status: 'resolved',
+            activity: $activity,
         );
     }
 }

@@ -22,6 +22,8 @@ export interface AdminServerSettings {
   google_id?: string;
   google_secret?: string;
   google_safe_browsing_key?: string;
+  github_id?: string;
+  github_secret?: string;
   twitter_id?: string;
   twitter_secret?: string;
   facebook_id?: string;
@@ -106,6 +108,11 @@ export interface AdminServerSettings {
 
   // sentry
   sentry_dsn?: string;
+  outgoing_email_log_retention_days?: string | number;
+  customer_communication_retention_days?: string | number;
+  customer_security_event_retention_days?: string | number;
+  administrative_security_audit_retention_days?: string | number;
+  user_session_retention_days?: string | number;
 
   // queue
   queue_connection?: string;

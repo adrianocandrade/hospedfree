@@ -26,10 +26,10 @@ class NewInvoiceAvailable extends Notification implements ShouldQueue
     {
         return (new MailMessage())
             ->subject($this->mainLine())
-            ->level('error')
+            ->level('success')
             ->greeting(__('Hello, :name', ['name' => $notifiable->name]))
             ->line($this->descriptionLine())
-            ->action(__('View receipt'), $this->mainAction());
+            ->action(__('hospedfree-notifications.billing.invoice_available.action'), $this->mainAction());
     }
 
     public function toArray(mixed $notifiable): array
@@ -45,7 +45,7 @@ class NewInvoiceAvailable extends Notification implements ShouldQueue
             ],
             'buttonActions' => [
                 [
-                    'label' => __('View receipt'),
+                    'label' => __('hospedfree-notifications.billing.invoice_available.action'),
                     'action' => $this->mainAction(),
                 ],
             ],
@@ -54,18 +54,12 @@ class NewInvoiceAvailable extends Notification implements ShouldQueue
 
     protected function mainLine(): string
     {
-        $siteName = config('app.name');
-        return __(':name payment receipt', [
-            'name' => $siteName,
-        ]);
+        return __('hospedfree-notifications.billing.invoice_available.subject');
     }
 
     protected function descriptionLine(): string
     {
-        $siteName = config('app.name');
-        return __('This is a receipt for your latest :siteName payment.', [
-            'siteName' => $siteName,
-        ]);
+        return __('hospedfree-notifications.billing.invoice_available.line');
     }
 
     protected function mainAction(): string

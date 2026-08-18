@@ -14,7 +14,6 @@ export interface BaseBackendBootstrapData {
   auth_redirect_uri: string;
   guest_role: Role | null;
   default_meta_tags?: string;
-  show_cookie_notice?: boolean;
   uploading_types: Record<keyof typeof UploadType, PartialUploadType>;
   workspaces?: Workspace[];
 }

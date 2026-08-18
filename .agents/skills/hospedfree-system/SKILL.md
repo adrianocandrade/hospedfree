@@ -24,6 +24,9 @@ Ground work in the approved HospedFree product, the inherited code reality and t
 - Module ownership and target architecture: references/module-map.md.
 - Product and implementation limits: references/rules.md.
 - Sensitive surfaces and known issues: references/security-known-issues.md.
+- MOFH client methods, identifier taxonomy, packages and safe smoke tests:
+  references/mofh-api-client.md. Read it before any MOFH API change or real
+  provider test.
 - Validation: references/testing.md.
 - Old HospedFree, plugins, Bixa and Vebto provenance: references/reference-systems.md.
 

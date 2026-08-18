@@ -1,5 +1,6 @@
 import {AdminDocsUrls} from '@app/admin/admin-config';
 import {DocsLink} from '@common/admin/settings/layout/settings-links';
+import {useAuth} from '@common/auth/use-auth';
 import {DashboardLayout} from '@common/ui/dashboard/dashboard-layout';
 import {Tabs} from '@shadcn/tabs/tabs';
 import {Trans} from '@ui/i18n/trans';
@@ -8,6 +9,7 @@ import {Outlet, useMatch} from 'react-router';
 export function Component() {
   const match = useMatch('/admin/logs/:tab');
   const selectedTab = match?.params.tab ?? 'schedule';
+  const {hasPermission} = useAuth();
 
   return (
     <DashboardLayout.MainSection>
@@ -39,14 +41,16 @@ export function Component() {
             >
               <Trans message="Error" />
             </Tabs.LinkTab>
-            <Tabs.LinkTab
-              className="min-w-25"
-              value="outgoing-email"
-              to="/admin/logs/outgoing-email"
-              replace
-            >
-              <Trans message="Email" />
-            </Tabs.LinkTab>
+            {hasPermission('email_logs.view') ? (
+              <Tabs.LinkTab
+                className="min-w-25"
+                value="outgoing-email"
+                to="/admin/logs/outgoing-email"
+                replace
+              >
+                <Trans message="E-mails" />
+              </Tabs.LinkTab>
+            ) : null}
           </Tabs.List>
         </div>
       </Tabs.Root>
@@ -65,6 +69,6 @@ function Title({tab}: TitleProps) {
     case 'error':
       return <Trans message="Error log" />;
     case 'outgoing-email':
-      return <Trans message="Outgoing email log" />;
+      return <Trans message="Log de e-mails enviados" />;
   }
 }

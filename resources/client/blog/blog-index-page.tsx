@@ -1,97 +1,135 @@
 import {BlogCategoryNav} from '@app/blog/blog-category-nav';
 import {blogIndexQueryOptions} from '@app/blog/blog-queries';
-import {BlogPageHeader, BlogShell} from '@app/blog/blog-shell';
-import {PublicBlogPostCard} from '@app/blog/public-blog-post-card';
+import {BlogPageHeader, BlogSeo, BlogShell} from '@app/blog/blog-shell';
+import {
+  PublicBlogFeaturedPost,
+  PublicBlogPostCard,
+} from '@app/blog/public-blog-post-card';
 import {ListPublicBlogPostsParams} from '@app/gen/schemas/list-public-blog-posts-params';
+import {
+  PublicEditorialEmpty,
+  PublicEditorialPagination,
+  PublicEditorialSearch,
+} from '@app/landing/public-editorial-components';
 import {useShowGlobalLoadingBar} from '@common/core/use-show-global-loading-bar';
-import {StaticPageTitle} from '@common/seo/static-page-title';
-import {Empty} from '@shadcn/empty/empty';
-import {BackendPagination} from '@shadcn/table/utils/table-pagination';
-import {TableSearchInput} from '@shadcn/table/utils/table-search-input';
 import {useTableQueryState} from '@shadcn/table/utils/use-table-query-state';
 import {useSuspenseQuery} from '@tanstack/react-query';
-import {Trans} from '@ui/i18n/trans';
 import {message} from '@ui/i18n/message';
+import {Trans} from '@ui/i18n/trans';
 import {NewspaperIcon} from 'lucide-react';
 
 export function Component() {
-  const {setQueryState, searchParams, isLoading, isFiltering} =
+  const {queryState, setQueryState, searchParams, isLoading, isFiltering} =
     useTableQueryState();
   const query = useSuspenseQuery(
     blogIndexQueryOptions(searchParams as ListPublicBlogPostsParams),
   );
   const posts = query.data.posts.data ?? [];
+  const showFeatured = !isFiltering && query.data.posts.meta.current_page === 1;
+  const featuredPost = showFeatured ? posts[0] : undefined;
+  const remainingPosts = featuredPost ? posts.slice(1) : posts;
 
   useShowGlobalLoadingBar({isLoading});
 
   return (
     <BlogShell>
-      <StaticPageTitle>
-        <Trans message="Blog" />
-      </StaticPageTitle>
+      <BlogSeo
+        title="Blog"
+        description="Guias práticos da HospedFree sobre hospedagem, domínios, arquivos, bancos MySQL, SSL e publicação de sites."
+        canonicalPath="/blog"
+      />
       <BlogPageHeader
-        title={
-          <Trans message="Conteúdo para fortalecer sua presença digital" />
-        }
+        title={<Trans message="Guias para publicar e manter seu site" />}
         description={
-          <Trans message="Guias, ideias e novidades sobre páginas de links, QR Codes, conteúdo e resultados." />
+          <Trans message="Orientações diretas sobre hospedagem, domínios, arquivos, bancos de dados, segurança e as ferramentas usadas para colocar um projeto no ar." />
         }
       >
-        <BlogCategoryNav categories={query.data.categories.data ?? []} />
+        <div className="space-y-5">
+          <PublicEditorialSearch
+            value={queryState.query}
+            onSearch={value => setQueryState({query: value}, {resetPage: true})}
+            placeholder={message('Pesquisar no blog')}
+          />
+          <BlogCategoryNav categories={query.data.categories.data ?? []} />
+        </div>
       </BlogPageHeader>
 
-      <div className="lp-container py-10 md:py-14 lg:py-16">
-        <div className="mb-8 flex flex-wrap items-center gap-3">
-          <TableSearchInput
-            className="w-full max-w-md"
-            placeholder={message('Buscar artigos...')}
-          />
+      <section className="hf-shell hf-editorial-section" aria-busy={isLoading}>
+        {featuredPost ? (
+          <div className="mb-12 md:mb-16">
+            <div className="hf-editorial-section-header">
+              <div>
+                <h2>
+                  <Trans message="Leitura recomendada" />
+                </h2>
+                <p>
+                  <Trans message="Um ponto de partida para entender melhor sua hospedagem e publicar com segurança." />
+                </p>
+              </div>
+            </div>
+            <PublicBlogFeaturedPost post={featuredPost} />
+          </div>
+        ) : null}
+
+        <div className="hf-editorial-section-header">
+          <div>
+            <h2>
+              {isFiltering ? (
+                <Trans message="Resultados da pesquisa" />
+              ) : (
+                <Trans message="Artigos recentes" />
+              )}
+            </h2>
+            <p>
+              {isFiltering ? (
+                <Trans message="Conteúdos relacionados ao termo pesquisado." />
+              ) : (
+                <Trans message="Novos guias e orientações para cuidar do seu site em cada etapa." />
+              )}
+            </p>
+          </div>
         </div>
 
-        <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {posts.map(post => (
-            <PublicBlogPostCard key={post.id} post={post} />
-          ))}
-          {posts.length === 0 ? (
-            <div className="md:col-span-2 lg:col-span-3">
-              <BlogEmptyState isFiltering={isFiltering} />
-            </div>
-          ) : null}
-        </section>
-        <div className="mt-10">
-          <BackendPagination
-            response={query.data.posts}
-            onPageChange={page => setQueryState({page})}
-            onPageSizeChange={perPage => setQueryState({per_page: perPage})}
-          />
-        </div>
-      </div>
+        {remainingPosts.length ? (
+          <div className="hf-editorial-card-grid">
+            {remainingPosts.map(post => (
+              <PublicBlogPostCard key={post.id} post={post} />
+            ))}
+          </div>
+        ) : featuredPost ? null : (
+          <BlogEmptyState isFiltering={isFiltering} />
+        )}
+
+        <PublicEditorialPagination
+          currentPage={query.data.posts.meta.current_page}
+          hasPrevious={query.data.posts.links.prev !== null}
+          hasNext={query.data.posts.links.next !== null}
+          onPageChange={page => setQueryState({page})}
+          disabled={isLoading}
+        />
+      </section>
     </BlogShell>
   );
 }
 
 function BlogEmptyState({isFiltering}: {isFiltering: boolean}) {
   return (
-    <Empty.Root>
-      <Empty.Header>
-        <Empty.Media variant="icon">
-          <NewspaperIcon />
-        </Empty.Media>
-        <Empty.Title>
-          {isFiltering ? (
-            <Trans message="Nenhum artigo encontrado" />
-          ) : (
-            <Trans message="Nenhum artigo publicado ainda" />
-          )}
-        </Empty.Title>
-        <Empty.Description>
-          {isFiltering ? (
-            <Trans message="Tente buscar por outro termo." />
-          ) : (
-            <Trans message="Os novos conteúdos aparecerão aqui quando forem publicados." />
-          )}
-        </Empty.Description>
-      </Empty.Header>
-    </Empty.Root>
+    <PublicEditorialEmpty
+      icon={<NewspaperIcon aria-hidden="true" />}
+      title={
+        isFiltering ? (
+          <Trans message="Nenhum artigo encontrado" />
+        ) : (
+          <Trans message="Nenhum artigo publicado ainda" />
+        )
+      }
+      description={
+        isFiltering ? (
+          <Trans message="Tente pesquisar por outro termo ou escolha uma categoria." />
+        ) : (
+          <Trans message="Os novos conteúdos aparecerão aqui quando forem publicados." />
+        )
+      }
+    />
   );
 }

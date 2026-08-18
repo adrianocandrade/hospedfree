@@ -2,11 +2,7 @@
 
 namespace App\Actions;
 
-use App\Biolinks\BiolinksQueryBuilder;
-use App\Biolinks\Resources\BiolinkResource;
 use Common\Core\Bootstrap\BaseBootstrapData;
-use Common\Workspaces\ActiveWorkspace;
-use Common\Workspaces\Resources\WorkspaceResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,12 +16,8 @@ class AppBootstrapData extends BaseBootstrapData
         );
 
         if (Auth::check()) {
-            $this->data['biolinks'] = BiolinkResource::collection(
-                (new BiolinksQueryBuilder([]))->paginate(),
-            );
-            $this->data['workspaces'] = WorkspaceResource::collection(
-                ActiveWorkspace::getAll(),
-            );
+            $this->data['biolinks'] = [];
+            $this->data['workspaces'] = [];
         }
 
         $this->data['settings']['unsplash_is_setup'] = config(
@@ -37,7 +29,12 @@ class AppBootstrapData extends BaseBootstrapData
 
     protected function getAuthRedirectUri(): string
     {
-        $uri = settings('dashboard.homepage', 'links');
+        $uri = settings('dashboard.homepage', 'hosting');
+
+        if ($uri === 'overview') {
+            return '/dashboard';
+        }
+
         return "/dashboard/$uri";
     }
 }

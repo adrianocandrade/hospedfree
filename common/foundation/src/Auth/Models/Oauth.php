@@ -22,7 +22,7 @@ class Oauth
     const OAUTH_CALLBACK_HANDLER_KEY = 'oauthCallbackHandler';
     const RETRIEVE_PROFILE_ONLY_KEY = 'retrieveProfileOnly';
 
-    private array $validProviders = ['google', 'facebook', 'twitter'];
+    private array $validProviders = ['google', 'github', 'facebook', 'twitter'];
 
     public function loginWith(string $provider)
     {
@@ -207,15 +207,26 @@ class Oauth
         TwoUser|OneUser $data,
         int $userId,
     ): array {
+        // GitHub is only used to authenticate the user. Keeping its bearer
+        // token after the callback would add a recoverable credential without
+        // providing any product functionality.
+        $shouldPersistTokens = $service !== 'github';
+
         return [
             'service_name' => $service,
             'user_service_id' => $this->getUsersIdentifierOnService($data),
             'user_id' => $userId,
             'username' => $data->name,
-            'access_token' => $data->token ?? null,
-            'refresh_token' => $data->refreshToken ?? null,
+            'access_token' => $shouldPersistTokens
+                ? $data->token ?? null
+                : null,
+            'refresh_token' => $shouldPersistTokens
+                ? $data->refreshToken ?? null
+                : null,
             'access_expires_at' =>
-                isset($data->expiresIn) && $data->expiresIn
+                $shouldPersistTokens &&
+                isset($data->expiresIn) &&
+                $data->expiresIn
                     ? Carbon::now()->addSeconds($data->expiresIn)
                     : null,
         ];

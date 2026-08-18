@@ -42,7 +42,11 @@ export function AdminSidebar() {
             <Sidebar.MenuFromConfig
               position="admin-sidebar"
               defaultIcons={AdminSidebarIcons}
-              end={item => item.action === '/admin'}
+              end={item =>
+                item.action === '/admin' ||
+                item.action === '/admin/hosting' ||
+                item.action === '/admin/settings'
+              }
             />
           </Sidebar.GroupContent>
         </Sidebar.Group>

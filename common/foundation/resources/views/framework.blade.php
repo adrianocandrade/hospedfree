@@ -119,59 +119,46 @@
         @endif
     @endif
 
-    @if ($code = settings('analytics.tracking_code'))
-        <!-- Google tag (gtag.js) -->
-        <script
-            async
-            src="https://www.googletagmanager.com/gtag/js?id={{ settings('analytics.tracking_code') }}"
-        ></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag() {
-                dataLayer.push(arguments);
-            }
-            gtag('js', new Date());
-            gtag('config', '{{
-                settings(
-                    'analytics.tracking_code',
-                )
-            }}');
-        </script>
-    @endif
-
     @yield ('head-end')
 </head>
 
 <body>
     <div id="root">
-        <div class="flex h-screen w-screen items-center justify-center">
-            <svg
-                viewBox="0 0 32 32"
-                fill="none"
-                stroke-width="3"
-                class="progress-circle indeterminate h-10 w-10 overflow-hidden"
-            >
-                <circle
-                    cx="16"
-                    cy="16"
-                    r="13"
-                    role="presentation"
-                    stroke-dasharray="81.68140899333463 81.68140899333463"
-                    stroke-dashoffset="0"
-                    transform="rotate(-90 16 16)"
-                    class="progress-circle-track"
-                ></circle>
-                <circle
-                    cx="16"
-                    cy="16"
-                    r="13"
-                    role="presentation"
-                    stroke-dasharray="81.68140899333463 81.68140899333463"
-                    stroke-dashoffset="61.26105674500097"
-                    transform="rotate(-90 16 16)"
-                    class="progress-circle-fill"
-                ></circle>
-            </svg>
+        <div
+            class="hf-page-loader"
+            data-slot="full-page-loader"
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+        >
+            <div class="hf-page-loader__visual" aria-hidden="true">
+                <div class="hf-page-loader__glow"></div>
+                <div class="hf-page-loader__mark">
+                    <img
+                        src="{{ asset('images/icon.png') }}"
+                        alt=""
+                        class="hf-page-loader__icon"
+                        draggable="false"
+                    />
+                    <img
+                        src="{{ asset('images/icon.png') }}"
+                        alt=""
+                        class="hf-page-loader__shine"
+                        draggable="false"
+                    />
+                </div>
+            </div>
+
+            <div class="hf-page-loader__status">
+                <span class="hf-page-loader__label">
+                    {{ __('Preparing HospedFree...') }}
+                </span>
+                <span class="hf-page-loader__dots" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+            </div>
         </div>
     </div>
 

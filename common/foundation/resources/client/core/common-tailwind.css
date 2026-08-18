@@ -31,12 +31,22 @@ html {
 }
 
 html.dark {
+  --hf-primary: #625deb;
+  --hf-secondary: #706cf4;
+  --hf-soft: #9b98ff;
+  --hf-ink: #080916;
+  --hf-background: #080916;
+  --hf-surface: #111426;
+  --hf-muted: #15182c;
+  --hf-border: #292c44;
+  --hf-text-muted: #a4a7bb;
+
   --be-hover-opacity: 4%;
   --be-focus-opacity: 8%;
   --be-selected-opacity: 12%;
 
-  --be-chart-1: #aca9d4;
-  --be-chart-2: #8f89c3;
+  --be-chart-1: #706cf4;
+  --be-chart-2: #9b98ff;
   --be-chart-3: #7dd3fc;
   --be-chart-4: #fbbf24;
   --be-chart-5: #4ade80;

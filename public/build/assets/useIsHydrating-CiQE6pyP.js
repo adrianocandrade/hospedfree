@@ -1,0 +1,1 @@
+import{o as e}from"./cn-pu37w4_l.js";import{s as t}from"./ReactStore-D_4liK3y.js";var n=t();function r(){return e}function i(){return!1}function a(){return!0}function o(){return(0,n.useSyncExternalStore)(r,i,a)}export{o as t};

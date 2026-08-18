@@ -44,8 +44,7 @@ export const blogIndexQueryOptions = (params?: ListPublicBlogPostsParams) => {
     },
     initialData: () => {
       const data = getBootstrapData().loaders?.blogIndex as
-        | BootstrapLoaders['blogIndex']
-        | undefined;
+        BootstrapLoaders['blogIndex'] | undefined;
       if (data) {
         return data;
       }
@@ -72,8 +71,7 @@ export const blogCategoryQueryOptions = (
     },
     initialData: () => {
       const data = getBootstrapData().loaders?.blogCategory as
-        | BootstrapLoaders['blogCategory']
-        | undefined;
+        BootstrapLoaders['blogCategory'] | undefined;
       if (data?.category.slug === categorySlug) {
         return data;
       }
@@ -90,8 +88,7 @@ export const blogPostQueryOptions = (postSlug: string) => {
     },
     initialData: () => {
       const data = getBootstrapData().loaders?.blogPost as
-        | BootstrapLoaders['blogPost']
-        | undefined;
+        BootstrapLoaders['blogPost'] | undefined;
       if (data?.post.slug === postSlug) {
         return data;
       }

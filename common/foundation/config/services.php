@@ -67,6 +67,12 @@ return [
         'safe_browsing_key' => env('GOOGLE_SAFE_BROWSING_KEY'),
     ],
 
+    'github' => [
+        'client_id' => env('GITHUB_ID'),
+        'client_secret' => env('GITHUB_SECRET'),
+        'redirect' => env('APP_URL') . '/secure/auth/social/github/callback',
+    ],
+
     'twitter' => [
         'client_id' => env('TWITTER_ID'),
         'client_secret' => env('TWITTER_SECRET'),

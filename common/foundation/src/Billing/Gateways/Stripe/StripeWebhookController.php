@@ -15,6 +15,8 @@ use Illuminate\Routing\Controller;
 use Stripe\Invoice as StripeInvoice;
 use Stripe\Subscription as StripeSubscription;
 use Stripe\Webhook;
+use Common\Billing\Webhooks\WebhookReceipt;
+use Throwable;
 
 class StripeWebhookController extends Controller
 {
@@ -26,40 +28,47 @@ class StripeWebhookController extends Controller
     public function handleWebhook(Request $request): Response|JsonResponse
     {
         $webhookSecret = config('services.stripe.webhook_secret');
-        if ($webhookSecret) {
-            try {
-                $event = Webhook::constructEvent(
-                    $request->getContent(),
-                    $request->header('stripe-signature'),
-                    $webhookSecret,
-                )->toArray();
-            } catch (Exception $e) {
-                return response()->json(['message' => $e->getMessage()], 403);
-            }
-        } else {
-            $event = $request->all();
+        if (!$webhookSecret) {
+            return response()->json(['message' => 'Stripe webhook is not configured.'], 503);
         }
 
-        return match ($event['type']) {
-            'invoice.paid' => $this->handleInvoicePaid($event),
-            // sync user payment methods with local database
-            'customer.updated' => $this->handleCustomerUpdated($event),
-            'payment_method.attached' => $this->handlePaymentMethodAttached(
-                $event,
-            ),
-            // user subscription ended and can't be resumed
-            'customer.subscription.deleted' => $this->deleteSubscription(
-                $event,
-            ),
-            // automatic subscription renewal failed on stripe
-            'invoice.payment_failed' => $this->handleInvoicePaymentFailed(
-                $event,
-            ),
-            'customer.subscription.created',
-            'customer.subscription.updated'
-                => $this->handleSubscriptionCreatedAndUpdated($event),
-            default => response('Webhook handled', 200),
-        };
+        try {
+            $event = Webhook::constructEvent(
+                $request->getContent(),
+                $request->header('stripe-signature'),
+                $webhookSecret,
+            )->toArray();
+        } catch (Exception) {
+            return response()->json(['message' => 'Invalid Stripe webhook signature.'], 403);
+        }
+
+        $eventId = isset($event['id']) && is_string($event['id']) ? $event['id'] : null;
+        if (!$eventId) {
+            return response()->json(['message' => 'Stripe event ID is required.'], 422);
+        }
+
+        $receipts = app(WebhookReceipt::class);
+        if (!$receipts->begin('stripe', $eventId, $request->getContent())) {
+            return response('Webhook already handled', 200);
+        }
+
+        try {
+            $response = match ($event['type']) {
+                'invoice.paid' => $this->handleInvoicePaid($event),
+                'customer.updated' => $this->handleCustomerUpdated($event),
+                'payment_method.attached' => $this->handlePaymentMethodAttached($event),
+                'customer.subscription.deleted' => $this->deleteSubscription($event),
+                'invoice.payment_failed' => $this->handleInvoicePaymentFailed($event),
+                'customer.subscription.created',
+                'customer.subscription.updated' => $this->handleSubscriptionCreatedAndUpdated($event),
+                default => response('Webhook handled', 200),
+            };
+            $receipts->complete('stripe', $eventId);
+            return $response;
+        } catch (Throwable $e) {
+            $receipts->fail('stripe', $eventId);
+            throw $e;
+        }
     }
 
     protected function handleInvoicePaid(

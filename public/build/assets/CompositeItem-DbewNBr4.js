@@ -1,2 +1,0 @@
-import{Mt as e,jt as t,kt as n}from"./composite-TLKCZGS_.js";import{t as r}from"./useCompositeItem-CpYIz1KG.js";function i(i){let{render:a,className:o,style:s,state:c=e,props:l=t,refs:u=t,metadata:d,stateAttributesMapping:f,tag:p=`div`,...m}=i,{compositeProps:h,compositeRef:g}=r({metadata:d});return n(p,i,{state:c,ref:[...u,g],props:[h,...l,m],stateAttributesMapping:f})}export{i as t};
-//# sourceMappingURL=CompositeItem-DbewNBr4.js.map

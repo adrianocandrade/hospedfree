@@ -9,6 +9,10 @@ lerna-debug.log*
 
 node_modules
 vendor
+!/resources/views/vendor/
+!/resources/views/vendor/mail/
+!/resources/views/vendor/mail/html/
+!/resources/views/vendor/mail/html/header.blade.php
 dist
 dist-ssr
 *.local
@@ -19,6 +23,8 @@ dist-ssr
 .idea
 .DS_Store
 Thumbs.db
+__pycache__/
+*.py[cod]
 *.suo
 *.ntvs*
 *.njsproj
@@ -28,6 +34,7 @@ Thumbs.db
 # misc
 .htaccess
 public/.htaccess
+!/public/.htaccess
 public/favicon
 public/favicon.ico
 install_files
@@ -36,10 +43,27 @@ install_files
 Homestead.json
 Homestead.yaml
 .env
+.env-PROD
+.env.*
+.env-*
+!.env.example
 data.ms
 /test-results/
 /playwright-report/
 /playwright/.cache/
+/.phpunit.cache/
 storageState.json
+/storage/app/backups/
+/tmp/
+/logoprod/
+/banco.sql
+/hospedfree-base.zip
+/public/build.zip
+/loader-preview.png
+/support-page-copy.tsx
+/deploy/
 # translation files (include default "en"), will be created during installation
 resources/lang/*.json
+!/resources/lang/en.json
+!/resources/lang/pt-BR.json
+!/resources/lang/pt-PT.json

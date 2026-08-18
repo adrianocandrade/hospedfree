@@ -49,6 +49,15 @@ class Product extends BaseModel
 
     public function prices(): HasMany
     {
+        return $this->allPrices()
+            ->where('active', true);
+    }
+
+    /**
+     * Includes retired prices that are kept for subscription and invoice history.
+     */
+    public function allPrices(): HasMany
+    {
         return $this->hasMany(Price::class)
             ->orderBy('default')
             ->orderBy('amount');

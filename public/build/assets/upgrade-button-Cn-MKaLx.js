@@ -1,0 +1,1 @@
+import{gr as e}from"./icons-CVwVS06L.js";import{n as t}from"./button-BGXuQRjR.js";import{t as n}from"./trans-BR6Sczt0.js";var r=e();function i(e){return(0,r.jsx)(t,{to:`/dashboard/hosting/plans`,variant:`outline`,color:`primary`,...e,children:(0,r.jsx)(n,{message:`Upgrade`})})}export{i as t};

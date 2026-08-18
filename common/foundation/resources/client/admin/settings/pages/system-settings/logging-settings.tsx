@@ -24,13 +24,114 @@ export function LoggingSettings({tabs, title}: Props) {
     defaultValues: {
       server: {
         sentry_dsn: data.server.sentry_dsn ?? '',
+        outgoing_email_log_retention_days:
+          data.server.outgoing_email_log_retention_days ?? 7,
+        customer_communication_retention_days:
+          data.server.customer_communication_retention_days ?? 365,
+        customer_security_event_retention_days:
+          data.server.customer_security_event_retention_days ?? 365,
+        administrative_security_audit_retention_days:
+          data.server.administrative_security_audit_retention_days ?? 365,
+        user_session_retention_days:
+          data.server.user_session_retention_days ?? 90,
       },
     },
   });
   return (
     <AdminSettingsLayout form={form} title={title} tabs={tabs}>
       <SentryPanel />
+      <RetentionPanel />
     </AdminSettingsLayout>
+  );
+}
+
+function RetentionPanel() {
+  return (
+    <SettingsPanel
+      title={<Trans message="Retenção dos históricos de segurança" />}
+      description={
+        <Trans message="Defina por quantos dias os históricos técnicos e da conta serão preservados. A limpeza ocorre diariamente e não altera e-mails, contas ou hospedagens." />
+      }
+    >
+      <SettingsErrorGroup
+        separatorTop={false}
+        separatorBottom={false}
+        name="retention_group"
+      >
+        {isInvalid => (
+          <div className="grid gap-5 md:grid-cols-2">
+            <RetentionField
+              invalid={isInvalid}
+              name="server.outgoing_email_log_retention_days"
+              label={<Trans message="Log técnico de e-mails" />}
+              description={
+                <Trans message="Contém MIME completo e deve permanecer pelo menor período operacional necessário." />
+              }
+            />
+            <RetentionField
+              invalid={isInvalid}
+              name="server.customer_communication_retention_days"
+              label={<Trans message="E-mails exibidos ao cliente" />}
+              description={
+                <Trans message="Armazena somente assunto seguro, status e datas." />
+              }
+            />
+            <RetentionField
+              invalid={isInvalid}
+              name="server.customer_security_event_retention_days"
+              label={<Trans message="Eventos de segurança do cliente" />}
+              description={
+                <Trans message="Inclui acessos e alterações importantes com IP mascarado." />
+              }
+            />
+            <RetentionField
+              invalid={isInvalid}
+              name="server.administrative_security_audit_retention_days"
+              label={<Trans message="Auditoria administrativa" />}
+              description={
+                <Trans message="Registra acessos administrativos a conteúdo técnico protegido." />
+              }
+            />
+            <RetentionField
+              invalid={isInvalid}
+              name="server.user_session_retention_days"
+              label={<Trans message="Sessões e dispositivos" />}
+              description={
+                <Trans message="Mantém o histórico recente de navegadores e tokens usados na conta." />
+              }
+            />
+          </div>
+        )}
+      </SettingsErrorGroup>
+    </SettingsPanel>
+  );
+}
+
+type RetentionFieldProps = {
+  invalid: boolean;
+  name:
+    | 'server.outgoing_email_log_retention_days'
+    | 'server.customer_communication_retention_days'
+    | 'server.customer_security_event_retention_days'
+    | 'server.administrative_security_audit_retention_days'
+    | 'server.user_session_retention_days';
+  label: ReactElement;
+  description: ReactElement;
+};
+
+function RetentionField({
+  invalid,
+  name,
+  label,
+  description,
+}: RetentionFieldProps) {
+  return (
+    <HookForm.Field invalid={invalid} name={name}>
+      <Field.Label>{label}</Field.Label>
+      <Input type="number" min={1} max={3650} inputMode="numeric" />
+      <Field.Description>{description}</Field.Description>
+      <Field.Error />
+    </HookForm.Field>
   );
 }
 

@@ -57,8 +57,37 @@ use App\Webhooks\Controllers\WebhooksController;
 use App\Tags\Controllers\TagsController;
 use Common\Domains\CustomDomainsController;
 use Illuminate\Support\Facades\Route;
+use App\Hosting\Controllers\HostingPlansController;
+use App\Hosting\Controllers\HostingAvailabilityController;
+use App\Hosting\Controllers\HostingOrdersController;
+use App\Hosting\Controllers\HostingAccountsController;
+use App\Hosting\Controllers\AdminHostingController;
+use App\Hosting\Controllers\AdminHostingPlansController;
+use App\Hosting\Controllers\AdminPremiumSubdomainsController;
+use App\Hosting\Controllers\HostingPremiumSubdomainPurchaseController;
+use App\Hosting\Controllers\HostingSslController;
+use App\Hosting\Controllers\HostingAccountInsightsController;
+  use App\Hosting\Controllers\HostingDomainsController;
+  use App\Hosting\Controllers\HostingFilesController;
+  use App\Hosting\Controllers\HostingDatabasesController;
+use App\Hosting\Controllers\AdminHostingSettingsController;
+use App\Knowledge\Controllers\KnowledgeBaseController;
+use App\Knowledge\Controllers\AdminKnowledgeController;
+use App\Support\Controllers\SupportTicketsController;
+use App\Support\Controllers\AdminSupportTicketsController;
+use App\Security\Controllers\EmailChangeController;
+use App\Security\Controllers\CustomerCommunicationsController;
+use App\Security\Controllers\CustomerSecurityEventsController;
 
 Route::group(['prefix' => 'v1'], function() {
+
+    // HOSPEDFREE PUBLIC CATALOG AND KNOWLEDGE BASE
+    Route::get('hosting/plans', HostingPlansController::class)
+        ->middleware('throttle:120,1');
+    Route::get('knowledge/articles', [KnowledgeBaseController::class, 'index'])
+        ->middleware('throttle:120,1');
+    Route::get('knowledge/articles/{article}', [KnowledgeBaseController::class, 'show'])
+        ->middleware('throttle:120,1');
 
     // LANDING
     Route::get('landing-page-data', [LandingPageController::class, 'show']);
@@ -111,6 +140,150 @@ Route::group(['prefix' => 'v1'], function() {
         ->middleware('throttle:60,1');
 
     Route::group(['middleware' => ['optionalAuth:sanctum', 'verified', 'verifyApiAccess']], function () {
+        Route::group(['middleware' => 'auth:sanctum'], function (): void {
+            Route::post('account/email-change', [EmailChangeController::class, 'requestChange'])
+                ->middleware(['session.auth', 'throttle:3,10']);
+            Route::post('account/email-change/confirm', [EmailChangeController::class, 'confirm'])
+                ->middleware(['session.auth', 'throttle:6,10']);
+            Route::delete('account/email-change', [EmailChangeController::class, 'cancel'])
+                ->middleware(['session.auth', 'throttle:6,10']);
+            Route::get('account/communications', CustomerCommunicationsController::class)
+                ->middleware(['session.auth', 'throttle:60,1']);
+            Route::get('account/security-events', CustomerSecurityEventsController::class)
+                ->middleware(['session.auth', 'throttle:60,1']);
+            Route::post('hosting/availability', HostingAvailabilityController::class)
+                ->middleware(['token.ability:hosting:write', 'throttle:30,1']);
+            Route::post('hosting/premium-subdomains/reserve', HostingPremiumSubdomainPurchaseController::class)
+                ->middleware(['token.ability:hosting:write', 'throttle:10,1']);
+            Route::post('hosting/orders', [HostingOrdersController::class, 'store'])
+                ->middleware(['token.ability:hosting:write', 'throttle:10,1']);
+            Route::get('hosting/orders', [HostingOrdersController::class, 'index'])
+                ->middleware(['token.ability:hosting:read', 'throttle:60,1']);
+            Route::delete('hosting/orders/{order}', [HostingOrdersController::class, 'destroy'])
+                ->middleware(['token.ability:hosting:write', 'throttle:10,1']);
+            Route::get('hosting/accounts', [HostingAccountsController::class, 'index'])
+                ->middleware('token.ability:hosting:read');
+            Route::get('hosting/accounts/{account}', [HostingAccountsController::class, 'show'])
+                ->middleware('token.ability:hosting:read');
+            Route::post('hosting/accounts/{account}/credentials/reveal', [HostingAccountsController::class, 'revealCredentials'])
+                ->middleware(['session.auth', 'password.confirm', 'throttle:6,1']);
+            Route::post('hosting/accounts/{account}/password-reset', [HostingAccountsController::class, 'resetPassword'])
+                ->middleware(['session.auth', 'password.confirm', 'throttle:3,1']);
+            Route::post('hosting/accounts/{account}/reconcile', [HostingAccountsController::class, 'reconcile'])
+                ->middleware(['token.ability:hosting:write', 'throttle:6,1']);
+            Route::post('hosting/accounts/{account}/suspend', [HostingAccountsController::class, 'suspend'])
+                ->middleware(['session.auth', 'password.confirm', 'throttle:hosting-account-lifecycle']);
+            Route::post('hosting/accounts/{account}/reactivate', [HostingAccountsController::class, 'unsuspend'])
+                ->middleware(['session.auth', 'throttle:hosting-account-lifecycle']);
+            Route::post('hosting/accounts/{account}/plan', [HostingAccountsController::class, 'changePlan'])
+                ->middleware(['session.auth', 'password.confirm', 'throttle:6,1']);
+            Route::get('hosting/accounts/{account}/tools', [HostingAccountsController::class, 'tools'])
+                ->middleware('token.ability:hosting:tools');
+            Route::get('hosting/accounts/{account}/stats', [HostingAccountInsightsController::class, 'stats'])
+                ->middleware(['token.ability:hosting:read', 'throttle:30,1']);
+            Route::get('hosting/accounts/{account}/activity', [HostingAccountInsightsController::class, 'activity'])
+                ->middleware(['token.ability:hosting:read', 'throttle:60,1']);
+            Route::get('hosting/accounts/{account}/domains', [HostingDomainsController::class, 'index'])
+                ->middleware(['token.ability:hosting:domains', 'throttle:30,1']);
+            Route::post('hosting/accounts/{account}/domains/verify', [HostingDomainsController::class, 'verify'])
+                ->middleware(['token.ability:hosting:domains', 'throttle:12,1']);
+            Route::post('hosting/accounts/{account}/domains/subdomains', [HostingDomainsController::class, 'storeSubdomain'])
+                ->middleware(['token.ability:hosting:domains', 'throttle:6,1']);
+            Route::delete('hosting/accounts/{account}/domains/{domain}', [HostingDomainsController::class, 'destroy'])
+                ->where('domain', '[^/]+')
+                ->middleware(['token.ability:hosting:domains', 'throttle:6,1']);
+            Route::get('hosting/accounts/{account}/files', [HostingFilesController::class, 'index'])
+                ->middleware(['token.ability:hosting:files', 'throttle:60,1']);
+            Route::get('hosting/accounts/{account}/files/content', [HostingFilesController::class, 'show'])
+                ->middleware(['token.ability:hosting:files', 'throttle:30,1']);
+            Route::get('hosting/accounts/{account}/files/download', [HostingFilesController::class, 'download'])
+                ->middleware(['token.ability:hosting:files', 'throttle:20,1']);
+            Route::post('hosting/accounts/{account}/files', [HostingFilesController::class, 'store'])
+                ->middleware(['token.ability:hosting:files', 'throttle:20,1']);
+            Route::post('hosting/accounts/{account}/files/upload', [HostingFilesController::class, 'upload'])
+                ->middleware(['token.ability:hosting:files', 'throttle:10,1']);
+            Route::put('hosting/accounts/{account}/files', [HostingFilesController::class, 'update'])
+                ->middleware(['token.ability:hosting:files', 'throttle:30,1']);
+            Route::delete('hosting/accounts/{account}/files', [HostingFilesController::class, 'destroy'])
+                ->middleware(['token.ability:hosting:files', 'throttle:20,1']);
+            Route::get('hosting/accounts/{account}/databases', [HostingDatabasesController::class, 'index'])
+                ->middleware(['token.ability:hosting:databases', 'throttle:30,1']);
+            Route::post('hosting/accounts/{account}/databases', [HostingDatabasesController::class, 'store'])
+                ->middleware(['token.ability:hosting:databases', 'throttle:hosting-database-create']);
+            Route::post('hosting/accounts/{account}/tools/{tool}', [HostingAccountsController::class, 'tool'])
+                ->middleware(['token.ability:hosting:tools', 'throttle:30,1']);
+            Route::get('hosting/accounts/{account}/ssl', [HostingSslController::class, 'index'])
+                ->middleware('token.ability:hosting:ssl');
+            Route::post('hosting/accounts/{account}/ssl', [HostingSslController::class, 'store'])
+                ->middleware(['session.auth', 'password.confirm', 'throttle:6,1']);
+            Route::post('hosting/accounts/{account}/ssl/{certificate}/verify', [HostingSslController::class, 'verify'])
+                ->middleware(['token.ability:hosting:ssl', 'throttle:6,1']);
+            Route::delete('hosting/accounts/{account}/ssl/{certificate}', [HostingSslController::class, 'destroy'])
+                ->middleware(['session.auth', 'password.confirm', 'throttle:3,1']);
+            Route::delete('hosting/accounts/{account}', [HostingAccountsController::class, 'destroy'])
+                ->middleware(['session.auth', 'password.confirm', 'throttle:hosting-account-lifecycle']);
+            Route::post('hosting/accounts/{account}/deletion/cancel', [HostingAccountsController::class, 'cancelDeletion'])
+                ->middleware(['session.auth', 'throttle:hosting-account-lifecycle']);
+
+            Route::get('support/tickets', [SupportTicketsController::class, 'index'])
+                ->middleware('token.ability:support:read');
+            Route::post('support/tickets', [SupportTicketsController::class, 'store'])
+                ->middleware(['token.ability:support:write', 'throttle:6,1']);
+            Route::get('support/tickets/{ticket}', [SupportTicketsController::class, 'show'])
+                ->middleware('token.ability:support:read');
+            Route::post('support/tickets/{ticket}/messages', [SupportTicketsController::class, 'reply'])
+                ->middleware(['token.ability:support:write', 'throttle:12,1']);
+            Route::get('support/tickets/{ticket}/attachments/{attachment}', [SupportTicketsController::class, 'downloadAttachment'])
+                ->middleware(['token.ability:support:read', 'throttle:30,1']);
+            Route::post('support/tickets/{ticket}/close', [SupportTicketsController::class, 'close'])
+                ->middleware(['token.ability:support:write', 'throttle:6,1']);
+
+            Route::get('admin/hosting/accounts', [AdminHostingController::class, 'accounts']);
+            Route::get('admin/hosting/accounts/{account}/resources', [AdminHostingController::class, 'accountResources'])
+                ->middleware('throttle:30,1');
+            Route::delete('admin/hosting/accounts/{account}/files', [HostingFilesController::class, 'adminDestroy'])
+                ->middleware('throttle:3,1');
+            Route::delete('admin/hosting/accounts/{account}/ssl/{certificate}', [HostingSslController::class, 'adminDestroy'])
+                ->middleware('throttle:3,1');
+            Route::get('admin/hosting/orders', [AdminHostingController::class, 'orders']);
+            Route::get('admin/hosting/operations', [AdminHostingController::class, 'operations']);
+            Route::post('admin/hosting/accounts/{account}/operations', [AdminHostingController::class, 'accountOperation'])
+                ->middleware('throttle:30,1');
+            Route::post('admin/hosting/operations/{operation}/retry', [AdminHostingController::class, 'retry'])
+                ->middleware('throttle:30,1');
+            Route::get('admin/hosting/plans', [AdminHostingPlansController::class, 'index']);
+            Route::post('admin/hosting/plans', [AdminHostingPlansController::class, 'store']);
+            Route::put('admin/hosting/plans/{plan}', [AdminHostingPlansController::class, 'update']);
+            Route::put('admin/hosting/plans/{plan}/provider-package', [AdminHostingPlansController::class, 'providerPackage']);
+            Route::get('admin/hosting/premium-subdomains', [AdminPremiumSubdomainsController::class, 'index']);
+            Route::post('admin/hosting/premium-subdomains', [AdminPremiumSubdomainsController::class, 'store']);
+            Route::put('admin/hosting/premium-subdomains/{premiumSubdomain}', [AdminPremiumSubdomainsController::class, 'update']);
+            Route::delete('admin/hosting/premium-subdomains/{premiumSubdomain}', [AdminPremiumSubdomainsController::class, 'destroy']);
+            Route::get('admin/hosting/settings', [AdminHostingSettingsController::class, 'index']);
+            Route::put('admin/hosting/settings', [AdminHostingSettingsController::class, 'update']);
+            Route::post('admin/hosting/settings/provider-health', [AdminHostingSettingsController::class, 'health'])
+                ->middleware('throttle:6,1');
+            Route::post('admin/hosting/settings/cloudflare-health', [AdminHostingSettingsController::class, 'cloudflareHealth'])
+                ->middleware('throttle:6,1');
+            Route::post('admin/hosting/settings/site-builder-health', [AdminHostingSettingsController::class, 'siteBuilderHealth'])
+                ->middleware('throttle:6,1');
+            Route::post('admin/hosting/settings/file-manager-health', [AdminHostingSettingsController::class, 'fileManagerHealth'])
+                ->middleware('throttle:6,1');
+
+            Route::get('admin/knowledge/articles', [AdminKnowledgeController::class, 'index']);
+            Route::get('admin/knowledge/categories', [AdminKnowledgeController::class, 'categories']);
+            Route::post('admin/knowledge/categories', [AdminKnowledgeController::class, 'storeCategory']);
+            Route::post('admin/knowledge/articles', [AdminKnowledgeController::class, 'store']);
+            Route::put('admin/knowledge/articles/{article}', [AdminKnowledgeController::class, 'update']);
+            Route::delete('admin/knowledge/articles/{article}', [AdminKnowledgeController::class, 'destroy']);
+
+            Route::get('admin/support/tickets', [AdminSupportTicketsController::class, 'index']);
+            Route::get('admin/support/tickets/{ticket}', [AdminSupportTicketsController::class, 'show']);
+            Route::post('admin/support/tickets/{ticket}/messages', [AdminSupportTicketsController::class, 'reply']);
+            Route::get('admin/support/tickets/{ticket}/attachments/{attachment}', [AdminSupportTicketsController::class, 'downloadAttachment'])
+                ->middleware('throttle:30,1');
+            Route::put('admin/support/tickets/{ticket}', [AdminSupportTicketsController::class, 'update']);
+        });
         Route::get('tracked-events/report', [TrackedEventsController::class, 'report']);
         Route::get('admin/analytics/cards-data', [AdminAnalyticsController::class, 'cardsData']);
         Route::get('admin/analytics/report', [AdminAnalyticsController::class, 'report']);

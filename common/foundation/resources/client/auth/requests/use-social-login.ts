@@ -9,7 +9,7 @@ import {useTrans} from '@ui/i18n/use-trans';
 import {toast} from '@ui/toast/toast';
 import {useCallback, useState} from 'react';
 
-export type SocialService = 'google' | 'twitter' | 'facebook';
+export type SocialService = 'google' | 'github' | 'twitter' | 'facebook';
 
 interface SocialMessageEvent {
   status?: 'SUCCESS' | 'ALREADY_LOGGED_IN' | 'REQUEST_PASSWORD' | 'ERROR';

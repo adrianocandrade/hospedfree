@@ -50,7 +50,7 @@ export function RegisterPage({inviteType, fields, children}: Props) {
     <AuthHeading
       title={<Trans message="Crie sua conta" />}
       description={
-        <Trans message="Comece a organizar e compartilhar sua presença digital." />
+        <Trans message="Crie sua conta para escolher um endereço hsite.top e publicar seu site." />
       }
     />
   );
@@ -61,7 +61,7 @@ export function RegisterPage({inviteType, fields, children}: Props) {
         description={
           <Trans
             values={{siteName: branding?.site_name}}
-            message="Para se juntar à equipe em :siteName, crie sua conta"
+            message="Crie sua conta para continuar em :siteName"
           />
         }
       />

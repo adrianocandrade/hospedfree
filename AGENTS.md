@@ -4,7 +4,8 @@
 
 - This repository is the new HospedFree base. The target product is web hosting with a useful free plan and recurring paid hosting plans.
 - Free accounts use the hsite.top subdomain offering. MOFH is an infrastructure provider behind an adapter and must not become the public brand or leak into product copy.
-- Prices, quotas and paid-plan limits are not yet approved. Do not invent them or reuse the historical R$ 5,90 value from the old project.
+- The initial commercial catalog is approved: Free remains R$ 0; the public `Hospedagem Pro` plan uses the internal MOFH `pro` package with 10 GB disk, 150 GB monthly traffic, 5 domains, 10 MySQL databases and no ads, priced at R$ 9,90/month or R$ 99/year. MOFH remains an internal provider name and must not appear in public product copy.
+- Two future Premium plans backed by AndradeHost/KeyHelp remain target-only. Their names, prices, quotas and package mappings are open until real infrastructure costs, adapters and authorized smoke tests are available; do not invent them.
 - Short links, biolinks, QR Codes and their themes/widgets are inherited MeuLinkBio code, not HospedFree product features. Keep them stable until a reviewed removal or adaptation plan exists.
 - Billing, plans, subscriptions, trials, payments and invoices are reusable foundation capabilities. Preserve them unless a scoped HospedFree design replaces them safely.
 - The current users/workspaces architecture remains the implementation truth until an explicit identity migration is approved. Do not copy the old Botble members model into this base.
@@ -35,6 +36,9 @@
 - Use Lucide icons for new controls and semantic Tailwind tokens instead of direct colors.
 - Follow docs/brand-hospedfree.md. The official logo files are in public/images and must not be redrawn.
 - Keep the hosting dashboard task-oriented, accessible and responsive. Credentials are masked by default; icon-only controls need accessible names or tooltips.
+- New HospedFree admin/dashboard pages must follow the existing foundation page patterns before creating custom structure: `DashboardLayout.SectionContent`, `SectionContentHeader`, `SectionScrollContainer`, shadcn `GenericTable`, `TableSearchInput`, `TablePagination`, `Empty`, `Dialog`, `Dropdown`, `Badge`, `Input`, `Textarea` and `Select` where those patterns match the job. Do not build standalone centered cards/forms for admin CRUD, plans, subscriptions, support or knowledge screens when the existing billing/admin components already provide the correct model.
+- When changing hosting plans, subscriptions, tickets, knowledge base or customer hosting screens, inspect the comparable existing foundation screen first, especially billing products/plans and subscriptions, and preserve its interaction model unless there is a documented HospedFree reason to diverge.
+- Before adding new Bixa parity features to admin or dashboard, normalize any existing HospedFree screen that diverges from current foundation architecture. `Planos e pacotes` must adapt the existing billing/products/subscriptions flow with provider package mapping; hosting/admin settings must include the provider/tool configuration surfaces needed by MOFH/VistaPanel, WebFTP, Cloudflare, ACME/SSL, Site.Pro, allowed domains and health checks.
 
 ## Backend
 
@@ -53,3 +57,7 @@
 - Do not claim a command passed unless it was actually run.
 - For documentation-only work, check links/paths, search for secrets and audit stale brand references.
 - Preferred behavior checks are composer test:php, npm run lint, npm run typecheck, npm run format:check, npm run build and php artisan route:list. Regenerate the API client only when routes or schemas change.
+
+# Current implementation note
+
+As of 2026-08-10, this base contains implemented HospedFree hosting core (`app/Hosting`), support (`app/Support`), knowledge base (`app/Knowledge`), customer hosting UI and admin hosting UI. Treat legacy links/biolinks/QR as hidden inherited code, not active HospedFree product.

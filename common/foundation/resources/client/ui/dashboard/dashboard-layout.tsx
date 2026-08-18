@@ -3,6 +3,7 @@ import {useRender} from '@base-ui/react/use-render';
 import {Button} from '@shadcn/button/button';
 import {Tooltip} from '@shadcn/tooltip/tooltip';
 import {Trans} from '@ui/i18n/trans';
+import {useTrans} from '@ui/i18n/use-trans';
 import {ToggleLeftSidebarIcon} from '@ui/icons/toggle-left-sidebar-icon';
 import {ToggleRightSidebarIcon} from '@ui/icons/toggle-right-sidebar-icon';
 import {cn} from '@ui/utils/cn';
@@ -215,9 +216,14 @@ function SidebarToggle({
   sidebar?: 'left' | 'right';
   children?: ReactNode;
 }) {
+  const {trans} = useTrans();
   const ctx = use(DashboardLayoutContext);
   if (!ctx) return null;
   const sidebar = sidebarName === 'left' ? ctx.leftSidebar : ctx.rightSidebar;
+  const toggleLabel =
+    sidebar.status === 'collapsed'
+      ? trans({message: 'Expand sidebar'})
+      : trans({message: 'Collapse sidebar'});
 
   const defaultIcon =
     sidebarName === 'left' ? (
@@ -231,6 +237,7 @@ function SidebarToggle({
       <Tooltip.Trigger
         data-slot="sidebar-toggle-button"
         render={<Button variant="ghost" size="icon-sm" />}
+        aria-label={toggleLabel}
         onClick={() => sidebar.toggleStatus()}
       >
         {children || defaultIcon}

@@ -5,8 +5,11 @@ import 'ace-builds/src-noconflict/ext-language_tools';
 import 'ace-builds/src-noconflict/mode-css';
 import 'ace-builds/src-noconflict/mode-html';
 import 'ace-builds/src-noconflict/mode-javascript';
+import 'ace-builds/src-noconflict/mode-json';
 import 'ace-builds/src-noconflict/mode-php_laravel_blade';
+import 'ace-builds/src-noconflict/mode-text';
 import 'ace-builds/src-noconflict/theme-chrome';
+import 'ace-builds/src-noconflict/theme-monokai';
 import 'ace-builds/src-noconflict/theme-tomorrow_night';
 import cssWorkerUrl from 'ace-builds/src-noconflict/worker-css?url';
 import htmlWorkerUrl from 'ace-builds/src-noconflict/worker-html?url';
@@ -23,7 +26,7 @@ ace.config.setModuleUrl('ace/mode/javascript_worker', javascriptWorkerUrl);
 ace.config.setModuleUrl('ace/mode/json_worker', jsonWorkerUrl);
 
 interface Props {
-  mode: 'css' | 'html' | 'javascript' | 'php_laravel_blade' | 'json';
+  mode: 'css' | 'html' | 'javascript' | 'php_laravel_blade' | 'json' | 'text';
   onChange?: (value: string) => void;
   onIsValidChange?: (isValid: boolean) => void;
   defaultValue?: string;
@@ -32,6 +35,9 @@ interface Props {
   editorRef?: RefObject<ReactAce | null>;
   onLoad?: () => void;
   readOnly?: boolean;
+  theme?: 'auto' | 'chrome' | 'monokai' | 'tomorrow_night';
+  enableBasicAutocompletion?: boolean;
+  enableLiveAutocompletion?: boolean;
   onBlur?: () => void;
   onFocus?: () => void;
 }
@@ -45,6 +51,9 @@ export default function AceEditor({
   editorRef: propsEditorRef,
   onLoad,
   readOnly,
+  theme = 'auto',
+  enableBasicAutocompletion = true,
+  enableLiveAutocompletion = true,
   onBlur,
   onFocus,
 }: Props) {
@@ -71,9 +80,11 @@ export default function AceEditor({
       onFocus={onFocus}
       onLoad={onLoad}
       mode={mode}
-      theme={isDarkMode ? 'tomorrow_night' : 'chrome'}
-      enableBasicAutocompletion
-      enableLiveAutocompletion
+      theme={
+        theme === 'auto' ? (isDarkMode ? 'tomorrow_night' : 'chrome') : theme
+      }
+      enableBasicAutocompletion={enableBasicAutocompletion}
+      enableLiveAutocompletion={enableLiveAutocompletion}
       defaultValue={defaultValue}
       value={value}
       onChange={onChange}

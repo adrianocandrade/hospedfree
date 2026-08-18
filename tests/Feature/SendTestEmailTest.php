@@ -51,13 +51,13 @@ class SendTestEmailTest extends TestCase
         $this
             ->postJson('/api/v1/settings/email/send-test', [
                 'recipient' => 'recipient@example.com',
-                'template' => 'booking_confirmation',
+                'template' => 'hosting_ready',
             ])
             ->assertNoContent();
 
         $this->assertCount(1, $sender->calls);
         $this->assertSame(
-            TestEmailTemplate::BookingConfirmation,
+            TestEmailTemplate::HostingReady,
             $sender->calls[0][0],
         );
         $this->assertSame('recipient@example.com', $sender->calls[0][1]);

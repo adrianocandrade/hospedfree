@@ -41,8 +41,13 @@ class UserPolicy extends BasePolicy
 
         // user should not be able to change his own permissions or roles
         if (
-            $this->request->get('permissions') ||
-            $this->request->get('roles')
+            $this->request->hasAny([
+                'email',
+                'password',
+                'email_is_verified',
+                'permissions',
+                'roles',
+            ])
         ) {
             return false;
         }

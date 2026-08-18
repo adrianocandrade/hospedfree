@@ -200,6 +200,25 @@ O claro é o padrão institucional. Um tema escuro pode ser oferecido no painel 
 - não usa preto absoluto como superfície universal;
 - deve ser testado com status, gráficos, tabelas e campos.
 
+A direção digital Product Eclipse compartilha a mesma paleta semântica entre landing, painel e administração no modo escuro:
+
+| Papel | Valor |
+| --- | ---: |
+| background | #080916 |
+| foreground | #F5F4FB |
+| card | #111426 |
+| popover / muted | #15182C |
+| primary / ring | #625DEB |
+| primary-foreground | #FFFFFF |
+| secondary | #181B31 |
+| muted-foreground | #A4A7BB |
+| accent | #222148 |
+| border | #292C44 |
+| input | #606487 |
+| sidebar | #0D1020 |
+
+Essa extensão escura preserva o roxo oficial como família de marca. Tokens funcionais de sucesso, alerta, erro e informação continuam independentes e não devem ser substituídos pelo violeta.
+
 ## 12. Imagens e ilustrações
 
 - mostrar produto real ou cenas plausíveis de publicação;

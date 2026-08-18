@@ -6,12 +6,18 @@ import {
 import {AccountSettingsId} from '@common/auth/ui/account-settings/account-settings-sidenav';
 import {usePasswordConfirmedAction} from '@common/auth/ui/confirm-password/use-password-confirmed-action';
 import {showHttpErrorToast} from '@common/http/errors/show-http-error-toast';
+import {Badge} from '@shadcn/badge/badge';
 import {Button} from '@shadcn/button/button';
 import {toast} from '@shadcn/toast/toast';
 import {useMutation, useSuspenseQuery} from '@tanstack/react-query';
 import {FormattedRelativeTime} from '@ui/i18n/formatted-relative-time';
 import {Trans} from '@ui/i18n/trans';
-import {ComputerIcon, SmartphoneIcon, TabletIcon} from 'lucide-react';
+import {
+  ComputerIcon,
+  KeyRoundIcon,
+  SmartphoneIcon,
+  TabletIcon,
+} from 'lucide-react';
 import {ReactNode} from 'react';
 import {AccountSettingsPanel} from './account-settings-panel';
 
@@ -30,7 +36,7 @@ export function SessionsPanel() {
         {password},
         {
           onSuccess: () => {
-            toast.success(<Trans message="Logged out other sessions." />);
+            toast.success(<Trans message="Outras sessões encerradas." />);
           },
         },
       );
@@ -40,13 +46,13 @@ export function SessionsPanel() {
   return (
     <AccountSettingsPanel
       id={AccountSettingsId.Sessions}
-      title={<Trans message="Sessions" />}
+      title={<Trans message="Acessos à conta" />}
     >
-      <p className="text-sm">
-        <Trans message="If necessary, you may log out of all of your other browser sessions across all of your devices. Your recent sessions are listed below. If you feel your account has been compromised, you should also update your password." />
+      <p className="max-w-3xl text-sm text-muted-foreground">
+        <Trans message="Revise os dispositivos e tokens que acessaram sua conta. Se não reconhecer uma sessão, encerre os outros acessos e altere sua senha." />
       </p>
-      <div className="my-7.5">
-        <div className="max-h-100 overflow-y-auto overscroll-contain">
+      <div className="my-6">
+        <div className="max-h-100 divide-y overflow-y-auto overscroll-contain rounded-card border">
           {query.data.data.map(session => (
             <SessionItem key={session.id} session={session} />
           ))}
@@ -58,7 +64,7 @@ export function SessionsPanel() {
         disabled={confirmingPassword || logoutOther.isPending}
         onClick={() => handleLogoutOtherSessions()}
       >
-        <Trans message="Logout other sessions" />
+        <Trans message="Encerrar outras sessões" />
       </Button>
     </AccountSettingsPanel>
   );
@@ -69,20 +75,32 @@ interface SessionItemProps {
 }
 function SessionItem({session}: SessionItemProps) {
   return (
-    <div className="mb-3.5 flex items-start gap-3.5 text-sm">
-      <div className="shrink-0 pt-1 text-muted-foreground [&_svg]:size-4">
-        <DeviceIcon device={session.device} />
+    <div className="flex min-w-0 items-start gap-3.5 p-4 text-sm">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-card bg-primary/10 text-primary [&_svg]:size-4">
+        <DeviceIcon device={session.device} accessType={session.access_type} />
       </div>
-      <div className="flex-auto">
-        <div>
-          <ValueOrUnknown>{session.platform}</ValueOrUnknown> -{' '}
-          <ValueOrUnknown>{session.browser}</ValueOrUnknown>
+      <div className="min-w-0 flex-auto">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="font-medium break-words">
+            <ValueOrUnknown>{session.platform}</ValueOrUnknown> -{' '}
+            <ValueOrUnknown>{session.browser}</ValueOrUnknown>
+          </span>
+          {session.is_current_device ? (
+            <Badge variant="positive">
+              <Trans message="Este dispositivo" />
+            </Badge>
+          ) : null}
+          {session.access_type === 'api_token' ? (
+            <Badge variant="secondary">
+              <Trans message="Token de API" />
+            </Badge>
+          ) : null}
         </div>
-        <div className="my-1 text-xs">
+        <div className="my-1 text-xs text-muted-foreground">
           <ValueOrUnknown>{session.city}</ValueOrUnknown>,{' '}
           <ValueOrUnknown>{session.country}</ValueOrUnknown>
         </div>
-        <div className="text-xs">
+        <div className="text-xs break-all text-muted-foreground">
           <IpAddress session={session} /> - <LastActive session={session} />
         </div>
       </div>
@@ -92,8 +110,13 @@ function SessionItem({session}: SessionItemProps) {
 
 interface DeviceIconProps {
   device: UserSession['device'];
+  accessType: UserSession['access_type'];
 }
-function DeviceIcon({device}: DeviceIconProps) {
+function DeviceIcon({device, accessType}: DeviceIconProps) {
+  if (accessType === 'api_token') {
+    return <KeyRoundIcon />;
+  }
+
   switch (device) {
     case 'mobile':
       return <SmartphoneIcon />;
@@ -111,7 +134,7 @@ function LastActive({session}: LastActiveProps) {
   if (session.is_current_device) {
     return (
       <span className="text-positive">
-        <Trans message="This device" />
+        <Trans message="Ativo agora" />
       </span>
     );
   }
@@ -126,12 +149,12 @@ function IpAddress({session}: IpAddressProps) {
   if (session.ip_address) {
     return <span>{session.ip_address}</span>;
   }
-  return <Trans message="Unknown IP" />;
+  return <Trans message="IP desconhecido" />;
 }
 
 interface ValueOrUnknownProps {
   children: ReactNode;
 }
 function ValueOrUnknown({children}: ValueOrUnknownProps) {
-  return children ? <>{children}</> : <Trans message="Unknown" />;
+  return children ? <>{children}</> : <Trans message="Desconhecido" />;
 }

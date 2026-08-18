@@ -19,10 +19,10 @@ class TestEmailTemplateSenderTest extends TestCase
             'mail.primary' => 'array',
             'mail.mailers.array' => ['transport' => 'array'],
             'mail.from.address' => 'sender@example.com',
-            'mail.from.name' => 'MeuLinkBio',
+            'mail.from.name' => 'HospedFree',
         ]);
-        settings()->set('branding.logo_dark', 'images/logo-dark.svg');
-        settings()->set('branding.site_name', 'MeuLinkBio');
+        settings()->set('branding.logo_dark', 'images/logo-1.png');
+        settings()->set('branding.site_name', 'HospedFree');
         Mail::purge();
 
         app(TestEmailTemplateSender::class)->send(

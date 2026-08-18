@@ -1,2 +1,0 @@
-import"./browser-B0-gCI_h.js";function e(e){let{context:t,radius:n}=e,r=n*Math.SQRT1_2,i=r*2;t.rect(-r,-r,i,i)}var t=4,n=class{draw(t){e(t)}getSidesCount(){return t}};async function r(e){e.checkVersion(`4.3.2`),await e.pluginManager.register(e=>{e.pluginManager.addShape([`edge`,`square`],()=>Promise.resolve(new n))})}export{r as t};
-//# sourceMappingURL=browser-DKwryhoy.js.map

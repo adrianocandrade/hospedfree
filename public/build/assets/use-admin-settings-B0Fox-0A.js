@@ -1,0 +1,1 @@
+import{t as e}from"./useSuspenseQuery-DX0-Ez4T.js";import{Qn as t}from"./main-Bq1lpIKB.js";function n(){return e({...t(),select:r})}function r(e){for(let t in e)if(t===`themes`||t===`defaults`)continue;else Array.isArray(e[t])?e[t]=e[t].map(r):typeof e[t]==`object`?e[t]=r(e[t]):typeof e[t]==`number`?e[t]=e[t].toString():e[t]??(e[t]=``);return e}export{n as t};

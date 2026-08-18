@@ -1,5 +1,6 @@
 import {OutgoingEmailLogItem} from '@app/gen/schemas/outgoing-email-log-item';
 import {OutgoingEmailLogEntryDialog} from '@common/admin/logging/outgoing-email/outgoing-email-log-entry-dialog';
+import {useAuth} from '@common/auth/use-auth';
 import {Badge} from '@shadcn/badge/badge';
 import {Button} from '@shadcn/button/button';
 import {Dialog} from '@shadcn/dialog/dialog';
@@ -118,6 +119,9 @@ export function StatusBadge({status}: {status: string}) {
 }
 
 export function PreviewEmailButton({item}: {item: OutgoingEmailLogItem}) {
+  const {hasPermission} = useAuth();
+  if (!hasPermission('email_logs.view_content')) return null;
+
   return (
     <OutgoingEmailLogEntryDialog logItemId={item.id}>
       <Tooltip.Root>
@@ -129,7 +133,7 @@ export function PreviewEmailButton({item}: {item: OutgoingEmailLogItem}) {
           <EyeIcon />
         </Dialog.Trigger>
         <Tooltip.Content>
-          <Trans message="Preview" />
+          <Trans message="Visualizar conteúdo" />
         </Tooltip.Content>
       </Tooltip.Root>
     </OutgoingEmailLogEntryDialog>

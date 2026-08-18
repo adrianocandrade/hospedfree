@@ -11,6 +11,11 @@ class PasswordController extends FortifyPasswordController
 {
     use BlocksFunctionalityOnDemoSite;
 
+    public function __construct()
+    {
+        $this->middleware('session.auth');
+    }
+
     public function update(Request $request, UpdatesUserPasswords $updater)
     {
         $this->blockOnDemoSite();

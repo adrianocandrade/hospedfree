@@ -2,49 +2,30 @@
 
 namespace Common\Settings\Validators;
 
-use Common\Auth\Models\Oauth;
-use Common\Core\HttpClient;
-use Common\Settings\Validators\SettingsValidator;
-use Config;
-use Exception;
 use Illuminate\Support\Arr;
-use Socialite;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
+use Throwable;
 
 class TwitterLoginValidator implements SettingsValidator
 {
-    const KEYS = ['twitter_id', 'twitter_secret'];
+    public const KEYS = ['twitter_id', 'twitter_secret'];
 
-    /**
-     * @var Oauth
-     */
-    private $oauth;
-
-    /**
-     * @var HttpClient
-     */
-    private $httpClient;
-
-    public function __construct(Oauth $oauth)
-    {
-        $this->oauth = $oauth;
-        $this->httpClient = new HttpClient([
-            'exceptions' => true,
-        ]);
-    }
-
-    public function fails($values)
+    public function fails($values): ?array
     {
         $this->setConfigDynamically($values);
 
         try {
             Socialite::driver('twitter')->redirect();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return $this->getErrorMessage($e);
         }
+
+        return null;
     }
 
-    private function setConfigDynamically($settings)
+    private function setConfigDynamically(array $settings): void
     {
         if ($twitterId = Arr::get($settings, 'twitter_id')) {
             Config::set('services.twitter.client_id', $twitterId);
@@ -55,28 +36,41 @@ class TwitterLoginValidator implements SettingsValidator
         }
     }
 
-    /**
-     * @param Exception $e
-     * @return array
-     */
-    private function getErrorMessage(Exception $e)
+    private function getErrorMessage(Throwable $e): array
     {
-        if (Str::contains($e->getMessage(), 'code="415"')) {
+        if (
+            Str::contains($e->getMessage(), [
+                'status code [401]',
+                'code":32',
+                'code 32',
+                'Could not authenticate you',
+            ])
+        ) {
             return [
                 'twitter_group' =>
-                    'Site url is not present in "Callback URL" field on your twitter app.',
+                    'O X rejeitou as credenciais. Este login usa OAuth 1.0a: informe a API Key (Consumer Key) e a API Key Secret, não o Client ID/Secret do OAuth 2.0. Confirme também se “Sign in with X” está ativo e se a Callback URL cadastrada é exatamente ' .
+                    config('services.twitter.redirect') .
+                    '.',
             ];
         }
 
-        if ($e->getMessage()) {
-            return ['twitter_group' => $e->getMessage()];
+        if (Str::contains($e->getMessage(), 'code="415"')) {
+            return [
+                'twitter_group' =>
+                    'Cadastre exatamente esta Callback URL no aplicativo do X: ' .
+                    config('services.twitter.redirect') .
+                    '.',
+            ];
         }
 
         return $this->getDefaultError();
     }
 
-    private function getDefaultError()
+    private function getDefaultError(): array
     {
-        return ['twitter_group' => 'These twitter credentials are not valid.'];
+        return [
+            'twitter_group' =>
+                'Não foi possível validar o login com X. Confirme a API Key e a API Key Secret do OAuth 1.0a, a permissão de leitura e a Callback URL.',
+        ];
     }
 }

@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\Response;
+use Common\Billing\Webhooks\WebhookReceipt;
+use Throwable;
 
 class PaypalWebhookController extends Controller
 {
@@ -23,21 +25,40 @@ class PaypalWebhookController extends Controller
     {
         $payload = $request->all();
 
-        if (config('app.verify_paypal_webhook') && !$this->webhookIsValid()) {
+        if (!config('services.paypal.webhook_id')) {
+            return response('PayPal webhook is not configured', 503);
+        }
+
+        if (!$this->webhookIsValid()) {
             return response('Webhook validation failed', 422);
         }
 
-        return match ($payload['event_type']) {
-            'BILLING.SUBSCRIPTION.PAYMENT.FAILED'
-                => $this->handleInvoicePaymentFailed($payload),
-            'BILLING.SUBSCRIPTION.ACTIVATED',
-            'BILLING.SUBSCRIPTION.CANCELLED',
-            'BILLING.SUBSCRIPTION.EXPIRED',
-            'BILLING.SUBSCRIPTION.SUSPENDED'
-                => $this->handleSubscriptionStateChanged($payload),
-            'PAYMENT.SALE.COMPLETED' => $this->handleSaleCompleted($payload),
-            default => response('Webhook Handled', 200),
-        };
+        $eventId = isset($payload['id']) && is_string($payload['id']) ? $payload['id'] : null;
+        if (!$eventId) {
+            return response('PayPal event ID is required', 422);
+        }
+
+        $receipts = app(WebhookReceipt::class);
+        if (!$receipts->begin('paypal', $eventId, $request->getContent())) {
+            return response('Webhook already handled', 200);
+        }
+
+        try {
+            $response = match ($payload['event_type'] ?? null) {
+                'BILLING.SUBSCRIPTION.PAYMENT.FAILED' => $this->handleInvoicePaymentFailed($payload),
+                'BILLING.SUBSCRIPTION.ACTIVATED',
+                'BILLING.SUBSCRIPTION.CANCELLED',
+                'BILLING.SUBSCRIPTION.EXPIRED',
+                'BILLING.SUBSCRIPTION.SUSPENDED' => $this->handleSubscriptionStateChanged($payload),
+                'PAYMENT.SALE.COMPLETED' => $this->handleSaleCompleted($payload),
+                default => response('Webhook Handled', 200),
+            };
+            $receipts->complete('paypal', $eventId);
+            return $response;
+        } catch (Throwable $e) {
+            $receipts->fail('paypal', $eventId);
+            throw $e;
+        }
     }
 
     protected function handleInvoicePaymentFailed(array $payload): Response

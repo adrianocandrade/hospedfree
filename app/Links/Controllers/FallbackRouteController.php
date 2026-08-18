@@ -27,6 +27,8 @@ class FallbackRouteController extends Controller
         'admin',
         'billing',
         'blog',
+        'faq',
+        'knowledge',
         'workspace',
         'contact',
         'update',
@@ -44,7 +46,7 @@ class FallbackRouteController extends Controller
         $parts = $this->parsePath($path);
 
         // if any linkeable matches the url, handle it
-        if ($parts) {
+        if (config('hospedfree.legacy_links_enabled') && $parts) {
             if ($linkeable = $this->findLinkeable($parts['backHalf'])) {
                 return $this->handleLinkeable($linkeable, $parts['route']);
             }

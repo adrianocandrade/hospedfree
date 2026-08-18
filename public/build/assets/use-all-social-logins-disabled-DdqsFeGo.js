@@ -1,0 +1,1 @@
+import{t as e}from"./use-settings-CXOaJQ2w.js";function t(){let{social:t}=e();return!t?.google?.enable&&!t?.github?.enable&&!t?.facebook?.enable&&!t?.twitter?.enable}export{t};

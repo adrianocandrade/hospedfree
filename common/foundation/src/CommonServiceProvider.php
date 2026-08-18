@@ -423,6 +423,8 @@ class CommonServiceProvider extends ServiceProvider
             'customDomainsEnabled' => CustomDomainsEnabled::class,
             'verifyApiAccess' => VerifyApiAccessMiddleware::class,
             'guest' => RedirectIfAuthenticated::class,
+            'session.auth' => \Common\Auth\Middleware\RequireSessionAuthentication::class,
+            'token.ability' => \Common\Auth\Middleware\RequireTokenAbility::class,
         ];
 
         $apiMiddleware = [

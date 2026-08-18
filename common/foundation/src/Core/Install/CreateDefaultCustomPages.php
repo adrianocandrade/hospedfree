@@ -8,16 +8,12 @@ class CreateDefaultCustomPages
 {
     public function execute(): void
     {
-        if (CustomPage::query()->count() > 0) {
-            return;
-        }
-
         CustomPage::firstOrCreate(
             [
                 'slug' => 'privacy-policy',
             ],
             [
-                'title' => 'Example Privacy Policy',
+                'title' => 'Política de Privacidade',
                 'slug' => 'privacy-policy',
                 'body' => $this->replacePlaceholders(
                     file_get_contents(
@@ -25,6 +21,9 @@ class CreateDefaultCustomPages
                             '/resources/defaults/privacy-policy.html',
                     ),
                 ),
+                'meta' => [
+                    'description' => 'Entenda como a HospedFree coleta, usa, protege e compartilha dados pessoais para prestar o serviço de hospedagem.',
+                ],
                 'type' => 'default',
             ],
         );
@@ -34,7 +33,7 @@ class CreateDefaultCustomPages
                 'slug' => 'terms-of-service',
             ],
             [
-                'title' => 'Example Terms of Service',
+                'title' => 'Termos de Uso',
                 'slug' => 'terms-of-service',
                 'body' => $this->replacePlaceholders(
                     file_get_contents(
@@ -42,6 +41,26 @@ class CreateDefaultCustomPages
                             '/resources/defaults/terms-of-service.html',
                     ),
                 ),
+                'meta' => [
+                    'description' => 'Conheça as regras de uso da hospedagem gratuita e dos planos pagos da HospedFree.',
+                ],
+                'type' => 'default',
+            ],
+        );
+
+        CustomPage::firstOrCreate(
+            [
+                'slug' => 'cookies',
+            ],
+            [
+                'title' => 'Política de Cookies',
+                'slug' => 'cookies',
+                'body' => file_get_contents(
+                    app('path.common') . '/resources/defaults/cookies.html',
+                ),
+                'meta' => [
+                    'description' => 'Saiba quais cookies a HospedFree usa e controle suas preferências de analytics.',
+                ],
                 'type' => 'default',
             ],
         );
@@ -74,7 +93,7 @@ class CreateDefaultCustomPages
                 config('app.name'),
                 url('/'),
                 settings('mail.contact_page_address'),
-                'United States',
+                'Brasil',
             ],
             $text,
         );

@@ -3,18 +3,37 @@ import {useRequiredParams} from '@common/ui/navigation/use-required-params';
 import {useSuspenseQuery} from '@tanstack/react-query';
 import {Trans} from '@ui/i18n/trans';
 import {useSettings} from '@ui/settings/use-settings';
-import {Navigate} from 'react-router';
+import {Navigate, useSearchParams} from 'react-router';
 import {CheckoutLayout} from './checkout-layout';
 import {CheckoutProductSummary} from './checkout-product-summary';
+import {
+  getSafeHostingOrderReference,
+  getSafePremiumPurchaseReference,
+  getSafeCheckoutReturnPath,
+  withHostingOrderReference,
+  withPremiumPurchaseReference,
+  withCheckoutReturnPath,
+} from './checkout-return-path';
 import {usePaypal} from './paypal/use-paypal';
 import {StripeElementsForm} from './stripe/stripe-elements-form';
 
 export function Component() {
   const {productId, priceId} = useRequiredParams(['productId', 'priceId']);
+  const [searchParams] = useSearchParams();
+  const returnPath = getSafeCheckoutReturnPath(searchParams.get('returnTo'));
+  const hostingOrder = getSafeHostingOrderReference(
+    searchParams.get('hostingOrder'),
+  );
+  const premiumPurchase = getSafePremiumPurchaseReference(
+    searchParams.get('premiumPurchase'),
+  );
   const productsQuery = useSuspenseQuery(listProductsOptions());
   const {paypalElementRef} = usePaypal({
     productId,
     priceId,
+    returnPath,
+    hostingOrder,
+    premiumPurchase,
   });
   const {base_url, billing} = useSettings();
 
@@ -43,7 +62,18 @@ export function Component() {
               submitLabel={<Trans message="Upgrade" />}
               confirmType={formType}
               createType="subscription"
-              returnUrl={`${base_url}/checkout/${productId}/${priceId}/stripe/done`}
+              hostingOrder={hostingOrder}
+              premiumPurchase={premiumPurchase}
+              returnUrl={withPremiumPurchaseReference(
+                withHostingOrderReference(
+                  withCheckoutReturnPath(
+                    `${base_url}/checkout/${productId}/${priceId}/stripe/done`,
+                    returnPath,
+                  ),
+                  hostingOrder,
+                ),
+                premiumPurchase,
+              )}
             />
             <Separator />
           </>

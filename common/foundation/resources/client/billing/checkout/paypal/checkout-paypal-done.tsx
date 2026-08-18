@@ -9,10 +9,23 @@ import {
 } from '../../billing-redirect-message';
 import {CheckoutLayout} from '../checkout-layout';
 import {CheckoutProductSummary} from '../checkout-product-summary';
+import {
+  getSafeHostingOrderReference,
+  getSafePremiumPurchaseReference,
+  getSafeCheckoutReturnPath,
+  withHostingOrderReference,
+  withPremiumPurchaseReference,
+  withCheckoutReturnPath,
+} from '../checkout-return-path';
 
 export function Component() {
   const {productId, priceId} = useRequiredParams(['productId', 'priceId']);
   const [params] = useSearchParams();
+  const returnPath = getSafeCheckoutReturnPath(params.get('returnTo'));
+  const hostingOrder = getSafeHostingOrderReference(params.get('hostingOrder'));
+  const premiumPurchase = getSafePremiumPurchaseReference(
+    params.get('premiumPurchase'),
+  );
   const alreadyStoredLocally = useRef(false);
 
   const [messageConfig, setMessageConfig] =
@@ -27,19 +40,43 @@ export function Component() {
     }
 
     if (subscriptionId && status === 'success') {
-      storePaypalSubscriptionDetailsLocally({
-        paypal_subscription_id: subscriptionId,
-      }).then(() => {
-        setMessageConfig(
-          getRedirectMessageConfig('success', productId, priceId),
-        );
-        window.location.href = '/billing';
-      });
+      void (async () => {
+        try {
+          await storePaypalSubscriptionDetailsLocally(
+            {
+              paypal_subscription_id: subscriptionId,
+            },
+            checkoutHeaders(hostingOrder, premiumPurchase),
+          );
+          setMessageConfig(
+            getRedirectMessageConfig(
+              'success',
+              productId,
+              priceId,
+              returnPath,
+              hostingOrder,
+              premiumPurchase,
+            ),
+          );
+          window.location.href = returnPath;
+        } catch {
+          setMessageConfig(getAsyncFailureConfig());
+        }
+      })();
     } else {
-      setMessageConfig(getRedirectMessageConfig(status, productId, priceId));
+      setMessageConfig(
+        getRedirectMessageConfig(
+          status,
+          productId,
+          priceId,
+          returnPath,
+          hostingOrder,
+          premiumPurchase,
+        ),
+      );
     }
     alreadyStoredLocally.current = true;
-  }, [priceId, productId, params]);
+  }, [priceId, productId, params, returnPath, hostingOrder, premiumPurchase]);
 
   return (
     <CheckoutLayout>
@@ -49,10 +86,24 @@ export function Component() {
   );
 }
 
+function getAsyncFailureConfig(): BillingRedirectMessageConfig {
+  return {
+    message: (
+      <Trans message="O pagamento pode ter sido recebido, mas a confirmação local ainda não terminou. Tente confirmar novamente." />
+    ),
+    status: 'error',
+    buttonLabel: <Trans message="Tentar confirmar novamente" />,
+    link: window.location.href,
+  };
+}
+
 function getRedirectMessageConfig(
   status?: 'success' | 'error' | string | null,
   productId?: string,
   priceId?: string,
+  returnPath = '/billing',
+  hostingOrder?: string,
+  premiumPurchase?: string,
 ): BillingRedirectMessageConfig {
   switch (status) {
     case 'success':
@@ -60,18 +111,52 @@ function getRedirectMessageConfig(
         message: <Trans message="Subscription successful!" />,
         status: 'success',
         buttonLabel: <Trans message="Return to site" />,
-        link: '/billing',
+        link: returnPath,
       };
     default:
       return {
         message: <Trans message="Something went wrong. Please try again." />,
         status: 'error',
         buttonLabel: <Trans message="Go back" />,
-        link: errorLink(productId, priceId),
+        link: errorLink(
+          productId,
+          priceId,
+          returnPath,
+          hostingOrder,
+          premiumPurchase,
+        ),
       };
   }
 }
 
-function errorLink(productId?: string, priceId?: string): string {
-  return productId && priceId ? `/checkout/${productId}/${priceId}` : '/';
+function errorLink(
+  productId?: string,
+  priceId?: string,
+  returnPath = '/billing',
+  hostingOrder?: string,
+  premiumPurchase?: string,
+): string {
+  return productId && priceId
+    ? withPremiumPurchaseReference(
+        withHostingOrderReference(
+          withCheckoutReturnPath(
+            `/checkout/${productId}/${priceId}`,
+            returnPath,
+          ),
+          hostingOrder,
+        ),
+        premiumPurchase,
+      )
+    : '/';
+}
+
+function checkoutHeaders(
+  hostingOrder?: string,
+  premiumPurchase?: string,
+): {headers: Record<string, string>} | undefined {
+  if (hostingOrder) return {headers: {'X-Hosting-Order': hostingOrder}};
+  if (premiumPurchase) {
+    return {headers: {'X-Premium-Subdomain-Purchase': premiumPurchase}};
+  }
+  return undefined;
 }

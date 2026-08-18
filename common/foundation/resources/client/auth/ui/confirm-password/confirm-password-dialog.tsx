@@ -58,7 +58,7 @@ export function ConfirmPasswordDialogProvider({
       >
         <Dialog.Portal>
           <Dialog.Backdrop />
-          <Content />
+          {isOpen && <Content />}
         </Dialog.Portal>
       </Dialog.Root>
     </ConfirmPasswordDialogContext.Provider>
@@ -96,7 +96,13 @@ function Content() {
               <Field.Label>
                 <Trans message="Password" />
               </Field.Label>
-              <Input type="password" required autoFocus />
+              <Input
+                type="password"
+                autoComplete="current-password"
+                onChange={() => form.clearErrors('password')}
+                required
+                autoFocus
+              />
               <Field.Error />
             </HookForm.Field>
           </Field.Group>

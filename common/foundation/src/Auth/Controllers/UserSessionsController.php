@@ -2,6 +2,9 @@
 
 namespace Common\Auth\Controllers;
 
+use App\Models\User;
+use App\Security\CustomerSecurityEventRecorder;
+use App\Security\Enums\CustomerSecurityEventType;
 use Common\Auth\Models\UserSession;
 use Common\Auth\Resources\UserSessionResource;
 use Common\Core\Demo\BlockedOnDemoSite;
@@ -18,7 +21,9 @@ use Illuminate\Support\Facades\Auth;
 #[ExcludeRoutesFromPublicDocs]
 class UserSessionsController extends Controller
 {
-    public function __construct()
+    public function __construct(
+        private readonly CustomerSecurityEventRecorder $securityEventRecorder,
+    )
     {
         $this->middleware('auth');
     }
@@ -62,6 +67,14 @@ class UserSessionsController extends Controller
             ->whereNotNull('session_id')
             ->where('session_id', '!=', request()->session()->getId())
             ->delete();
+
+        /** @var User $user */
+        $user = $request->user();
+        $this->securityEventRecorder->record(
+            $user,
+            CustomerSecurityEventType::OtherSessionsEnded,
+            $request,
+        );
 
         return response()->noContent();
     }

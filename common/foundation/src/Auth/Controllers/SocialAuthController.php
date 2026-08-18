@@ -5,11 +5,11 @@ namespace Common\Auth\Controllers;
 use App\Models\User;
 use Common\Auth\Models\Oauth;
 use Common\API\ExcludeRoutesFromPublicDocs;
-use Exception;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Throwable;
 
 #[ExcludeRoutesFromPublicDocs]
 class SocialAuthController extends Controller
@@ -108,8 +108,13 @@ class SocialAuthController extends Controller
                 request('tokenFromApi'),
                 request('secretFromApi'),
             );
-        } catch (Exception $e) {
-            Log::error($e);
+        } catch (Throwable $e) {
+            // OAuth callback URLs can contain short-lived authorization codes.
+            // Log only operational context, never the exception payload.
+            Log::warning('Social authentication callback failed.', [
+                'provider' => $provider,
+                'exception' => $e::class,
+            ]);
         }
 
         if (!$externalProfile) {
@@ -151,6 +156,17 @@ class SocialAuthController extends Controller
             return $this->oauth->getErrorResponse(
                 __(
                     "We couldn't find that account. Sign up or try another login method.",
+                ),
+            );
+        }
+
+        if (
+            !is_string($externalProfile->email) ||
+            !filter_var($externalProfile->email, FILTER_VALIDATE_EMAIL)
+        ) {
+            return $this->oauth->getErrorResponse(
+                __(
+                    'The social provider did not return a verified email address. Make a verified primary email available and try again.',
                 ),
             );
         }

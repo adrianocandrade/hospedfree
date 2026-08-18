@@ -31,6 +31,10 @@ class CustomPageResource extends JsonResource
                     : Str::limit(strip_tags($this->body), 100),
             'slug' => $this->slug,
             'type' => $this->type,
+            'description' => $this->meta['description'] ?? Str::limit(
+                trim(preg_replace('/\s+/', ' ', strip_tags($this->body))),
+                160,
+            ),
             'user_id' => $this->user_id,
             'user' => $this->whenLoaded(
                 'user',

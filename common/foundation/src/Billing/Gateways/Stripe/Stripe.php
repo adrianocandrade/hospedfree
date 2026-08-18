@@ -19,7 +19,10 @@ class Stripe implements CommonSubscriptionGatewayActions
     public function __construct()
     {
         $this->client = new StripeClient([
-            'api_key' => config('services.stripe.secret'),
+            // Stripe validates the key while controllers are resolved (for example
+            // by `route:list`). Keep disabled installations bootable; the gateway
+            // remains unusable until it is enabled with a real configured key.
+            'api_key' => config('services.stripe.secret') ?: 'sk_test_disabled',
             'stripe_version' => '2022-08-01',
         ]);
 

@@ -1,2 +1,0 @@
-function e(e){let{context:t,particle:n,radius:r}=e,i=n.shapeData;t.moveTo(-r,0),t.lineTo(r,0),t.lineCap=i?.cap??`butt`}var t=1,n=class{draw(t){e(t)}getSidesCount(){return t}};async function r(e){e.checkVersion(`4.3.2`),await e.pluginManager.register(e=>{e.pluginManager.addShape([`line`],()=>Promise.resolve(new n))})}export{r as t};
-//# sourceMappingURL=browser-BA6pscNS.js.map

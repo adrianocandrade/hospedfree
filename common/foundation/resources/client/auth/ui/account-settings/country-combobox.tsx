@@ -1,19 +1,25 @@
 import {Combobox} from '@shadcn/forms/combobox/combobox';
 import {VirtualizedCombobox} from '@shadcn/forms/combobox/virtualized-combobox';
 import {message} from '@ui/i18n/message';
+import {useSelectedLocale} from '@ui/i18n/selected-locale';
 import {Trans} from '@ui/i18n/trans';
 import {useTrans} from '@ui/i18n/use-trans';
 import {getCountryList} from '@ui/utils/intl/countries';
-import {useRef, useState} from 'react';
+import {useMemo, useRef, useState} from 'react';
 
 export function CountryCombobox() {
   const {trans} = useTrans();
+  const {localeCode} = useSelectedLocale();
   const virtualizerRef = useRef<VirtualizedCombobox.Virtualizer | null>(null);
 
-  const items = getCountryList().map(country => ({
-    label: country.name,
-    value: country.code,
-  }));
+  const items = useMemo(
+    () =>
+      getCountryList(localeCode).map(country => ({
+        label: country.name,
+        value: country.code,
+      })),
+    [localeCode],
+  );
 
   const [open, setOpen] = useState(false);
 

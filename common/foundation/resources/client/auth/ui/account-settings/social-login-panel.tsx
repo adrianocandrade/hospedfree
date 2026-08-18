@@ -2,7 +2,7 @@ import {User} from '@app/gen/schemas/user';
 import {AccountSettingsId} from '@common/auth/ui/account-settings/account-settings-sidenav';
 import {useAllSocialLoginsDisabled} from '@common/auth/ui/use-all-social-logins-disabled';
 import {queryClient} from '@common/http/query-client';
-import {SiFacebook, SiX} from '@icons-pack/react-simple-icons';
+import {SiFacebook, SiGithub, SiX} from '@icons-pack/react-simple-icons';
 import {Button} from '@shadcn/button/button';
 import {toast} from '@shadcn/toast/toast';
 import {Trans} from '@ui/i18n/trans';
@@ -33,6 +33,7 @@ export function SocialLoginPanel({user}: {user: User}) {
         service="google"
         user={user}
       />
+      <SocialLoginPanelRow icon={<SiGithub />} service="github" user={user} />
       <SocialLoginPanelRow
         icon={<SiFacebook className="text-facebook" />}
         service="facebook"

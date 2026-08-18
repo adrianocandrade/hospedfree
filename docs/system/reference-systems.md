@@ -8,7 +8,7 @@ Os sistemas abaixo foram lidos para entender domínio, fluxos e experiências:
 
 - HospedFree antigo: D:\ARQUIVOS\PROJETOS\2025\SITES\hospedfree
 - Plugins antigos: D:\ARQUIVOS\PROJETOS\2025\SITES\hospedfree\platform\plugins
-- Bixa: D:\ARQUIVOS\PROJETOS\2025\SITES\hospedfree\bixa-2.0.1
+- Bixa: D:\ARQUIVOS\PROJETOS\2025\SITES\bixa
 
 Eles são read-only e não são dependências do hospedfree-base.
 
@@ -284,7 +284,7 @@ Elas continuam pendências de referência, não tarefas automaticamente aprovada
 
 ### Papel
 
-Bixa é uma aplicação Laravel 11 de gerenciamento de hospedagem usada como referência funcional.
+Bixa é uma aplicação Laravel de gerenciamento de hospedagem usada como referência funcional para integração MOFH reseller, VistaPanel/WebFTP, SSL, tickets e base de conhecimento.
 
 Capacidades observadas:
 
@@ -322,6 +322,59 @@ A nova implementação deve fazer o oposto:
 
 Usar Bixa para perguntar quais casos de uso existem, nunca para responder como implementá-los. A arquitetura, os modelos, as políticas, a segurança e os testes serão definidos na base nova.
 
+### Mapeamento MOFH extraído
+
+O Bixa usa `infinityfree/mofh-client` e não chamadas HTTP genéricas com sufixo `.php`. A base nova adotou essa dependência no provider MOFH, mantendo o contrato interno `HostingProvider`.
+
+Fluxos reaproveitados como comportamento:
+
+- `checkavailable`: disponibilidade remota de domínio;
+- `createacct`: cria conta com username MOFH curto, senha gerada, e-mail, domínio e pacote;
+- `getuserdomains`: reconcilia estado da conta;
+- `suspendacct`: suspende conta;
+- `unsuspendacct`: reativa conta;
+- `passwd`: redefine senha.
+
+Diferença crítica preservada:
+
+- username curto enviado ao MOFH fica em `hosting_accounts.provider_account_id`;
+- username VistaPanel retornado pelo provider fica em `hosting_accounts.username`;
+- operações remotas usam `provider_account_id`, não o usuário VistaPanel.
+
+O Bixa também tinha callback MOFH sem prova de autenticação forte. A base nova não depende disso para ativar contas; usa reconciliação periódica. Se callback for adicionado depois, ele deve ter token/assinatura, rate limit, auditoria e payload redigido.
+
+### Mapeamento VistaPanel/WebFTP extraído
+
+O Bixa implementa integração por scraping/session para:
+
+- login VistaPanel;
+- token `ttt`;
+- link Softaculous;
+- estatísticas de disco/banda/inodes;
+- quota e criação/listagem de bancos MySQL;
+- subdomínios;
+- CNAME;
+- WebFTP próprio por FTP.
+
+Essas capacidades entram no backlog técnico, mas não devem ser copiadas literalmente porque foram encontrados padrões incompatíveis com as regras atuais:
+
+- TLS desabilitado em chamadas cURL;
+- logs com resposta bruta;
+- risco de expor sessão/cookie/credencial;
+- File Manager externo com credenciais na URL.
+
+Implementação correta futura:
+
+1. criar contrato provider-neutral para ferramentas VistaPanel;
+2. exigir TLS;
+3. redigir logs;
+4. validar paths e ownership;
+5. não serializar senha;
+6. não enviar credenciais por query string;
+7. testar com conta descartável autorizada.
+
+O fluxo de verificação de domínio próprio agora usa o endpoint MOFH `getCname` através da biblioteca já instalada, não o scraping inseguro do Bixa. O hash normalizado forma o host de validação (`<hash>.<domínio>`), o destino CNAME é configurável pelo admin e a propagação é consultada no servidor. A automação de Addon Domains continua separada porque o projeto de referência não contém um contrato de formulário verificável para criar ou remover esse domínio.
+
 ## Matriz de adoção
 
 | Capacidade | Fonte de inspiração | Decisão |
@@ -334,7 +387,7 @@ Usar Bixa para perguntar quais casos de uso existem, nunca para responder como i
 | Suporte/KB | plugins antigos + Bixa | alvo |
 | Git deploy | plugin antigo | alvo opcional com regras seguras |
 | File Manager/WebFTP | ambos | experiência e segurança pendentes |
-| Softaculous/Site.Pro | ambos | integração pendente |
+| Softaculous/Site.Pro | ambos | Site.Pro integrado; Softaculous acessível pelo painel porque o redirecionamento direto do VistaPanel expõe a senha e é bloqueado |
 | Migração de legado | plugin antigo | projeto separado |
 | Links/biolinks/QR | base atual | fora do escopo |
 
@@ -348,3 +401,32 @@ Usar Bixa para perguntar quais casos de uso existem, nunca para responder como i
 6. Testar com fake/sandbox.
 7. Executar integração real somente em ambiente autorizado.
 8. Atualizar module-map.md com caminhos reais.
+
+## Atualizacao 2026-08-12: Bixa parity
+
+Bixa passa a ser a referencia funcional principal para a paridade de hospedagem do novo HospedFree. A meta nao e copiar o Bixa, mas entregar no painel HospedFree as mesmas capacidades centrais de operacao de hospedagem, usando a arquitetura atual.
+
+Capacidades Bixa agora classificadas como alvo principal da conversao:
+
+- MOFH reseller account lifecycle;
+- VistaPanel/cPanel entrypoints;
+- Softaculous;
+- WebFTP e File Manager nativo;
+- Site.Pro/Site Builder;
+- SSL/ACME;
+- Cloudflare/DNS para validacao e certificados;
+- dominio proprio;
+- subdominios adicionais;
+- bancos MySQL;
+- estatisticas e quotas;
+- tickets de suporte;
+- base de conhecimento e FAQ publica.
+
+Regras mantidas:
+
+- Bixa define quais casos de uso precisam existir, nao como o codigo deve ser copiado;
+- users, workspaces, billing e permissoes da base atual continuam sendo a fonte de verdade;
+- dados sensiveis, contas, usuarios, tickets, credenciais, `.env`, cookies e provider payloads do Bixa nao sao migrados;
+- knowledge pode ser recriado ou importado apenas apos sanitizacao e revisao;
+- integracoes com MOFH, VistaPanel, WebFTP, Cloudflare, ACME e Site.Pro devem ficar atras de contratos internos;
+- credenciais, cookies, callbacks brutos e respostas cruas do provider nao podem chegar ao frontend, logs comuns, notificacoes ou URLs.

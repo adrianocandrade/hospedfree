@@ -98,7 +98,9 @@ class SubscriptionsController extends Controller
         ]);
 
         $newProduct = Product::findOrFail($data['newProductId']);
-        $newPrice = Price::findOrFail($data['newPriceId']);
+        $newPrice = $newProduct
+            ->prices()
+            ->findOrFail($data['newPriceId']);
 
         $subscription->changePlan($newProduct, $newPrice);
 

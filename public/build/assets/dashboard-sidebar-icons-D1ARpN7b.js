@@ -1,2 +1,0 @@
-import{At as e,Kt as t,Rn as n,Ut as r,Vn as i,cr as a,dr as o,fr as s,ln as c,mi as l,ta as u}from"./icons-DFfxS4V_.js";var d=u(),f={links:(0,d.jsx)(n,{}),"qr-codes":(0,d.jsx)(r,{}),biolinks:(0,d.jsx)(i,{}),folders:(0,d.jsx)(s,{}),"custom-domains":(0,d.jsx)(a,{}),"link-overlays":(0,d.jsx)(t,{}),pixels:(0,d.jsx)(c,{}),"link-pages":(0,d.jsx)(o,{})},p={"/dashboard/insights":(0,d.jsx)(l,{}),"/dashboard/search":(0,d.jsx)(e,{})};for(let[e,t]of Object.entries(f))p[`/dashboard/${e}`]=t;export{f as n,p as t};
-//# sourceMappingURL=dashboard-sidebar-icons-D1ARpN7b.js.map

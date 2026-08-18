@@ -131,6 +131,9 @@ export interface BaseBackendSettings {
     google?: {
       enable: boolean;
     };
+    github?: {
+      enable: boolean;
+    };
     twitter?: {
       enable: boolean;
     };

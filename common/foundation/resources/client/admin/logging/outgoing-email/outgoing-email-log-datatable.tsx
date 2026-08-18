@@ -7,6 +7,7 @@ import {
 import {OutgoingEmailLogDatatableFilters} from '@common/admin/logging/outgoing-email/outgoing-email-log-datatable-filters';
 import {listOutgoingEmailLogItemsOptions} from '@common/admin/logging/outgoing-email/outgoing-email-queries';
 import {useShowGlobalLoadingBar} from '@common/core/use-show-global-loading-bar';
+import {useAuth} from '@common/auth/use-auth';
 import {AddFilterPopover} from '@common/datatable/filters/add-filter-popover';
 import {FilterList} from '@common/datatable/filters/filter-list/filter-list';
 import {DashboardLayout} from '@common/ui/dashboard/dashboard-layout';
@@ -116,6 +117,9 @@ function OutgoingEmailLogMobileList({items}: {items: OutgoingEmailLogItem[]}) {
 
 function DownloadOutgoingEmailLogButton({className}: {className?: string}) {
   const {base_url} = useSettings();
+  const {hasPermission} = useAuth();
+  if (!hasPermission('email_logs.download')) return null;
+
   return (
     <a
       className={cn(
@@ -130,7 +134,7 @@ function DownloadOutgoingEmailLogButton({className}: {className?: string}) {
       download
     >
       <DownloadIcon />
-      <Trans message="Download log" />
+      <Trans message="Baixar log" />
     </a>
   );
 }

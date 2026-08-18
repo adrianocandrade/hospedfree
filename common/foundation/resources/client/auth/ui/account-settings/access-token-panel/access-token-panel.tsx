@@ -93,6 +93,31 @@ function TokenLine({token, isLast}: TokenLineProps) {
             <Trans message="Never" />
           )}
         </div>
+        <div className="mt-2.5 font-semibold">
+          <Trans message="Expira em" />
+        </div>
+        <div>
+          {token.expires_at ? (
+            <FormattedDate date={token.expires_at} />
+          ) : (
+            <Trans message="Sem validade definida" />
+          )}
+        </div>
+        <div className="mt-2.5 font-semibold">
+          <Trans message="Permissões" />
+        </div>
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          {(token.abilities ?? [])
+            .filter((ability): ability is string => typeof ability === 'string')
+            .map(ability => (
+              <span
+                key={ability}
+                className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+              >
+                {ability}
+              </span>
+            ))}
+        </div>
       </div>
       <DeleteTokenAlert token={token}>
         <AlertDialog.Trigger

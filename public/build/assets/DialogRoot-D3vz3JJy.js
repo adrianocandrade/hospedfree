@@ -1,2 +1,0 @@
-import{a as e}from"./rolldown-runtime-Cyuzqnbw.js";import{na as t}from"./icons-DFfxS4V_.js";import{f as n,o as r}from"./overlay-portal-container-B-HmOjf0.js";var i=e(t());function a(e){return r(e,i.useContext(n)?`drawer`:`dialog`)}export{a as t};
-//# sourceMappingURL=DialogRoot-D3vz3JJy.js.map

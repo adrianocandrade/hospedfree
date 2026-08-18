@@ -1,2 +1,0 @@
-import{a as e}from"./rolldown-runtime-Cyuzqnbw.js";import{na as t}from"./icons-DFfxS4V_.js";var n=e(t());function r(){let[,e]=n.useState({});return n.useCallback(()=>{e({})},[])}export{r as t};
-//# sourceMappingURL=useForcedRerendering-DrZftPsu.js.map

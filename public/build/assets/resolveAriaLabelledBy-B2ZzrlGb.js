@@ -1,2 +1,1 @@
 function e(e){return e==null?void 0:`${e}-label`}function t(e,t){return e??t}export{t as n,e as t};
-//# sourceMappingURL=resolveAriaLabelledBy-B2ZzrlGb.js.map

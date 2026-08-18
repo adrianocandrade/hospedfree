@@ -1,6 +1,7 @@
 import {listErrorLogItemsOptions} from '@common/admin/logging/error/error-log-queries';
 import {listOutgoingEmailLogItemsOptions} from '@common/admin/logging/outgoing-email/outgoing-email-queries';
 import {listScheduleLogItemsOptions} from '@common/admin/logging/schedule/schedule-queries';
+import {authGuard} from '@common/auth/guards/auth-route';
 import {shouldRevalidateDatatableLoader} from '@common/datatable/filters/utils/should-revalidate-datatable-loader';
 import {queryClient} from '@common/http/query-client';
 import {searchParamsFromUrl} from '@ui/utils/urls/search-params-from-url';
@@ -39,12 +40,15 @@ export const adminLogsRoutes: Record<string, RouteObject> = {
         lazy: () =>
           import('@common/admin/logging/outgoing-email/outgoing-email-log-datatable'),
         shouldRevalidate: shouldRevalidateDatatableLoader,
-        loader: ({request}) =>
-          queryClient.ensureQueryData(
+        loader: ({request}) => {
+          const redirect = authGuard({permission: 'email_logs.view'});
+          if (redirect) return redirect;
+          return queryClient.ensureQueryData(
             listOutgoingEmailLogItemsOptions(
               searchParamsFromUrl(request.url),
             ),
-          ),
+          );
+        },
       },
     ],
   },

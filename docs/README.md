@@ -1,67 +1,52 @@
-# Documentação HospedFree
+# HospedFree Docs
 
-Este diretório separa a verdade atual da base herdada, o produto alvo e as referências históricas. Um recurso só pode ser chamado de implementado quando existir e tiver sido verificado neste repositório.
+This directory separates current implementation, target product decisions and historical references.
 
-## Ordem de autoridade
+## Authority Order
 
-1. ../PRODUCT.md — escopo e decisões de produto.
-2. brand-hospedfree.md — identidade visual canônica.
-3. ../DESIGN.md — contrato geral de experiência.
-4. brand/ — aplicação de marca, conteúdo, componentes e site.
-5. system/ — arquitetura atual, arquitetura alvo, operação e referências.
-6. security/ — invariantes e riscos.
-7. Código local — verdade final sobre o que está implementado.
+1. `../PRODUCT.md` for product scope.
+2. `brand-hospedfree.md` for official brand.
+3. `../DESIGN.md` for implemented experience rules.
+4. `system/` for architecture, operations and module status.
+5. `security/` for invariants and known risks.
+6. Local code for final implementation truth.
 
-## Índice
+## Current Implementation Docs
 
-### Produto e marca
+- `system/module-map.md` - current modules and legacy boundaries.
+- `system/bixa-parity-roadmap.md` - Bixa capability parity matrix and target boundaries.
+- `system/bixa-parity-tasks.md` - executable backlog for provider, domains, files, SSL, MySQL, tools, support and admin parity.
+- `system/commercial-expansion-plan.md` - catálogo, integrações e etapas para hospedagens adicionais, domínios, backup e serviços pagos.
+- `system/customer-dashboard-improvement-plan.md` - visual direction, information architecture and executable tasks for the customer home, hosting usage and contextual upgrade sidebar.
+- `system/operations.md` - local setup, jobs, provider, billing and validation.
+- `adr/` - accepted architecture decisions.
+- `audits/hosting-conversion-baseline.md` - baseline from the inherited project before hosting migrations.
+- `audits/security-and-completion-audit-2026-08-13.md` - current authenticated API, WebFTP, domain sync, Site.Pro, e-mail/access history and settings audit.
+- `security/security-audit.md` - security baseline and required invariants.
 
-- brand-hospedfree.md — cores, logotipo e regras oficiais.
-- brand/README.md — índice da documentação detalhada de marca.
-- brand/brand.md — personalidade, posicionamento e aplicação.
-- brand/design-system.md — tokens, tipografia, contraste e temas.
-- brand/content.md — voz, mensagens e terminologia.
-- brand/components.md — contratos de componentes.
-- brand/site-structure.md — arquitetura da experiência pública.
+## Brand and Experience
 
-### Sistema
+- `brand-hospedfree.md` - official colors, logo and usage rules.
+- `../DESIGN.md` - current UI/UX contract.
+- `design-references/hospedfree-dashboard/README.md` - reference-only manifest for the attached dashboard concepts.
+- `brand/` - older detailed brand work. Treat it as supporting context and verify against `brand-hospedfree.md`.
 
-- system/module-map.md — base atual, candidatos a reaproveitamento e módulos alvo.
-- system/reference-systems.md — HospedFree antigo, plugins e Bixa, apenas como referência.
-- system/operations.md — desenvolvimento, execução e operação segura.
-- system/divergences-and-known-issues.md — divergências e decisões pendentes.
-- system/localization.md — localização e português do Brasil.
-- system/ai-rules.md — regras para agentes.
-- system/biolink-themes.md e system/biolink-widgets.md — inventário herdado fora do escopo.
-- system/vebto-docs-map.md — proveniência histórica da base, não documentação HospedFree.
+## Historical Reference Material
 
-### Segurança e histórico
+These folders are not active HospedFree product docs:
 
-- security/security-audit.md — baseline e requisitos do produto alvo.
-- audits/ — registros históricos da estabilização da base anterior.
-- audits/hospedfree-documentation-rebrand.md — decisões e validação desta conversão documental.
-- migrations/remove-license-system.md — histórico da remoção do licenciamento legado.
-- ai/impeccable.md — uso da skill de qualidade visual.
+- `66biolinks (47 - 69)/`
+- `themes/linkbio/`
+- `imagensExemplo/`
+- old MeuLinkBio brand assets in `brand/assets/`
 
-## Acervos herdados
+They remain for audit and future decommission planning. Do not use them as source for new HospedFree UI, pricing, claims or provider implementation.
 
-Os diretórios abaixo não definem a marca ou o produto HospedFree:
+## Documentation States
 
-- 66biolinks (47 - 69)/ — corpus de terceiros/referência.
-- themes/linkbio/ — imagens de temas da base de biolinks.
-- imagensExemplo/ — imagens de exemplo antigas.
-- brand/assets/meulinkbio-color-system-v1.1.pdf — documento visual legado.
+- Current: implemented and verified locally.
+- Planned: approved scope but not implemented yet.
+- Reference-only: useful for understanding old workflows, never copied directly.
+- Open: requires business, provider or security decision.
 
-Eles permanecem intactos para auditoria e futura limpeza controlada. Não devem aparecer em novas telas, materiais ou decisões de marca.
-
-## Estados documentais
-
-- Atual: confirmado no código atual.
-- Reutilizável: existe na base, mas exige revisão para HospedFree.
-- Alvo: aprovado para o produto, ainda não necessariamente implementado.
-- Referência: informa fluxo ou domínio; nunca deve ser copiado automaticamente.
-- Aberto: depende de decisão de produto, negócio ou infraestrutura.
-
-## Regra de atualização
-
-Toda mudança relevante deve atualizar o documento mais próximo do assunto. Documentação nunca deve conter senhas, tokens, cookies, chaves, payloads privados ou valores copiados de ambientes reais.
+Docs must not contain secrets, provider credentials, customer passwords, cookies, private payloads or real payment data.

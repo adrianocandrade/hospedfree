@@ -31,7 +31,12 @@ export default defineConfig({
     strictPort: true,
     origin: 'http://127.0.0.1:5173',
     cors: {
-      origin: ['http://127.0.0.1:8000', 'http://localhost:8000'],
+      origin: [
+        'http://127.0.0.1:8000',
+        'http://localhost:8000',
+        'http://127.0.0.1:8011',
+        'http://localhost:8011',
+      ],
     },
     hmr: {
       host: '127.0.0.1',
@@ -43,7 +48,7 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   build: {
-    sourcemap: true,
+    sourcemap: false,
     rolldownOptions: {
       output: {
         codeSplitting: {

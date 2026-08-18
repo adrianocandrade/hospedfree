@@ -24,6 +24,8 @@ class Subscription extends BaseModel
 
     protected $guarded = [];
 
+    protected $hidden = ['checkout_reference'];
+
     protected $appends = [
         'on_grace_period',
         'past_due',
@@ -207,8 +209,11 @@ class Subscription extends BaseModel
     public function cancelAndDelete(): self
     {
         $this->cancel(false);
-        $this->delete();
-        $this->invoices()->delete();
+        $this->forceFill([
+            'ends_at' => now(),
+            'renews_at' => null,
+            'gateway_status' => 'cancelled',
+        ])->save();
 
         $this->user?->update([
             'card_last_four' => null,

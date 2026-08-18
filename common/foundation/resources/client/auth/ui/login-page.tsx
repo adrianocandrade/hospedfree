@@ -7,6 +7,7 @@ import {Input} from '@shadcn/forms/input/input';
 import {LinkStyle} from '@ui/buttons/external-link';
 import {Trans} from '@ui/i18n/trans';
 import {useSettings} from '@ui/settings/use-settings';
+import {LoaderCircleIcon} from 'lucide-react';
 import {ReactNode, useContext} from 'react';
 import {useForm} from 'react-hook-form';
 import {Link, useLocation, useSearchParams} from 'react-router';
@@ -45,6 +46,7 @@ export function LoginPage({
     defaultValues: {remember: true, email: searchParamsEmail, ...demoDefaults},
   });
   const login = useLogin(form);
+  const clearCredentialErrors = () => form.clearErrors(['email', 'password']);
 
   const heading = isWorkspaceLogin ? (
     <AuthHeading
@@ -52,14 +54,16 @@ export function LoginPage({
       description={
         <Trans
           values={{siteName: branding?.site_name}}
-          message="Para entrar em sua equipe em :siteName, faça login"
+          message="Entre em :siteName para continuar"
         />
       }
     />
   ) : (
     <AuthHeading
       title={<Trans message="Bem-vindo de volta" />}
-      description={<Trans message="Entre para continuar no MeuLinkBio." />}
+      description={
+        <Trans message="Acesse sua hospedagem, seus domínios e o suporte em um só lugar." />
+      }
     />
   );
 
@@ -68,7 +72,7 @@ export function LoginPage({
       {registrationEnabled && (
         <div>
           <Trans
-            message="Ainda não tem uma conta? <a>Crie sua conta.</a>"
+            message="Ainda não tem uma conta? <a>Comece gratuitamente.</a>"
             values={{
               a: parts => (
                 <Link className={LinkStyle} to="/register">
@@ -112,9 +116,16 @@ export function LoginPage({
             disabled={!!searchParamsEmail}
           >
             <Field.Label>
-              <Trans message="Email" />
+              <Trans message="E-mail" />
             </Field.Label>
-            <Input type="email" autoComplete="email" required />
+            <Input
+              className="h-12"
+              type="email"
+              autoComplete="email"
+              autoFocus={!searchParamsEmail}
+              onChange={clearCredentialErrors}
+              required
+            />
             {form.formState.errors.email?.message ? (
               <Field.Error>
                 <InvalidCredentialsMessage />
@@ -133,14 +144,20 @@ export function LoginPage({
                 <Trans message="Senha" />
               </Field.Label>
               <Link
-                className="text-sm hover:underline"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
                 to="/forgot-password"
-                tabIndex={-1}
               >
                 <Trans message="Esqueceu sua senha?" />
               </Link>
             </div>
-            <Input type="password" autoComplete="current-password" required />
+            <Input
+              className="h-12"
+              type="password"
+              autoComplete="current-password"
+              autoFocus={!!searchParamsEmail}
+              onChange={clearCredentialErrors}
+              required
+            />
             <Field.Error />
           </HookForm.Field>
 
@@ -152,13 +169,21 @@ export function LoginPage({
           </HookForm.Field>
 
           <Button
-            className="mt-2 w-full"
+            className="mt-3 h-12 w-full font-semibold"
             type="submit"
             variant="default"
             color="primary"
             disabled={login.isPending}
+            aria-busy={login.isPending}
           >
-            <Trans message="Entrar" />
+            {login.isPending ? (
+              <>
+                <LoaderCircleIcon className="animate-spin" />
+                <Trans message="Entrando..." />
+              </>
+            ) : (
+              <Trans message="Entrar" />
+            )}
           </Button>
         </Field.Group>
       </HookForm.Root>
@@ -181,11 +206,7 @@ function InvalidCredentialsMessage() {
       message="E-mail ou senha incorretos. Tente novamente ou <a>recupere sua senha</a>."
       values={{
         a: text => (
-          <Link
-            className="font-semibold underline"
-            to="/forgot-password"
-            tabIndex={-1}
-          >
+          <Link className="font-semibold underline" to="/forgot-password">
             {text}
           </Link>
         ),

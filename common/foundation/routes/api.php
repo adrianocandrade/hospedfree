@@ -110,10 +110,13 @@ Route::group(['prefix' => 'v1'], function () {
         Route::get('users', [UsersController::class, 'index']);
         Route::get('users/{id}', [UsersController::class, 'show'])->withoutMiddleware('verified');
         Route::post('users', [UsersController::class, 'store']);
-        Route::put('users/{id}', [UsersController::class, 'update']);
+        Route::put('users/{id}', [UsersController::class, 'update'])
+            ->middleware('session.auth');
         Route::delete('users/bulk', [UsersController::class, 'bulkeDelete']);
-        Route::post('access-tokens', [AccessTokenController::class, 'store']);
-        Route::delete('access-tokens/{tokenId}', [AccessTokenController::class, 'destroy']);
+        Route::post('access-tokens', [AccessTokenController::class, 'store'])
+            ->middleware(['session.auth', 'password.confirm', 'throttle:6,1']);
+        Route::delete('access-tokens/{tokenId}', [AccessTokenController::class, 'destroy'])
+            ->middleware('session.auth');
         Route::post('users/csv/export', [UsersController::class, 'exportCsv']);
         Route::get('users/{user}/followers', [FollowersController::class, 'index']);
         Route::post('users/{user}/follow', [FollowersController::class, 'follow']);
@@ -126,8 +129,8 @@ Route::group(['prefix' => 'v1'], function () {
         Route::delete('users/unban/{userIds}', [BanUsersController::class, 'destroy']);
 
         // USER SESSIONS
-        Route::get('user-sessions', [UserSessionsController::class, 'index'])->middleware('auth');
-        Route::post('user-sessions/logout-other', [UserSessionsController::class, 'LogoutOtherSessions'])->middleware(['auth', 'password.confirm']);
+        Route::get('user-sessions', [UserSessionsController::class, 'index'])->middleware(['auth', 'session.auth']);
+        Route::post('user-sessions/logout-other', [UserSessionsController::class, 'LogoutOtherSessions'])->middleware(['auth', 'session.auth', 'password.confirm']);
 
         // WORKSPACES
         Route::get('workspaces', [WorkspacesController::class, 'index']);
@@ -183,16 +186,18 @@ Route::group(['prefix' => 'v1'], function () {
 
         // SUBSCRIPTIONS
         Route::get('billing/subscriptions', [SubscriptionsController::class, 'index']);
-        Route::post('billing/subscriptions', [SubscriptionsController::class, 'store']);
-        Route::post('billing/subscriptions/{id}/cancel', [SubscriptionsController::class, 'cancel']);
-        Route::put('billing/subscriptions/{id}', [SubscriptionsController::class, 'update']);
-        Route::post('billing/subscriptions/{id}/resume', [SubscriptionsController::class, 'resume']);
-        Route::post('billing/subscriptions/{id}/change-plan', [SubscriptionsController::class, 'changePlan']);
-        Route::post('billing/stripe/create-partial-subscription', [StripeController::class, 'createPartialSubscription']);
-        Route::post('billing/stripe/create-setup-intent', [StripeController::class, 'createSetupIntent']);
-        Route::post('billing/stripe/change-default-payment-method', [StripeController::class, 'changeDefaultPaymentMethod']);
-        Route::post('billing/stripe/store-subscription-details-locally', [StripeController::class, 'storeSubscriptionDetailsLocally']);
-        Route::post('billing/paypal/store-subscription-details-locally', [PaypalController::class, 'storeSubscriptionDetailsLocally']);
+        Route::post('billing/subscriptions', [SubscriptionsController::class, 'store'])->middleware('throttle:12,1');
+        Route::post('billing/subscriptions/{id}/cancel', [SubscriptionsController::class, 'cancel'])->middleware('throttle:12,1');
+        Route::put('billing/subscriptions/{id}', [SubscriptionsController::class, 'update'])->middleware('throttle:12,1');
+        Route::post('billing/subscriptions/{id}/resume', [SubscriptionsController::class, 'resume'])->middleware('throttle:12,1');
+        Route::post('billing/subscriptions/{id}/change-plan', [SubscriptionsController::class, 'changePlan'])->middleware('throttle:12,1');
+        Route::post('billing/stripe/create-partial-subscription', [StripeController::class, 'createPartialSubscription'])->middleware('throttle:12,1');
+        Route::post('billing/stripe/create-setup-intent', [StripeController::class, 'createSetupIntent'])->middleware('throttle:12,1');
+        Route::post('billing/stripe/change-default-payment-method', [StripeController::class, 'changeDefaultPaymentMethod'])->middleware('throttle:12,1');
+        Route::post('billing/stripe/store-subscription-details-locally', [StripeController::class, 'storeSubscriptionDetailsLocally'])->middleware('throttle:12,1');
+        Route::post('billing/paypal/store-subscription-details-locally', [PaypalController::class, 'storeSubscriptionDetailsLocally'])->middleware('throttle:12,1');
+        Route::post('billing/paypal/register-hosting-subscription-attempt', [PaypalController::class, 'registerHostingSubscriptionAttempt'])->middleware('throttle:12,1');
+        Route::post('billing/paypal/register-premium-subdomain-subscription-attempt', [PaypalController::class, 'registerPremiumSubdomainSubscriptionAttempt'])->middleware('throttle:12,1');
 
         // ADMIN
         Route::get('settings/server-max-file-size', [SettingsController::class, 'getServerMaxUploadSize']);

@@ -8,6 +8,7 @@ use Common\Settings\Events\SettingsSaved;
 use Common\Settings\GenerateFavicon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 
@@ -16,7 +17,11 @@ class StoreSettingsManagerData
     public function execute(array $data)
     {
         if (isset($data['server']) && !empty($data['server'])) {
-            (new DotEnvEditor())->write($data['server']);
+            app(DotEnvEditor::class)->write($data['server']);
+
+            // Production normally uses a cached configuration. Without
+            // clearing it, the next request continues using old credentials.
+            Artisan::call('config:clear');
         }
 
         $this->saveDatabaseSettings($data);

@@ -1,2 +1,0 @@
-import{ta as e}from"./icons-DFfxS4V_.js";import{t}from"./trans-BIcHQJKD.js";import{i as n}from"./chunk-6CSD65Y2-dReXBpgA.js";var r=e();function i(){return(0,r.jsxs)(`div`,{children:[(0,r.jsx)(`h1`,{className:`my-8 text-3xl font-bold`,children:(0,r.jsx)(t,{message:`Change payment method`})}),(0,r.jsx)(n,{})]})}export{i as Component};
-//# sourceMappingURL=change-payment-method-layout-DMGPa-fs.js.map

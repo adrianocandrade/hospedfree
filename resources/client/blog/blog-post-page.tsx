@@ -1,84 +1,152 @@
-import {blogPostQueryOptions} from '@app/blog/blog-queries';
-import {BlogShell} from '@app/blog/blog-shell';
-import {Badge} from '@shadcn/badge/badge';
-import {useSuspenseQuery} from '@tanstack/react-query';
-import {FormattedDate} from '@ui/i18n/formatted-date';
-import {Trans} from '@ui/i18n/trans';
-import {StaticPageTitle} from '@common/seo/static-page-title';
+import {
+  blogIndexQueryOptions,
+  blogPostQueryOptions,
+} from '@app/blog/blog-queries';
+import {BlogPostMeta} from '@app/blog/public-blog-post-card';
+import {BlogSeo, BlogShell} from '@app/blog/blog-shell';
 import {useRequiredParams} from '@common/ui/navigation/use-required-params';
-import {ArrowLeftIcon, ClockIcon} from 'lucide-react';
+import {useQuery, useSuspenseQuery} from '@tanstack/react-query';
+import {Trans} from '@ui/i18n/trans';
+import {BookOpenIcon, ChevronRightIcon, LifeBuoyIcon} from 'lucide-react';
 import {Link} from 'react-router';
 
 export function Component() {
   const {postSlug} = useRequiredParams(['postSlug']);
   const query = useSuspenseQuery(blogPostQueryOptions(postSlug));
+  const recentPosts = useQuery(blogIndexQueryOptions({per_page: 4}));
   const post = query.data.post;
+  const related = (recentPosts.data?.posts.data ?? [])
+    .filter(item => item.slug !== post.slug)
+    .slice(0, 3);
+  const description =
+    post.seo_description ||
+    post.excerpt ||
+    truncate(stripHtml(post.body ?? ''), 155) ||
+    post.title;
 
   return (
     <BlogShell>
-      <StaticPageTitle>{post.seo_title || post.title}</StaticPageTitle>
-      <header className="border-b border-[var(--lp-border)] bg-[var(--lp-surface-soft)]">
-        <div className="lp-container py-10 md:py-14 lg:py-16">
-          <Link
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--lp-primary)] hover:underline"
-            to="/blog"
-          >
-            <ArrowLeftIcon className="size-4" />
-            <Trans message="Voltar ao blog" />
-          </Link>
-          <div className="mt-8 flex flex-wrap items-center gap-2 text-sm text-[var(--lp-muted)]">
+      <BlogSeo
+        title={post.seo_title || post.title}
+        description={description}
+        canonicalPath={`/blog/${post.slug}`}
+        ogType="article"
+        image={post.featured_image}
+      />
+
+      <header className="hf-editorial-article-header">
+        <div className="hf-shell">
+          <nav className="hf-editorial-breadcrumbs" aria-label="Breadcrumb">
+            <Link to="/">
+              <Trans message="Início" />
+            </Link>
+            <ChevronRightIcon aria-hidden="true" />
+            <Link to="/blog">
+              <Trans message="Blog" />
+            </Link>
             {post.category ? (
-              <Badge
-                variant="secondary"
-                render={<Link to={`/blog/categoria/${post.category.slug}`} />}
-              >
-                {post.category.name}
-              </Badge>
+              <>
+                <ChevronRightIcon aria-hidden="true" />
+                <Link to={`/blog/categoria/${post.category.slug}`}>
+                  {post.category.name}
+                </Link>
+              </>
             ) : null}
-            {post.published_at ? (
-              <FormattedDate date={post.published_at} />
-            ) : null}
-            <span className="inline-flex items-center gap-1">
-              <ClockIcon className="size-3.5" />
-              <Trans
-                message="[one :count min de leitura|other :count min de leitura]"
-                values={{count: post.reading_time_minutes}}
-              />
-            </span>
-          </div>
-          <h1 className="mt-5 max-w-4xl text-4xl font-[var(--lp-font-display)] font-semibold tracking-[-0.03em] text-balance text-[var(--lp-ink)] md:text-5xl lg:text-6xl">
+          </nav>
+          <BlogPostMeta post={post} />
+          <h1 className="hf-editorial-heading hf-editorial-heading--article mt-5">
             {post.title}
           </h1>
           {post.excerpt ? (
-            <p className="mt-5 max-w-[68ch] text-lg leading-8 text-[var(--lp-muted)]">
-              {post.excerpt}
-            </p>
+            <p className="hf-editorial-lead">{post.excerpt}</p>
           ) : null}
           {post.author?.name ? (
-            <div className="mt-5 text-sm text-[var(--lp-muted)]">
+            <p className="mt-5 text-sm text-[#898da5]">
               <Trans
                 message="Por :author"
                 values={{author: post.author.name}}
               />
-            </div>
+            </p>
           ) : null}
         </div>
       </header>
 
-      <article className="mx-auto flex w-full max-w-4xl flex-col px-4 py-10 md:px-6 md:py-14 lg:py-16">
-        {post.featured_image ? (
-          <img
-            src={post.featured_image}
-            alt=""
-            className="mb-10 aspect-video w-full rounded-2xl object-cover md:mb-12"
-          />
-        ) : null}
+      <section className="hf-shell hf-editorial-section">
+        <div className="hf-editorial-article-layout">
+          <article className="hf-editorial-article-body">
+            {post.featured_image ? (
+              <img
+                src={post.featured_image}
+                alt=""
+                className="hf-editorial-article-image"
+                decoding="async"
+                fetchPriority="high"
+              />
+            ) : null}
 
-        <div
-          className="mx-auto prose prose-lg w-full max-w-3xl dark:prose-invert prose-headings:tracking-[-0.02em] prose-a:text-[var(--lp-primary)]"
-          dangerouslySetInnerHTML={{__html: post.body ?? ''}}
-        />
-      </article>
+            <div
+              className="hf-editorial-prose prose prose-lg max-w-none dark:prose-invert"
+              dangerouslySetInnerHTML={{__html: post.body ?? ''}}
+            />
+
+            <div className="mt-12 border-t border-[var(--hf-editorial-border)] pt-8">
+              <Link className="hf-editorial-inline-link mt-0" to="/faq">
+                <BookOpenIcon aria-hidden="true" />
+                <Trans message="Consultar a Central de Ajuda" />
+              </Link>
+            </div>
+          </article>
+
+          <aside className="space-y-4">
+            {related.length ? (
+              <section className="hf-editorial-aside-card">
+                <h2>
+                  <Trans message="Continuar lendo" />
+                </h2>
+                <div className="hf-editorial-related-list">
+                  {related.map(item => (
+                    <Link key={item.id} to={`/blog/${item.slug}`}>
+                      <span>{item.title}</span>
+                      <ChevronRightIcon aria-hidden="true" />
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            <section className="hf-editorial-aside-card">
+              <span className="hf-help-sidebar-icon" aria-hidden="true">
+                <LifeBuoyIcon />
+              </span>
+              <h2 className="mt-4">
+                <Trans message="Precisa de uma resposta direta?" />
+              </h2>
+              <p>
+                <Trans message="Pesquise tutoriais sobre domínio, arquivos, bancos, SSL e publicação na Central de Ajuda." />
+              </p>
+              <Link className="hf-editorial-inline-link" to="/faq">
+                <Trans message="Encontrar uma orientação" />
+                <ChevronRightIcon aria-hidden="true" />
+              </Link>
+            </section>
+          </aside>
+        </div>
+      </section>
     </BlogShell>
   );
+}
+
+function stripHtml(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function truncate(value: string, limit: number): string {
+  if (value.length <= limit) {
+    return value;
+  }
+
+  return `${value.slice(0, limit - 1).trim()}…`;
 }

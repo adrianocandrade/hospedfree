@@ -2,6 +2,7 @@
 
 namespace Common\Auth\Resources;
 
+use App\Security\RequestSecurityContext;
 use Common\Auth\Models\UserSession;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Illuminate\Http\Request;
@@ -15,10 +16,11 @@ class UserSessionResource extends JsonResource
 {
     public function toArray(Request $request)
     {
-        $isCurrentDevice = requestIsFromFrontend()
+        $currentToken = $request->user()?->currentAccessToken();
+        $isCurrentDevice = (bool) ($this->resource->session_id
             ? $this->resource->session_id === $request->session()->getId()
-            : $this->resource->token ===
-                $request->user()->currentAccessToken()->token;
+            : $currentToken &&
+                $this->resource->token === $currentToken->token);
 
         return [
             'id' => $this->id,
@@ -27,8 +29,12 @@ class UserSessionResource extends JsonResource
             'platform' => $this->platform,
             'device' => $this->device,
             'browser' => $this->browser,
-            'ip_address' => $this->ip_address,
+            'ip_address' => app(RequestSecurityContext::class)->maskIp(
+                $this->ip_address,
+            ),
             'is_current_device' => $isCurrentDevice,
+            'access_type' => $this->session_id ? 'browser' : 'api_token',
+            'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
     }

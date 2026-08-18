@@ -27,14 +27,14 @@ export const adminBillingRoutes: Record<string, RouteObject> = {
     shouldRevalidate: () => false,
     lazy: () => import('@common/admin/plans/plans-datatable-page'),
     loader: async () => {
-      const redirect = authGuard({permission: 'plans.update'});
+      const redirect = authGuard({permission: 'subscriptions.update'});
       if (redirect) return redirect;
       await queryClient.ensureQueryData(listProductsOptions());
     },
   },
   createPlan: {
     path: 'plans/new',
-    loader: () => authGuard({permission: 'plans.update'}),
+    loader: () => authGuard({permission: 'subscriptions.update'}),
     lazy: () =>
       import('@common/admin/plans/crupdate-plan-page/create-plan-page'),
   },
@@ -42,7 +42,7 @@ export const adminBillingRoutes: Record<string, RouteObject> = {
     path: 'plans/:productId/edit',
     lazy: () => import('@common/admin/plans/crupdate-plan-page/edit-plan-page'),
     loader: async ({params}) => {
-      const redirect = authGuard({permission: 'plans.update'});
+      const redirect = authGuard({permission: 'subscriptions.update'});
       if (redirect) return redirect;
       return await queryClient.ensureQueryData(
         retrieveProductOptions(Number(params.productId)),

@@ -29,7 +29,7 @@ class PaymentFailed extends Notification implements ShouldQueue
             ->level('error')
             ->greeting(__('Hello, :name', ['name' => $notifiable->name]))
             ->line($this->descriptionLine())
-            ->action(__('View subscription'), $this->mainAction());
+            ->action(__('hospedfree-notifications.billing.payment_failed.action'), $this->mainAction());
     }
 
     public function toArray(mixed $notifiable): array
@@ -45,7 +45,7 @@ class PaymentFailed extends Notification implements ShouldQueue
             ],
             'buttonActions' => [
                 [
-                    'label' => __('View subscription'),
+                    'label' => __('hospedfree-notifications.billing.payment_failed.action'),
                     'action' => $this->mainAction(),
                 ],
             ],
@@ -54,20 +54,17 @@ class PaymentFailed extends Notification implements ShouldQueue
 
     protected function mainLine(): string
     {
-        $siteName = config('app.name');
-        return __('Payment for :name subscription failed', [
-            'name' => $siteName,
+        return __('hospedfree-notifications.billing.payment_failed.subject', [
+            'plan' => $this->subscription->product->name,
         ]);
     }
 
     protected function descriptionLine(): string
     {
-        $siteName = config('app.name');
         $planName = $this->subscription->product->name;
-        return __(
-            'We could not charge your specified payment method for :planName. We will retry it one more time, after which time your subscription on :siteName will be cancelled and you will lose associated benefits.',
-            ['siteName' => $siteName, 'planName' => $planName],
-        );
+        return __('hospedfree-notifications.billing.payment_failed.line', [
+            'plan' => $planName,
+        ]);
     }
 
     protected function mainAction(): string

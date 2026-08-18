@@ -3,6 +3,7 @@
 return [
     \Common\Settings\Validators\MailCredentials\OutgoingMailCredentialsValidator::class,
     \Common\Settings\Validators\GoogleLoginValidator::class,
+    \Common\Settings\Validators\GithubLoginValidator::class,
     \Common\Settings\Validators\FacebookLoginValidator::class,
     \Common\Settings\Validators\TwitterLoginValidator::class,
     \Common\Settings\Validators\CacheConfigValidator::class,

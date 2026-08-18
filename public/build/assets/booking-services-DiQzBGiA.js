@@ -1,2 +1,0 @@
-import{n as e}from"./query-client-DZzHQFAr.js";var t=(t,n)=>e({url:`/biolink/${t}/booking/services`,method:`GET`},n),n=(t,n,r)=>e({url:`/biolink/${t}/booking/services`,method:`POST`,headers:{"Content-Type":`application/json`},data:n},r),r=(t,n,r,i)=>e({url:`/biolink/${t}/booking/services/${n}`,method:`PUT`,headers:{"Content-Type":`application/json`},data:r},i),i=(t,n,r)=>e({url:`/biolink/${t}/booking/services/${n}`,method:`DELETE`},r);export{r as i,t as n,n as r,i as t};
-//# sourceMappingURL=booking-services-DiQzBGiA.js.map

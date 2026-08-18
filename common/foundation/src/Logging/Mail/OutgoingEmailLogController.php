@@ -2,21 +2,21 @@
 
 namespace Common\Logging\Mail;
 
-use Common\Logging\Mail\OutgoingEmailLogItem;
+use App\Models\User;
+use App\Security\AdministrativeSecurityEventRecorder;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
-use ZBateson\MailMimeParser\Message;
+use Illuminate\Support\Str;
 
 /**
  * @tags Logs, Admin
  */
 class OutgoingEmailLogController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('isAdmin');
-    }
+    public function __construct(
+        private readonly AdministrativeSecurityEventRecorder $auditRecorder,
+    ) {}
 
     /**
      * List email log items.
@@ -25,6 +25,8 @@ class OutgoingEmailLogController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize($request, 'email_logs.view');
+
         $data = $request->validate([
             'sort' => 'string',
             'page' => 'integer',
@@ -60,9 +62,18 @@ class OutgoingEmailLogController extends Controller
      *
      * @operationId retrieveOutgoingEmailLogItem
      */
-    public function show(int $id)
+    public function show(Request $request, int $id)
     {
+        $user = $this->authorize($request, 'email_logs.view_content');
         $logItem = OutgoingEmailLogItem::query()->findOrFail($id);
+
+        $this->auditRecorder->record(
+            $user,
+            'outgoing_email.content_viewed',
+            OutgoingEmailLogItem::MODEL_TYPE,
+            $logItem->id,
+            $request,
+        );
 
         return new OutgoingEmailLogItemResource(
             $logItem,
@@ -75,11 +86,20 @@ class OutgoingEmailLogController extends Controller
      *
      * @operationId downloadEmailLog
      */
-    public function downloadLog()
+    public function downloadLog(Request $request)
     {
+        $user = $this->authorize($request, 'email_logs.download');
         $log = json_encode(
             OutgoingEmailLogItem::limit(1000)->get(),
             JSON_PRETTY_PRINT,
+        );
+
+        $this->auditRecorder->record(
+            $user,
+            'outgoing_email.log_exported',
+            OutgoingEmailLogItem::MODEL_TYPE,
+            null,
+            $request,
         );
 
         return response($log)
@@ -95,15 +115,42 @@ class OutgoingEmailLogController extends Controller
      *
      * @operationId downloadEmailLogItem
      */
-    public function downloadLogItem(int $id)
+    public function downloadLogItem(Request $request, int $id)
     {
+        $user = $this->authorize($request, 'email_logs.download');
         $logItem = OutgoingEmailLogItem::findOrFail($id);
 
+        $this->auditRecorder->record(
+            $user,
+            'outgoing_email.item_downloaded',
+            OutgoingEmailLogItem::MODEL_TYPE,
+            $logItem->id,
+            $request,
+        );
+
+        $fileName = Str::slug((string) $logItem->subject) ?: 'email';
+        $fileName = Str::limit($fileName, 80, '') . "-{$logItem->id}.eml";
+
         return response($logItem->mime)
+            ->header('Cache-Control', 'no-store, private')
             ->header('Content-Type', 'message/rfc822')
             ->header(
                 'Content-Disposition',
-                "attachment; filename=\"{$logItem->subject}.eml\"",
+                "attachment; filename=\"{$fileName}\"",
             );
+    }
+
+    private function authorize(Request $request, string $permission): User
+    {
+        /** @var User|null $user */
+        $user = $request->user();
+        abort_unless(
+            $user &&
+                $user->hasPermission('admin.access') &&
+                $user->hasPermission($permission),
+            403,
+        );
+
+        return $user;
     }
 }

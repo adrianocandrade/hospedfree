@@ -553,6 +553,48 @@ return [
         ],
         'Admin area' => [
             [
+                'name' => 'email_logs.view',
+                'role_types' => ['users'],
+                'display_name' => 'View outgoing email metadata',
+                'description' => 'List delivery status and recipient metadata without reading message content.',
+            ],
+            [
+                'name' => 'email_logs.view_content',
+                'role_types' => ['users'],
+                'display_name' => 'View outgoing email content',
+                'description' => 'Open the protected MIME body of outgoing email records. Access is audited.',
+            ],
+            [
+                'name' => 'email_logs.download',
+                'role_types' => ['users'],
+                'display_name' => 'Download outgoing email logs',
+                'description' => 'Download email metadata or MIME records. Access is audited.',
+            ],
+            [
+                'name' => 'hosting.operations',
+                'role_types' => ['users'],
+                'display_name' => 'Operate hosting accounts',
+                'description' => 'View hosting accounts and orders, reconcile provider state, and retry sensitive operations.',
+            ],
+            [
+                'name' => 'hosting.settings',
+                'role_types' => ['users'],
+                'display_name' => 'Manage hosting plans',
+                'description' => 'Configure hosting plans and provider package mappings.',
+            ],
+            [
+                'name' => 'support.manage',
+                'role_types' => ['users'],
+                'display_name' => 'Manage support tickets',
+                'description' => 'Read and respond to customer support tickets.',
+            ],
+            [
+                'name' => 'knowledge.manage',
+                'role_types' => ['users'],
+                'display_name' => 'Manage knowledge base',
+                'description' => 'Create and publish knowledge base categories and articles.',
+            ],
+            [
                 'name' => 'admin.access',
                 'role_types' => ['users'],
                 'display_name' => 'Access admin area',

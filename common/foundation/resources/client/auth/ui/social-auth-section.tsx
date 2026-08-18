@@ -7,7 +7,7 @@ import {useAllSocialLoginsDisabled} from '@common/auth/ui/use-all-social-logins-
 import {useAuth} from '@common/auth/use-auth';
 import {onFormQueryError} from '@common/http/errors/on-form-query-error';
 import {useNavigate} from '@common/ui/navigation/use-navigate';
-import {SiFacebook, SiX} from '@icons-pack/react-simple-icons';
+import {SiFacebook, SiGithub, SiX} from '@icons-pack/react-simple-icons';
 import {Button} from '@shadcn/button/button';
 import {Dialog} from '@shadcn/dialog/dialog';
 import {Field} from '@shadcn/forms/field';
@@ -24,6 +24,7 @@ import {Fragment, ReactElement, ReactNode} from 'react';
 import {useForm} from 'react-hook-form';
 
 const googleLabel = <Trans message="Continuar com Google" />;
+const githubLabel = <Trans message="Continuar com GitHub" />;
 const facebookLabel = <Trans message="Continuar com Facebook" />;
 const twitterLabel = <Trans message="Continuar com X" />;
 
@@ -67,6 +68,13 @@ export function SocialAuthSection({dividerMessage}: SocialAuthSectionProps) {
             label={googleLabel}
             icon={<GoogleIcon viewBox="0 0 48 48" className="size-5" />}
             onClick={() => handleSocialLogin('google')}
+          />
+        ) : null}
+        {social?.github?.enable ? (
+          <SocialLoginButton
+            label={githubLabel}
+            icon={<SiGithub className="size-5" />}
+            onClick={() => handleSocialLogin('github')}
           />
         ) : null}
         {social?.facebook?.enable ? (

@@ -1,521 +1,135 @@
 <?php
 
 return [
-    // logos
-    [
-        'name' => 'branding.logo_dark',
-        'value' => 'images/logo-dark.svg',
-    ],
-    [
-        'name' => 'branding.logo_light',
-        'value' => 'images/logo-light.svg',
-    ],
-    [
-        'name' => 'branding.logo_dark_mobile',
-        'value' => 'images/mobile-logo-dark.svg',
-    ],
-    [
-        'name' => 'branding.logo_light_mobile',
-        'value' => 'images/mobile-logo-light.svg',
-    ],
+    ['name' => 'branding.logo_dark', 'value' => 'images/logo-white.png'],
+    ['name' => 'branding.logo_light', 'value' => 'images/logo-1.png'],
+    ['name' => 'branding.logo_dark_mobile', 'value' => 'images/icon.png'],
+    ['name' => 'branding.logo_light_mobile', 'value' => 'images/icon.png'],
 
-    // LINKS
     ['name' => 'links.default_type', 'value' => 'direct'],
-    ['name' => 'links.enable_type', 'value' => true],
-    ['name' => 'links.redirect_time', 'value' => 10],
-    ['name' => 'links.retargeting', 'value' => true],
-    ['name' => 'links.pixels', 'value' => true],
-    ['name' => 'links.homepage_stats', 'value' => true],
+    ['name' => 'links.enable_type', 'value' => false],
+    ['name' => 'links.redirect_time', 'value' => 0],
+    ['name' => 'links.retargeting', 'value' => false],
+    ['name' => 'links.pixels', 'value' => false],
+    ['name' => 'links.homepage_stats', 'value' => false],
     ['name' => 'links.back_half_min', 'value' => 5],
     ['name' => 'links.back_half_max', 'value' => 10],
     ['name' => 'links.min_len', 'value' => 3],
     ['name' => 'links.max_len', 'value' => 1000],
     ['name' => 'links.back_half_content', 'value' => 'alpha_dash'],
     ['name' => 'biolink.show_branding', 'value' => true],
+
     ['name' => 'pwa.install_prompt_enabled', 'value' => true],
     ['name' => 'pwa.theme_color', 'value' => '#2563eb'],
     ['name' => 'pwa.background_color', 'value' => '#ffffff'],
 
-    // HOMEPAGE APPEARANCE
-    [
-        'name' => 'homepage.type',
-        'value' => 'landingPage',
-    ],
+    ['name' => 'homepage.type', 'value' => 'landingPage'],
     [
         'name' => 'landingPage',
         'value' => json_encode([
             'sections' => [
                 [
-                    'name' => 'meulinkbio-hero',
-                    'title' => 'Transform your links into opportunities',
-                    'description' =>
-                        'Create your link page, shorten URLs, generate QR Codes and track results from a single place.',
-                ],
-                [
-                    'name' => 'meulinkbio-trust',
-                    'title' => 'Built in Brazil for better sharing',
-                    'description' =>
-                        'Made in Brazil for creators, professionals and businesses.',
-                ],
-                [
-                    'name' => 'meulinkbio-features',
-                    'title' => 'Everything you need to take your links seriously',
-                    'description' =>
-                        'Create, publish and measure every public touchpoint without spreading your work across separate tools.',
-                ],
-                [
-                    'name' => 'meulinkbio-analytics',
-                    'title' => 'Better decisions with real data',
-                    'description' =>
-                        'Understand how your links perform and discover which channels really bring results.',
-                ],
-                [
-                    'name' => 'meulinkbio-templates',
-                    'title' => 'A page with your identity',
-                    'description' =>
-                        'Choose a template, customize colors, fonts, images and buttons, then publish your page in minutes.',
-                ],
-                [
-                    'name' => 'meulinkbio-use-cases',
-                    'title' => 'A MeuLinkBio for every goal',
-                    'description' =>
-                        'Different audiences need different outcomes, from creators launching content to local businesses turning traffic into contact.',
-                ],
-                [
-                    'name' => 'meulinkbio-tools',
-                    'title' => 'More than a link in bio',
-                    'description' =>
-                        'A complete toolkit to publish, connect, measure and grow every link your brand shares.',
+                    'name' => 'hospedfree-hero',
+                    'title' => 'Hospedagem gratuita para comecar seu site',
+                    'description' => 'Crie uma hospedagem em hsite.top e faca upgrade quando precisar de um plano pago.',
                 ],
                 [
                     'name' => 'pricing',
-                    'title' => 'Plans that grow with you',
-                    'description' =>
-                        'Start free and upgrade when you need more links, clicks, custom domains or team resources.',
+                    'title' => 'Planos de hospedagem',
+                    'description' => 'O Free fica disponivel desde o inicio. Planos pagos aparecem somente quando preco, package e gateway estiverem configurados.',
                     'maxProducts' => 3,
                 ],
                 [
-                    'name' => 'meulinkbio-faq',
-                    'title' => 'Frequently asked questions',
-                    'description' =>
-                        'The essentials before creating your first page or upgrading your plan.',
-                ],
-                [
-                    'name' => 'meulinkbio-final-cta',
-                    'title' => 'Ready to transform your links?',
-                    'description' =>
-                        'Create your page for free and start sharing more professionally.',
-                ],
-                [
-                    'name' => 'meulinkbio-footer',
-                    'title' => 'Made with dedication in Brazil.',
+                    'name' => 'hospedfree-support',
+                    'title' => 'Ajuda integrada',
+                    'description' => 'Base de conhecimento e chamados simples para clientes de hospedagem.',
                 ],
             ],
         ]),
     ],
 
-    // menus
     [
         'name' => 'menus',
         'value' => json_encode([
             [
-                'name' => 'Dashboard primary',
-                'id' => 'a01',
+                'name' => 'HospedFree dashboard',
+                'id' => 'hf-dashboard-primary',
                 'positions' => ['dashboard-primary'],
                 'items' => [
-                    [
-                        'type' => 'route',
-                        'label' => 'Short links',
-                        'action' => '/dashboard/links',
-                        'id' => 723,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'QR codes',
-                        'action' => '/dashboard/qr-codes',
-                        'id' => 891,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'Link in bio',
-                        'action' => '/dashboard/biolinks',
-                        'id' => 239,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'Insights',
-                        'action' => '/dashboard/insights',
-                        'id' => 318,
-                    ],
+                    ['type' => 'route', 'label' => 'Minha hospedagem', 'action' => '/dashboard/hosting', 'id' => 'hf-hosting'],
+                    ['type' => 'route', 'label' => 'Planos', 'action' => '/dashboard/hosting/plans', 'id' => 'hf-plans'],
+                    ['type' => 'route', 'label' => 'Suporte', 'action' => '/dashboard/support', 'id' => 'hf-support'],
+                    ['type' => 'route', 'label' => 'Central de ajuda', 'action' => '/faq', 'id' => 'hf-knowledge'],
+                    ['type' => 'route', 'label' => 'Minha conta', 'action' => '/account-settings', 'id' => 'hf-account'],
                 ],
             ],
             [
-                'name' => 'Dashboard secondary',
-                'id' => 'a02',
+                'name' => 'HospedFree dashboard secondary',
+                'id' => 'hf-dashboard-secondary',
                 'positions' => ['dashboard-secondary'],
-                'items' => [
-                    [
-                        'type' => 'route',
-                        'label' => 'Folders',
-                        'action' => '/dashboard/folders',
-                        'id' => 586,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'Custom domains',
-                        'action' => '/dashboard/custom-domains',
-                        'id' => 444,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'CTA overlays',
-                        'action' => '/dashboard/link-overlays',
-                        'id' => 184,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'Tracking pixels',
-                        'action' => '/dashboard/pixels',
-                        'id' => 303,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'Link pages',
-                        'action' => '/dashboard/link-pages',
-                        'id' => 637,
-                    ],
-                ],
+                'items' => [],
             ],
             [
-                'name' => 'Dashboard mobile',
-                'id' => 'a03',
+                'name' => 'HospedFree mobile',
+                'id' => 'hf-dashboard-mobile',
                 'positions' => ['dashboard-mobile'],
                 'items' => [
-                    [
-                        'type' => 'route',
-                        'label' => 'Links',
-                        'action' => '/dashboard/links',
-                        'id' => 723,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'Link in bio',
-                        'action' => '/dashboard/biolinks',
-                        'id' => 239,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'QR codes',
-                        'action' => '/dashboard/qr-codes',
-                        'id' => 721,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'Insights',
-                        'action' => '/dashboard/insights',
-                        'id' => 318,
-                    ],
+                    ['type' => 'route', 'label' => 'Hospedagem', 'action' => '/dashboard/hosting', 'id' => 'hf-mobile-hosting'],
+                    ['type' => 'route', 'label' => 'Planos', 'action' => '/dashboard/hosting/plans', 'id' => 'hf-mobile-plans'],
+                    ['type' => 'route', 'label' => 'Suporte', 'action' => '/dashboard/support', 'id' => 'hf-mobile-support'],
+                    ['type' => 'route', 'label' => 'Ajuda', 'action' => '/faq', 'id' => 'hf-mobile-knowledge'],
                 ],
             ],
             [
-                'name' => 'Landing page navbar',
-                'id' => 'mlb01',
-                'positions' => ['landing-page-navbar'],
+                'name' => 'HospedFree admin',
+                'id' => 'hf-admin-sidebar',
+                'positions' => ['admin-sidebar'],
                 'items' => [
-                    [
-                        'type' => 'link',
-                        'id' => 'mlb-nav-features',
-                        'position' => 1,
-                        'order' => 1,
-                        'label' => 'Features',
-                        'action' => '#features',
-                    ],
-                    [
-                        'type' => 'link',
-                        'id' => 'mlb-nav-templates',
-                        'position' => 2,
-                        'order' => 2,
-                        'label' => 'Templates',
-                        'action' => '#templates',
-                    ],
-                    [
-                        'type' => 'link',
-                        'id' => 'mlb-nav-pricing',
-                        'position' => 3,
-                        'order' => 3,
-                        'label' => 'Pricing',
-                        'action' => '#pricing-section',
-                    ],
-                    [
-                        'type' => 'link',
-                        'id' => 'mlb-nav-business',
-                        'position' => 4,
-                        'order' => 4,
-                        'label' => 'For businesses',
-                        'action' => '#enterprise',
-                    ],
-                    [
-                        'type' => 'route',
-                        'id' => 'mlb-nav-blog',
-                        'position' => 5,
-                        'order' => 5,
-                        'label' => 'Blog',
-                        'action' => '/blog',
-                    ],
+                    ['type' => 'route', 'label' => 'Hospedagens', 'action' => '/admin/hosting', 'id' => 'hf-admin-hosting', 'permissions' => ['hosting.operations']],
+                    ['type' => 'route', 'label' => 'Planos e pacotes', 'action' => '/admin/hosting/plans', 'id' => 'hf-admin-hosting-plans', 'permissions' => ['hosting.settings']],
+                    ['type' => 'route', 'label' => 'Nomes premium', 'action' => '/admin/hosting/premium-subdomains', 'id' => 'hf-admin-premium-subdomains', 'permissions' => ['hosting.settings']],
+                    ['type' => 'route', 'label' => 'Chamados', 'action' => '/admin/support', 'id' => 'hf-admin-support', 'permissions' => ['support.manage']],
+                    ['type' => 'route', 'label' => 'Base de conhecimento', 'action' => '/admin/knowledge', 'id' => 'hf-admin-knowledge', 'permissions' => ['knowledge.manage']],
+                    ['type' => 'route', 'label' => 'Assinaturas', 'action' => '/admin/subscriptions', 'id' => 'hf-admin-subscriptions', 'permissions' => ['subscriptions.update']],
+                    ['type' => 'route', 'label' => 'Pagamentos', 'action' => '/admin/settings/subscriptions', 'id' => 'hf-admin-payments', 'permissions' => ['settings.update']],
+                    ['type' => 'route', 'label' => 'Usuários', 'action' => '/admin/users', 'id' => 'hf-admin-users', 'permissions' => ['users.update']],
+                    ['type' => 'route', 'label' => 'Configurações', 'action' => '/admin/settings', 'id' => 'hf-admin-settings', 'permissions' => ['settings.update']],
                 ],
             ],
             [
                 'name' => 'Footer',
-                'id' => 'a04',
+                'id' => 'hf-footer',
                 'positions' => ['footer'],
                 'items' => [
-                    [
-                        'type' => 'url',
-                        'id' => 'c1sf2g',
-                        'position' => 1,
-                        'label' => 'Developers',
-                        'action' => env('APP_URL') . '/api-docs',
-                        'condition' => 'auth',
-                        'permissions' => ['api.access'],
-                    ],
-                    [
-                        'type' => 'route',
-                        'id' => 'rlz27v',
-                        'position' => 2,
-                        'label' => 'Privacy Policy',
-                        'action' => '/pages/privacy-policy',
-                    ],
-                    [
-                        'type' => 'route',
-                        'id' => 'p80pvk',
-                        'position' => 3,
-                        'label' => 'Terms of Service',
-                        'action' => '/pages/terms-of-service',
-                    ],
-                    [
-                        'type' => 'route',
-                        'id' => 'q8dtht',
-                        'position' => 4,
-                        'label' => 'Contact Us',
-                        'action' => '/contact',
-                    ],
-                ],
-            ],
-            [
-                'name' => 'Footer Social',
-                'id' => 'a05',
-                'positions' => ['footer-secondary'],
-                'items' => [
-                    [
-                        'type' => 'link',
-                        'id' => '6j747e',
-                        'position' => 1,
-                        'icon' => 'facebook',
-                        'action' => 'https://facebook.com',
-                    ],
-                    [
-                        'type' => 'link',
-                        'id' => 'jo96zw',
-                        'position' => 2,
-                        'icon' => 'twitter',
-                        'action' => 'https://twitter.com',
-                    ],
-                    [
-                        'type' => 'link',
-                        'id' => '57dsea',
-                        'position' => 3,
-                        'icon' => 'instagram',
-                        'action' => 'https://instagram.com',
-                    ],
-                    [
-                        'type' => 'link',
-                        'id' => 'lzntr2',
-                        'position' => 4,
-                        'icon' => 'youtube',
-                        'action' => 'https://youtube.com',
-                    ],
+                    ['type' => 'route', 'id' => 'hf-footer-privacy', 'position' => 1, 'label' => 'Política de privacidade', 'action' => '/pages/privacy-policy'],
+                    ['type' => 'route', 'id' => 'hf-footer-terms', 'position' => 2, 'label' => 'Termos de serviço', 'action' => '/pages/terms-of-service'],
+                    ['type' => 'route', 'id' => 'hf-footer-help', 'position' => 3, 'label' => 'Central de ajuda', 'action' => '/faq'],
                 ],
             ],
             [
                 'name' => 'Auth Dropdown',
-                'id' => 'a06',
-                'items' => [
-                    [
-                        'label' => 'Admin area',
-                        'id' => 'upm1rv',
-                        'action' => '/admin/insights',
-                        'type' => 'route',
-                        'permissions' => ['admin.access'],
-                    ],
-                    [
-                        'label' => 'Dashboard',
-                        'id' => 'ehj0uk',
-                        'action' => '/dashboard',
-                        'type' => 'route',
-                    ],
-                    [
-                        'label' => 'Account settings',
-                        'id' => '6a89z5',
-                        'action' => '/account-settings',
-                        'type' => 'route',
-                    ],
-                ],
+                'id' => 'hf-auth-dropdown',
                 'positions' => ['auth-dropdown'],
-            ],
-            [
-                'name' => 'Admin Sidebar',
-                'id' => 'a07',
                 'items' => [
-                    [
-                        'label' => 'Insights',
-                        'id' => '886nz4',
-                        'action' => '/admin/insights',
-                        'type' => 'route',
-                        'condition' => 'admin',
-                        'role' => 1,
-                        'permissions' => ['admin.access'],
-                        'roles' => [],
-                    ],
-                    [
-                        'label' => 'Settings',
-                        'id' => 'x5k484',
-                        'action' => '/admin/settings',
-                        'type' => 'route',
-                        'permissions' => ['settings.update'],
-                    ],
-                    [
-                        'label' => 'Plans',
-                        'id' => '7o42rt',
-                        'action' => '/admin/plans',
-                        'type' => 'route',
-                        'permissions' => ['plans.update'],
-                    ],
-                    [
-                        'label' => 'Subscriptions',
-                        'action' => '/admin/subscriptions',
-                        'type' => 'route',
-                        'id' => 'sdcb5a',
-                        'condition' => 'admin',
-                        'permissions' => ['subscriptions.update'],
-                    ],
-                    [
-                        'label' => 'Users',
-                        'action' => '/admin/users',
-                        'type' => 'route',
-                        'id' => 'fzfb45',
-                        'permissions' => ['users.update'],
-                    ],
-                    [
-                        'label' => 'Roles',
-                        'action' => '/admin/roles',
-                        'type' => 'route',
-                        'id' => 'mwdkf0',
-                        'permissions' => ['roles.update'],
-                    ],
-
-                    [
-                        'type' => 'route',
-                        'label' => 'Links',
-                        'action' => '/admin/links',
-                        'id' => 7234,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'Biolinks',
-                        'action' => '/admin/biolinks',
-                        'id' => 2394,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'Folders',
-                        'action' => '/admin/folders',
-                        'id' => 5864,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'Branded domains',
-                        'action' => '/admin/custom-domains',
-                        'id' => 4441,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'CTA overlays',
-                        'action' => '/admin/link-overlays',
-                        'id' => 18411,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'Link pages',
-                        'action' => '/admin/link-pages',
-                        'id' => 312113,
-                    ],
-                    [
-                        'type' => 'route',
-                        'label' => 'Tracking pixels',
-                        'action' => '/admin/pixels',
-                        'id' => 303113,
-                    ],
-                    [
-                        'label' => 'Custom pages',
-                        'action' => '/admin/custom-pages',
-                        'type' => 'route',
-                        'id' => '63bwv9',
-                        'permissions' => ['custom_pages.update'],
-                    ],
-                    [
-                        'label' => 'Blog',
-                        'action' => '/admin/blog',
-                        'type' => 'route',
-                        'id' => 'mlb-admin-blog',
-                        'permissions' => ['blog.update'],
-                    ],
-                    [
-                        'label' => 'Files',
-                        'action' => '/admin/files',
-                        'type' => 'route',
-                        'id' => 'vguvti',
-                        'permissions' => ['files.update'],
-                    ],
-
-                    [
-                        'label' => 'Translations',
-                        'action' => '/admin/localizations',
-                        'type' => 'route',
-                        'id' => 'w91yql',
-                        'permissions' => ['localizations.update'],
-                    ],
-
-                    [
-                        'label' => 'Logs',
-                        'action' => '/admin/logs',
-                        'type' => 'route',
-                        'id' => '8j435f',
-                    ],
+                    ['label' => 'Admin', 'id' => 'hf-auth-admin', 'action' => '/admin/hosting', 'type' => 'route', 'permissions' => ['admin.access']],
+                    ['label' => 'Painel', 'id' => 'hf-auth-dashboard', 'action' => '/dashboard/hosting', 'type' => 'route'],
+                    ['label' => 'Conta', 'id' => 'hf-auth-account', 'action' => '/account-settings', 'type' => 'route'],
                 ],
-                'positions' => ['admin-sidebar'],
             ],
             [
                 'name' => 'Homepage navbar',
-                'id' => 'a08',
+                'id' => 'hf-homepage-navbar',
                 'positions' => ['homepage-navbar'],
                 'items' => [
-                    [
-                        'type' => 'link',
-                        'label' => 'Features',
-                        'action' => '#features',
-                        'id' => 19041,
-                    ],
-                    [
-                        'type' => 'link',
-                        'label' => 'Pricing',
-                        'action' => '#pricing',
-                        'id' => 190456,
-                    ],
+                    ['type' => 'link', 'label' => 'Como funciona', 'action' => '#como-funciona', 'id' => 'hf-home-how'],
+                    ['type' => 'link', 'label' => 'Recursos', 'action' => '#recursos', 'id' => 'hf-home-features'],
+                    ['type' => 'link', 'label' => 'Planos', 'action' => '#planos', 'id' => 'hf-home-plans'],
+                    ['type' => 'link', 'label' => 'Ajuda', 'action' => '#ajuda', 'id' => 'hf-home-help'],
                 ],
             ],
         ]),
     ],
 
-    // custom domains
-    ['name' => 'custom_domains.allow_select', 'value' => true],
+    ['name' => 'custom_domains.allow_select', 'value' => false],
+    ['name' => 'dashboard.homepage', 'value' => 'hosting'],
 ];

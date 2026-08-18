@@ -23,36 +23,45 @@ const footerColumns: Array<{
 }> = [
   {
     id: 'product',
-    title: <Trans message="Produto" />,
+    title: <Trans message="Hospedagem" />,
     links: [
-      {label: <Trans message="Recursos" />, href: '#features'},
-      {label: <Trans message="Templates" />, href: '#templates'},
-      {label: <Trans message="Planos e preços" />, href: '#pricing-section'},
-      {label: <Trans message="Blog" />, href: '/blog'},
+      {label: <Trans message="Como funciona" />, href: '#como-funciona'},
+      {label: <Trans message="Recursos" />, href: '#recursos'},
+      {label: <Trans message="Criador de Sites" />, href: '#criador-de-sites'},
+      {label: <Trans message="Planos e preços" />, href: '#planos'},
+      {label: <Trans message="Dúvidas frequentes" />, href: '#faq'},
     ],
   },
   {
     id: 'start',
     title: <Trans message="Comece agora" />,
     links: [
-      {label: <Trans message="Criar conta" />, href: '/register'},
-      {label: <Trans message="Entrar" />, href: '/login'},
-      {label: <Trans message="Falar com a equipe" />, href: '/contact'},
+      {label: <Trans message="Criar conta grátis" />, href: '/register'},
+      {label: <Trans message="Entrar no painel" />, href: '/login'},
+      {label: <Trans message="Minha hospedagem" />, href: '/dashboard/hosting'},
     ],
   },
   {
     id: 'information',
-    title: <Trans message="Informações" />,
+    title: <Trans message="Ajuda & Suporte" />,
     links: [
       {
-        label: <Trans message="Termos de serviço" />,
+        label: <Trans message="Base de conhecimento" />,
+        href: '/faq',
+      },
+      {
+        label: <Trans message="Suporte técnico" />,
+        href: '/dashboard/support',
+      },
+      {
+        label: <Trans message="Termos de Uso" />,
         href: '/pages/terms-of-service',
       },
       {
-        label: <Trans message="Política de privacidade" />,
+        label: <Trans message="Política de Privacidade" />,
         href: '/pages/privacy-policy',
       },
-      {label: <Trans message="Sobre o MeuLinkBio" />, href: '/pages/about'},
+      {label: <Trans message="Política de Cookies" />, href: '/pages/cookies'},
     ],
   },
 ];
@@ -83,7 +92,7 @@ export function LpFooter() {
               <Logo logoType="wide" color="auto" className="h-9" />
             </div>
             <p className="mt-5 max-w-[34ch] text-sm leading-6 text-[var(--lp-footer-muted)]">
-              <Trans message="Centralize seus links, páginas e QR Codes em uma presença digital fácil de compartilhar e acompanhar." />
+              <Trans message="Hospedagem gratuita e profissional, com clareza, segurança e estabilidade para o seu projeto." />
             </p>
             {socialItems.length ? (
               <nav aria-labelledby="footer-social" className="mt-7">
@@ -137,16 +146,16 @@ export function LpFooter() {
         <div className="flex flex-col gap-3 border-t border-[var(--lp-footer-border)] pt-7 text-sm text-[var(--lp-footer-muted)] sm:flex-row sm:items-center sm:justify-between">
           <p>
             <Trans
-              message="© :year MeuLinkBio. Todos os direitos reservados."
+              message="© :year HospedFree. Todos os direitos reservados."
               values={{year: currentYear}}
             />
           </p>
-          <a
-            href="/contact"
+          <Link
+            to="/faq"
             className="inline-flex min-h-11 w-fit items-center rounded-sm transition-colors hover:text-[var(--lp-primary)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--lp-primary)]"
           >
-            <Trans message="Precisa de ajuda? Fale com a equipe" />
-          </a>
+            <Trans message="Central de Ajuda e Base de Conhecimento" />
+          </Link>
         </div>
       </div>
     </footer>

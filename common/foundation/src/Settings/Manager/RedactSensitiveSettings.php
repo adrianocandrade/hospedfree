@@ -10,6 +10,8 @@ class RedactSensitiveSettings
         'google_id',
         'google_secret',
         'google_safe_browsing_key',
+        'github_id',
+        'github_secret',
         'twitter_id',
         'twitter_secret',
         'facebook_id',

@@ -3,9 +3,9 @@ import {Trans} from '@ui/i18n/trans';
 import {useSettings} from '@ui/settings/use-settings';
 import {
   ArrowUpRightIcon,
-  BarChart3Icon,
-  LinkIcon,
-  QrCodeIcon,
+  FolderOpenIcon,
+  Globe2Icon,
+  ShieldCheckIcon,
 } from 'lucide-react';
 import {ReactNode} from 'react';
 import {Link} from 'react-router';
@@ -20,10 +20,14 @@ interface AuthPageProps {
 export function AuthLayout({heading, children, message}: AuthPageProps) {
   return (
     <main className="min-h-svh overflow-x-clip bg-background text-foreground">
-      <div className="grid min-h-svh lg:grid-cols-[minmax(0,0.95fr)_minmax(520px,1.05fr)]">
-        <section className="relative flex min-w-0 flex-col px-5 py-6 sm:px-8 lg:px-12 lg:py-9 xl:px-20">
+      <div className="grid min-h-svh xl:grid-cols-[minmax(440px,0.88fr)_minmax(560px,1.12fr)]">
+        <section className="relative flex min-w-0 flex-col px-5 py-6 sm:px-8 lg:px-12 lg:py-9 xl:px-16 2xl:px-20">
           <header className="flex items-center justify-between gap-4">
-            <Logo url="/" logoType="wide" className="h-8 max-w-[168px]" />
+            <Logo
+              url="/"
+              logoType="wide"
+              className="h-10 max-w-[196px] sm:h-11"
+            />
             <Link
               to="/"
               className="hidden items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:flex"
@@ -33,12 +37,12 @@ export function AuthLayout({heading, children, message}: AuthPageProps) {
             </Link>
           </header>
 
-          <div className="flex flex-1 items-center justify-center py-12 sm:py-16">
-            <div className="w-full max-w-md">
-              {heading ? <div className="mb-8">{heading}</div> : null}
+          <div className="flex flex-1 items-center justify-center py-12 sm:py-16 lg:py-14">
+            <div className="w-full max-w-[29rem]">
+              {heading ? <div className="mb-9">{heading}</div> : null}
               {children}
               {message ? (
-                <div className="mt-8 border-t pt-6 text-sm text-muted-foreground">
+                <div className="mt-9 border-t pt-6 text-sm leading-6 text-muted-foreground">
                   {message}
                 </div>
               ) : null}
@@ -62,8 +66,8 @@ export function AuthHeading({
   description?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-2.5">
-      <h1 className="text-3xl font-semibold tracking-[-0.025em] text-balance sm:text-4xl">
+    <div className="flex flex-col gap-3">
+      <h1 className="text-3xl font-semibold tracking-[-0.025em] text-balance sm:text-[2.125rem] sm:leading-[1.15]">
         {title}
       </h1>
       {description ? (
@@ -79,52 +83,48 @@ function AuthBrandPanel() {
   const {branding} = useSettings();
 
   return (
-    <aside className="relative hidden min-h-svh overflow-hidden bg-[var(--hf-ink)] p-10 text-[var(--hf-background)] lg:flex lg:flex-col xl:p-16">
+    <aside className="relative hidden min-h-svh overflow-hidden bg-[var(--hf-ink)] text-white xl:flex xl:flex-col">
+      <img
+        src="/images/hospedfree/black-network-switch-with-optical-fiber-cables-auth.jpg"
+        alt=""
+        className="absolute inset-0 size-full object-cover object-[68%_center]"
+        fetchPriority="high"
+      />
       <div
-        className="absolute -top-24 -right-20 size-72 rounded-full bg-[var(--hf-primary)]"
+        className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,7,22,0.18)_0%,rgba(6,7,22,0.38)_42%,rgba(6,7,22,0.96)_100%)]"
         aria-hidden="true"
       />
       <div
-        className="absolute top-24 right-28 size-24 rounded-2xl bg-[var(--hf-secondary)]"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute top-48 -right-8 h-28 w-48 rounded-2xl bg-[var(--hf-soft)]"
+        className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,7,22,0.35)_0%,transparent_48%)]"
         aria-hidden="true"
       />
 
-      <div className="relative z-10 mt-auto max-w-xl">
-        <h2 className="max-w-[12ch] text-4xl font-semibold tracking-[-0.03em] text-balance xl:text-5xl">
-          <Trans message="Tudo o que você compartilha, em um só lugar." />
+      <div className="relative z-10 mt-auto max-w-2xl p-10 xl:p-14 2xl:p-16">
+        <h2 className="max-w-[17ch] text-4xl font-semibold tracking-[-0.03em] text-balance text-white xl:text-[3.25rem] xl:leading-[1.02]">
+          <Trans message="Seu painel pronto para publicar." />
         </h2>
-        <p className="mt-5 max-w-[52ch] text-base leading-7 text-[var(--hf-muted)]">
+        <p className="mt-5 max-w-[54ch] text-base leading-7 text-white/76">
           <Trans
-            message="Organize sua presença digital, publique com sua identidade e acompanhe os resultados no :siteName."
+            message="Hospedagem, arquivos, domínios e suporte reunidos em uma área protegida da :siteName."
             values={{siteName: branding.site_name}}
           />
         </p>
 
-        <div className="mt-10 overflow-hidden rounded-2xl bg-white/[0.07] ring-1 ring-white/12">
+        <div className="mt-9 grid overflow-hidden rounded-2xl border border-white/12 bg-[#090a19]/82 shadow-[0_24px_70px_rgba(0,0,0,0.32)] backdrop-blur-md xl:grid-cols-3">
           <BrandPanelRow
-            icon={<LinkIcon />}
-            title={<Trans message="Links e páginas" />}
-            description={
-              <Trans message="Conteúdo organizado para cada objetivo" />
-            }
+            icon={<FolderOpenIcon />}
+            title={<Trans message="Arquivos no navegador" />}
+            description={<Trans message="Publique e organize seu site" />}
           />
           <BrandPanelRow
-            icon={<QrCodeIcon />}
-            title={<Trans message="QR Codes" />}
-            description={
-              <Trans message="Compartilhamento simples em qualquer canal" />
-            }
+            icon={<Globe2Icon />}
+            title={<Trans message="Domínios no painel" />}
+            description={<Trans message="Acompanhe endereço e DNS" />}
           />
           <BrandPanelRow
-            icon={<BarChart3Icon />}
-            title={<Trans message="Resultados" />}
-            description={
-              <Trans message="Dados claros para orientar suas decisões" />
-            }
+            icon={<ShieldCheckIcon />}
+            title={<Trans message="Acesso protegido" />}
+            description={<Trans message="Credenciais ocultas por padrão" />}
           />
         </div>
       </div>
@@ -142,13 +142,15 @@ function BrandPanelRow({
   description: ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-4 border-b border-white/10 px-5 py-4 last:border-b-0">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--hf-soft)] text-[var(--hf-ink)] [&_svg]:size-5">
+    <div className="flex items-start gap-3 border-b border-white/10 px-5 py-4 last:border-b-0 xl:border-r xl:border-b-0 xl:last:border-r-0">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.08] text-[var(--hf-primary)] [&_svg]:size-[18px]">
         {icon}
       </div>
       <div className="min-w-0">
-        <div className="font-medium text-white">{title}</div>
-        <div className="mt-0.5 text-sm text-[var(--hf-muted)]">
+        <div className="text-sm leading-5 font-semibold text-white">
+          {title}
+        </div>
+        <div className="mt-1 text-xs leading-5 text-white/58">
           {description}
         </div>
       </div>

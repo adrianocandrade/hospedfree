@@ -1,0 +1,1 @@
+import{gr as e}from"./icons-CVwVS06L.js";import{t}from"./use-settings-CXOaJQ2w.js";import{t as n}from"./helmet-D6DJ2n4f.js";var r=e();function i({children:e}){let{branding:{site_name:i}}=t();return(0,r.jsx)(n,{children:e?(0,r.jsxs)(`title`,{children:[e,` - `,i]}):void 0})}export{i as t};

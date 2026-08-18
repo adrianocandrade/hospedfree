@@ -29,6 +29,9 @@ export function Component() {
           google: {
             enable: data.client.social?.google?.enable ?? false,
           },
+          github: {
+            enable: data.client.social?.github?.enable ?? false,
+          },
           facebook: {
             enable: data.client.social?.facebook?.enable ?? false,
           },
@@ -44,6 +47,8 @@ export function Component() {
       server: {
         google_id: data.server?.google_id ?? '',
         google_secret: data.server?.google_secret ?? '',
+        github_id: data.server?.github_id ?? '',
+        github_secret: data.server?.github_secret ?? '',
         facebook_id: data.server?.facebook_id ?? '',
         facebook_secret: data.server?.facebook_secret ?? '',
         twitter_id: data.server?.twitter_id ?? '',
@@ -66,11 +71,20 @@ export function Component() {
         <SingleDeviceLoginPanel />
         <DomainBlacklistPanel />
         <GoogleSection />
+        <GithubSection
+          callbackUrl={socialCallbackUrl(data.server.app_url, 'github')}
+        />
         <FacebookSection />
-        <TwitterSection />
+        <TwitterSection
+          callbackUrl={socialCallbackUrl(data.server.app_url, 'twitter')}
+        />
       </div>
     </AdminSettingsLayout>
   );
+}
+
+function socialCallbackUrl(appUrl: string, provider: 'github' | 'twitter') {
+  return `${appUrl.replace(/\/$/, '')}/secure/auth/social/${provider}/callback`;
 }
 
 function RegistrationPanel() {
@@ -284,16 +298,73 @@ function FacebookSection() {
   );
 }
 
-function TwitterSection() {
+function GithubSection({callbackUrl}: {callbackUrl: string}) {
+  const githubLoginEnabled = useWatch<AdminSettings>({
+    name: 'client.social.github.enable',
+  });
+
+  return (
+    <SettingsPanel
+      title={<Trans message="GitHub Login" />}
+      description={
+        <Trans message="Configure GitHub OAuth authentication settings." />
+      }
+    >
+      <SettingsErrorGroup
+        separatorBottom={false}
+        separatorTop={false}
+        name="github_group"
+      >
+        {isInvalid => (
+          <Field.Group>
+            <HookForm.Field
+              invalid={isInvalid}
+              name="client.social.github.enable"
+            >
+              <Field.Label>
+                <Switch />
+                <Trans message="GitHub login" />
+              </Field.Label>
+              <Field.Description>
+                <Trans message="Enable logging into the site via GitHub." />
+              </Field.Description>
+            </HookForm.Field>
+            {!!githubLoginEnabled && (
+              <>
+                <HookForm.Field invalid={isInvalid} name="server.github_id">
+                  <Field.Label>
+                    <Trans message="GitHub Client ID" />
+                  </Field.Label>
+                  <Input required autoComplete="off" />
+                  <Field.Error />
+                </HookForm.Field>
+                <HookForm.Field invalid={isInvalid} name="server.github_secret">
+                  <Field.Label>
+                    <Trans message="GitHub Client Secret" />
+                  </Field.Label>
+                  <Input required type="password" autoComplete="new-password" />
+                  <Field.Error />
+                </HookForm.Field>
+                <SocialCallbackUrlField callbackUrl={callbackUrl} />
+              </>
+            )}
+          </Field.Group>
+        )}
+      </SettingsErrorGroup>
+    </SettingsPanel>
+  );
+}
+
+function TwitterSection({callbackUrl}: {callbackUrl: string}) {
   const twitterLoginEnabled = useWatch<AdminSettings>({
     name: 'client.social.twitter.enable',
   });
 
   return (
     <SettingsPanel
-      title={<Trans message="Twitter Login" />}
+      title={<Trans message="X Login" />}
       description={
-        <Trans message="Configure Twitter authentication settings." />
+        <Trans message="Configure X authentication using OAuth 1.0a." />
       }
     >
       <SettingsErrorGroup
@@ -309,19 +380,22 @@ function TwitterSection() {
             >
               <Field.Label>
                 <Switch />
-                <Trans message="Twitter login" />
+                <Trans message="X login" />
               </Field.Label>
               <Field.Description>
-                <Trans message="Enable logging into the site via twitter." />
+                <Trans message="Enable logging into the site via X." />
               </Field.Description>
             </HookForm.Field>
             {!!twitterLoginEnabled && (
               <>
                 <HookForm.Field invalid={isInvalid} name="server.twitter_id">
                   <Field.Label>
-                    <Trans message="Twitter ID" />
+                    <Trans message="X API Key (Consumer Key)" />
                   </Field.Label>
-                  <Input required />
+                  <Input required autoComplete="off" />
+                  <Field.Description>
+                    <Trans message="Use the OAuth 1.0a API Key, not the OAuth 2.0 Client ID." />
+                  </Field.Description>
                   <Field.Error />
                 </HookForm.Field>
                 <HookForm.Field
@@ -329,16 +403,39 @@ function TwitterSection() {
                   name="server.twitter_secret"
                 >
                   <Field.Label>
-                    <Trans message="Twitter secret" />
+                    <Trans message="X API Key Secret" />
                   </Field.Label>
-                  <Input required />
+                  <Input required type="password" autoComplete="new-password" />
+                  <Field.Description>
+                    <Trans message="Use the OAuth 1.0a API Key Secret, not the OAuth 2.0 Client Secret." />
+                  </Field.Description>
                   <Field.Error />
                 </HookForm.Field>
+                <SocialCallbackUrlField callbackUrl={callbackUrl} />
               </>
             )}
           </Field.Group>
         )}
       </SettingsErrorGroup>
     </SettingsPanel>
+  );
+}
+
+function SocialCallbackUrlField({callbackUrl}: {callbackUrl: string}) {
+  return (
+    <Field.Root>
+      <Field.Label>
+        <Trans message="Callback URL" />
+      </Field.Label>
+      <Input
+        readOnly
+        bindToHookForm={false}
+        value={callbackUrl}
+        className="font-mono text-xs"
+      />
+      <Field.Description>
+        <Trans message="Register this exact URL in the provider application." />
+      </Field.Description>
+    </Field.Root>
   );
 }

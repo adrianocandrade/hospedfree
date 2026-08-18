@@ -70,12 +70,6 @@ class BaseBootstrapData implements BootstrapData
             $this->data['user']->loadCount('unreadNotifications');
         }
 
-        $alreadyAccepted =
-            !settings('cookie_notice.enable') ||
-            (bool) Arr::get($_COOKIE, 'cookie_notice', false);
-        $this->data['show_cookie_notice'] =
-            !$alreadyAccepted && $this->isCookieLawCountry();
-
         $this->data['is_settings_preview'] =
             request('settingsPreview') === 'true';
 
@@ -245,13 +239,5 @@ class BaseBootstrapData implements BootstrapData
         } else {
             return view("seo.$pageName.seo-tags")->render();
         }
-    }
-
-    protected function isCookieLawCountry(): bool
-    {
-        $isoCode = geoip(getIp())['iso_code'];
-        // prettier-ignore
-        return in_array($isoCode, ['AT', 'BE', 'BG', 'BR', 'CY', 'CZ', 'DE', 'DK', 'EE', 'EL', 'ES', 'FI', 'FR', 'GB', 'HR', 'HU', 'IE', 'IT','LT', 'LU', 'LV', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK',
-        ]);
     }
 }

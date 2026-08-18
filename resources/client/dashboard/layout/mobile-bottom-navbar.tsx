@@ -14,7 +14,7 @@ export function MobileBottomNavbar() {
   if (!menu) return null;
 
   return (
-    <div className="flex items-center justify-between gap-7.5 border-t px-6 py-3">
+    <div className="grid grid-cols-5 items-center border-t px-1 py-2.5">
       {menu.items.map(item => (
         <UnstyledCustomMenuItem
           key={item.id}
@@ -22,7 +22,7 @@ export function MobileBottomNavbar() {
           defaultIcons={dashboardSidebarIcons}
           className={({isActive}) =>
             cn(
-              'flex flex-col items-center gap-1.5 overflow-hidden text-xs whitespace-nowrap',
+              'flex w-full min-w-0 flex-col items-center gap-1 text-[10px] whitespace-nowrap',
               isActive && 'font-bold',
             )
           }
@@ -38,16 +38,18 @@ function AccountButton() {
   const hasUnreadNotif = !!user?.unread_notifications_count;
 
   return (
-    <NavbarAuthMenu>
-      <Dropdown.Trigger className="relative flex flex-col items-center gap-1.5 overflow-hidden text-xs whitespace-nowrap">
-        <PersonIcon size="md" />
-        {hasUnreadNotif ? (
-          <Badge className="-top-1.5" right="right-1">
-            {user?.unread_notifications_count}
-          </Badge>
-        ) : null}
-        <Trans message="Account" />
-      </Dropdown.Trigger>
-    </NavbarAuthMenu>
+    <div className="flex w-full min-w-0 justify-center">
+      <NavbarAuthMenu>
+        <Dropdown.Trigger className="relative flex w-full min-w-0 flex-col items-center gap-1 text-[10px] whitespace-nowrap">
+          <PersonIcon size="md" />
+          {hasUnreadNotif ? (
+            <Badge className="-top-1.5" right="right-1">
+              {user?.unread_notifications_count}
+            </Badge>
+          ) : null}
+          <Trans message="Conta" />
+        </Dropdown.Trigger>
+      </NavbarAuthMenu>
+    </div>
   );
 }

@@ -1,0 +1,173 @@
+name: Build and deploy production
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Validate only or publish the package by FTPS
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - deploy
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hospedfree-production-ftp
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    name: Build, validate and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45 # v2
+        with:
+          php-version: '8.4'
+          extensions: ctype, curl, dom, fileinfo, filter, ftp, gd, iconv, intl, mbstring, openssl, pcntl, pdo_sqlite, posix, simplexml, tokenizer, xml, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22.12.0'
+          cache: npm
+
+      - name: Install PHP dependencies for validation
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Install frontend dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run PHP test suite
+        run: composer test:php
+
+      - name: Run TypeScript validation
+        run: npm run typecheck
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Remove development PHP dependencies
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
+
+      - name: Prepare production package
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_dir="${GITHUB_WORKSPACE}/deploy"
+          mkdir -p "${package_dir}"
+          rsync -a \
+            --exclude='/.agents/' \
+            --exclude='/.codex/' \
+            --exclude='/.cursor/' \
+            --exclude='/.git/' \
+            --exclude='/.github/' \
+            --exclude='/.impeccable/' \
+            --exclude='/.phpunit.cache/' \
+            --exclude='/.env*' \
+            --exclude='/bootstrap/cache/config.php' \
+            --exclude='/bootstrap/cache/events.php' \
+            --exclude='/bootstrap/cache/routes-*.php' \
+            --exclude='/docs/' \
+            --exclude='/deploy/' \
+            --exclude='/node_modules/' \
+            --exclude='/public/hot' \
+            --exclude='/resources/client/' \
+            --exclude='/scripts/' \
+            --exclude='/storage/app/backups/' \
+            --exclude='/storage/framework/cache/data/' \
+            --exclude='/storage/framework/sessions/' \
+            --exclude='/storage/framework/testing/' \
+            --exclude='/storage/framework/views/' \
+            --exclude='/storage/logs/' \
+            --exclude='/tests/' \
+            --exclude='/tmp/' \
+            --exclude='/banco.sql' \
+            --exclude='/hospedfree-base.zip' \
+            --exclude='/phpunit.xml' \
+            --exclude='/phpstan.neon' \
+            ./ "${package_dir}/"
+
+          test -f "${package_dir}/artisan"
+          test -f "${package_dir}/vendor/autoload.php"
+          test -f "${package_dir}/public/index.php"
+          test -f "${package_dir}/public/.htaccess"
+          test -f "${package_dir}/public/build/manifest.json"
+          test ! -e "${package_dir}/.env"
+          test ! -e "${package_dir}/bootstrap/cache/config.php"
+          test ! -d "${package_dir}/node_modules"
+
+      - name: Upload production package artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hospedfree-production-${{ github.sha }}
+          path: deploy/
+          if-no-files-found: error
+          retention-days: 7
+          include-hidden-files: true
+
+      - name: Install FTPS client
+        if: ${{ inputs.mode == 'deploy' }}
+        run: sudo apt-get update && sudo apt-get install --yes lftp
+
+      - name: Remove stale Laravel environment caches
+        if: ${{ inputs.mode == 'deploy' }}
+        shell: bash
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PORT: ${{ vars.FTP_PORT || '21' }}
+          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || './' }}
+        run: |
+          set -euo pipefail
+          lftp -u "${FTP_USERNAME}","${FTP_PASSWORD}" -p "${FTP_PORT}" "${FTP_SERVER}" <<LFTP
+          set cmd:fail-exit yes
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ssl:verify-certificate true
+          cd "${FTP_SERVER_DIR}"
+          rm -f bootstrap/cache/config.php
+          rm -f bootstrap/cache/events.php
+          rm -f bootstrap/cache/routes-v7.php
+          bye
+          LFTP
+
+      - name: Publish package by FTPS
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ vars.FTP_PORT || '21' }}
+          protocol: ftps
+          local-dir: ./deploy/
+          server-dir: ${{ vars.FTP_SERVER_DIR || './' }}
+          state-name: .hospedfree-ftp-state.json
+          dry-run: ${{ inputs.mode != 'deploy' }}
+          log-level: standard
+          security: strict
+          timeout: 120000
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.env*
+            **/node_modules/**
+            **/storage/app/backups/**
+            **/storage/framework/cache/data/**
+            **/storage/framework/sessions/**
+            **/storage/framework/testing/**
+            **/storage/framework/views/**
+            **/storage/logs/**

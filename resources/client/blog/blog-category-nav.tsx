@@ -1,7 +1,8 @@
 import {BlogCategory} from '@app/gen/schemas/blog-category';
-import {Button} from '@shadcn/button/button';
+import {PublicCategoryIcon} from '@app/landing/public-category-icon';
 import {Trans} from '@ui/i18n/trans';
-import {cn} from '@ui/utils/cn';
+import {useTrans} from '@ui/i18n/use-trans';
+import {BookOpenTextIcon} from 'lucide-react';
 import {Link} from 'react-router';
 
 type BlogCategoryNavProps = {
@@ -13,32 +14,44 @@ export function BlogCategoryNav({
   categories,
   activeSlug,
 }: BlogCategoryNavProps) {
+  const {trans} = useTrans();
+
   if (!categories.length) {
     return null;
   }
 
   return (
-    <nav className="flex flex-wrap gap-2" aria-label="Categorias do blog">
-      <Button
-        variant={activeSlug ? 'outline' : 'default'}
-        size="sm"
-        nativeButton={false}
-        render={<Link to="/blog" />}
+    <nav
+      className="hf-editorial-category-nav"
+      aria-label={trans({message: 'Categorias do blog'})}
+    >
+      <Link
+        to="/blog"
+        className="hf-editorial-category-link"
+        aria-current={activeSlug ? undefined : 'page'}
       >
+        <BookOpenTextIcon aria-hidden="true" />
         <Trans message="Todos os artigos" />
-      </Button>
-      {categories.map(category => (
-        <Button
-          key={category.id}
-          variant={activeSlug === category.slug ? 'default' : 'outline'}
-          size="sm"
-          nativeButton={false}
-          className={cn(activeSlug !== category.slug && 'bg-background')}
-          render={<Link to={`/blog/categoria/${category.slug}`} />}
-        >
-          {category.name}
-        </Button>
-      ))}
+      </Link>
+      {categories.map(category => {
+        const count =
+          category.published_posts_count ?? category.posts_count ?? undefined;
+
+        return (
+          <Link
+            key={category.id}
+            to={`/blog/categoria/${category.slug}`}
+            className="hf-editorial-category-link"
+            aria-current={activeSlug === category.slug ? 'page' : undefined}
+          >
+            <PublicCategoryIcon name={category.name} />
+            <span>{category.name}</span>
+            {count !== undefined ? (
+              <span className="hf-editorial-count">{count}</span>
+            ) : null}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

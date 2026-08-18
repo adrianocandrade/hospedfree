@@ -12,6 +12,8 @@ interface StripeElementsFormProps {
   submitLabel: ReactNode;
   cancelButton?: ReactNode;
   returnUrl: string;
+  hostingOrder?: string;
+  premiumPurchase?: string;
 }
 export function StripeElementsForm({
   productId,
@@ -21,6 +23,8 @@ export function StripeElementsForm({
   submitLabel,
   cancelButton,
   returnUrl: userReturnUrl,
+  hostingOrder,
+  premiumPurchase,
 }: StripeElementsFormProps) {
   const {stripe, elements, paymentElementRef, stripeIsEnabled, subscriptionId} =
     useStripe({
@@ -30,6 +34,8 @@ export function StripeElementsForm({
           : 'createSubscription',
       productId,
       priceId,
+      hostingOrder,
+      premiumPurchase,
     });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);

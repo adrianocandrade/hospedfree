@@ -6,6 +6,7 @@ use Common\Billing\Subscription;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Price extends Model
 {
@@ -17,6 +18,7 @@ class Price extends Model
         'amount' => 'float',
         'interval_count' => 'int',
         'default' => 'boolean',
+        'active' => 'boolean',
         'subscriptions_count' => 'int',
     ];
 
@@ -30,5 +32,10 @@ class Price extends Model
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 }

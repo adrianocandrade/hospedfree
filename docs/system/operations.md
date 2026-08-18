@@ -1,179 +1,211 @@
-# Operações — HospedFree
+# HospedFree Operations
 
-> Revisado em 10 de agosto de 2026
+Reviewed: 2026-08-10
 
-## Estado
+## Local Setup
 
-As instruções locais abaixo refletem a base atual. A operação de produção HospedFree ainda depende de decisões de infraestrutura, provider, banco, filas, e-mail, DNS, SSL e pagamentos.
+```bash
+composer install
+npm install
+copy .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve --port=8011
+npm run dev
+```
 
-## Requisitos
+Use an isolated database. The current local database is `hospedfreebase`.
 
-- PHP 8.2 ou superior;
-- Composer 2;
-- Node.js 22 ou superior;
-- npm 10 ou superior;
-- MySQL/MariaDB em implantação normal;
-- SQLite somente para desenvolvimento/teste isolado;
-- extensões Laravel e PDO adequadas;
-- Redis/Horizon, busca, realtime e storage conforme recursos habilitados.
+On Windows, local install may need:
 
-## Instalação local
+```bash
+composer install --no-interaction --prefer-dist --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-posix
+```
 
-    composer install
-    npm install
-    copy .env.example .env
-    php artisan key:generate
-    php artisan migrate
-    npm run dev
+## Hosting Flags
 
-No Windows, pcntl e posix não existem. Para desenvolvimento local sem Horizon:
+```env
+HOSPEDFREE_HOSTING_ENABLED=true
+HOSPEDFREE_PAID_ENABLED=false
+HOSPEDFREE_LEGACY_UI_ENABLED=false
+HOSPEDFREE_PROVIDER=fake
+HOSPEDFREE_BASE_DOMAIN=hsite.top
+HOSPEDFREE_PREMIUM_RESERVATION_MINUTES=30
+HOSPEDFREE_CHECKOUT_ATTEMPT_GRACE_MINUTES=60
+```
 
-    composer install --no-interaction --prefer-dist --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-posix
+Use `fake` locally unless testing MOFH with authorized disposable resources.
 
-Isso não é recomendação de produção. Produção Linux deve satisfazer os requisitos reais.
+### Short premium addresses
 
-## Ambiente isolado
+Before publishing a 3-4 character address for sale, create a dedicated active paid product with an annual price in Billing and configure that price for an enabled gateway. A hosting-plan product/price cannot be reused for a premium address. The premium-name admin can instead grant the address to an existing user, with or without an expiration date. The initial reservation duration is controlled by `HOSPEDFREE_PREMIUM_RESERVATION_MINUTES`; after Stripe or PayPal creates a verified attempt, the purchase and name reservation are extended together using `HOSPEDFREE_CHECKOUT_ATTEMPT_GRACE_MINUTES`.
 
-- Não copiar .env, banco ou storage do projeto antigo.
-- Usar banco próprio do hospedfree-base.
-- Não registrar credenciais reais em documentação.
-- APP_URL deve corresponder ao host local usado.
-- O web root de implantação aponta para public.
+Each purchase has its own UUID checkout reference persisted at the payment provider. Webhook synchronization binds a valid subscription to that exact name even if the browser does not return. A late payment never replaces another customer's reservation or entitlement: it is recorded as `action_required` for administrative resolution. An ended annual subscription preserves the site and also moves the linked hosting to operational review; no automatic remote deletion occurs.
 
-Para execução local:
+Production deployment must apply the premium-address schema and navigation migrations with `php artisan migrate --force` before the new route is used.
 
-    php artisan serve --port=8011
+## GitHub FTPS deployment
 
-## Build e implantação
+The manual `Build and deploy production` workflow builds a clean Linux artifact, runs the PHP and TypeScript checks, compiles `public/build`, installs Composer dependencies without development packages and publishes the resulting package by explicit FTPS. It is manual by design: run it first with `dry-run`, review the file plan and then run it with `deploy`.
 
-- instalar dependências com lock files;
-- revisar e executar migrations de forma controlada;
-- gerar assets com npm run build;
-- configurar cache de Laravel conforme o ambiente;
-- iniciar scheduler e workers quando usados;
-- não usar updater web ou download remoto de pacote;
-- manter rollback de release e backup de banco.
+Create a protected GitHub environment named `production` and configure these environment secrets:
 
-## Scheduler e filas
+- `FTP_SERVER`
+- `FTP_USERNAME`
+- `FTP_PASSWORD`
 
-A base possui tarefas herdadas. Antes de ativar produção:
+Configure `FTP_SERVER_DIR` as an environment variable with the FTP-visible project root, ending in `/` (for example `/www/hospedfree.com/` only when that is the path shown by the KeyHelp FTP account). `FTP_PORT` is optional and defaults to `21`. The workflow requires explicit FTPS with certificate verification; it does not fall back to unencrypted FTP.
 
-- inventariar tarefas que ainda pertencem a links/biolinks;
-- desabilitar somente por mudança revisada;
-- criar filas próprias para provider/provisionamento;
-- definir retry, timeout, backoff e idempotência;
-- não repetir operações de criação sem chave idempotente;
-- redigir falhas antes de persistir ou enviar ao observability.
+The deployment never uploads `.env`, local databases, backups, logs, tests, `node_modules` or environment-specific Laravel caches. Before a real publish it removes only the known remote cache files `bootstrap/cache/config.php`, `bootstrap/cache/events.php` and `bootstrap/cache/routes-v7.php`. This prevents a package built locally from forcing a development `APP_URL` in production. Keep the production `.env` on KeyHelp and use `APP_URL=https://www.hospedfree.com` without a trailing slash.
 
-O scheduler Laravel normalmente é acionado a cada minuto. Workers/Horizon são necessários quando queue não é sync.
+FTP cannot run database migrations or restart workers. After a deployment containing migrations, run `php artisan migrate --force` using the KeyHelp CLI or an authenticated operational mechanism, then restart the queue worker. Do not expose a public migration endpoint.
+
+## Production build on KeyHelp/Linux
+
+KeyHelp can host the application when the selected web and CLI runtimes both use
+PHP 8.2 or newer and satisfy `composer.lock`. The frontend build requires Node.js
+20.19+, 22.12+ or a newer Vite-compatible version. Point the domain document root
+to the project's `public` directory, never to the repository root.
+
+KeyHelp disables process execution functions such as `proc_open` by default, so
+the production artifact should be built on a trusted local machine instead of
+through a public PHP endpoint. Use the committed lockfiles and run:
+
+```bash
+composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+npm ci --no-audit --no-fund
+npm run typecheck
+npm run build
+php artisan optimize:clear
+```
+
+When building on Windows, Composer can ignore only `ext-pcntl` because that
+extension is unavailable there. The KeyHelp Linux CLI used by Horizon and queue
+workers must still provide `pcntl` in production. Upload the application code,
+`vendor` and `public/build`; do not upload `node_modules`, `.git`, the local `.env`,
+database dumps or provider credentials. Configure the production `.env` directly
+on KeyHelp and clear/regenerate Laravel caches after the database is available.
+
+## Queues and Scheduler
+
+Provisioning, password reset, reconciliation, suspension, reactivation, deletion and package changes run through jobs and provider operations.
+
+Run a worker when the queue connection is not sync:
+
+```bash
+php artisan queue:work
+```
+
+Run the scheduler every minute in production. The hosting maintenance command reconciles accounts and safely completes only legacy deletion requests that already have a scheduled due date. New customer deletions start immediately after successful deactivation and explicit confirmation.
+
+```bash
+php artisan schedule:run
+```
+
+### Security history retention
+
+The scheduler runs `security-history:prune` every day at 03:20. Retention can be changed in **Admin > Settings > Logs** or through the matching environment values:
+
+```env
+OUTGOING_EMAIL_LOG_RETENTION_DAYS=7
+CUSTOMER_COMMUNICATION_RETENTION_DAYS=365
+CUSTOMER_SECURITY_EVENT_RETENTION_DAYS=365
+ADMINISTRATIVE_SECURITY_AUDIT_RETENTION_DAYS=365
+USER_SESSION_RETENTION_DAYS=90
+```
+
+Values must be whole days between 1 and 3650. Customer history never contains message bodies, recipients, headers, OTPs, signed URLs or tokens. Technical MIME access remains administrative and requires independent permissions for metadata, content and download.
 
 ## Billing
 
-Billing atual fica em common/foundation/src/Billing e é candidato a reaproveitamento para hospedagem paga.
+Paid hosting uses existing products, prices, subscriptions and invoices. Gateways are not hardcoded; availability follows existing Stripe/PayPal settings.
 
-Antes de oferecer um plano:
+Operational rules:
 
-- aprovar pacote, preço, moeda, período e limites;
-- mapear produto comercial para pacote técnico;
-- validar webhooks;
-- separar pagamento confirmado de provisionamento concluído;
-- definir reembolso, cancelamento e falha de ativação;
-- testar upgrade/downgrade e renovação.
+- payment confirmed does not mean hosting active;
+- upgrade changes remote package only after local subscription validates;
+- failed package change moves the account to `action_required`;
+- cancellation/delinquency downgrades to Free after tolerance;
+- invoices and subscription history are preserved.
 
 ## MOFH
 
-MOFH é provider interno, nunca identidade pública.
+MOFH is internal infrastructure.
 
-Operação planejada:
+Required before real use:
 
-- adapter com interface estável;
-- secrets somente em ambiente/configuração protegida;
-- sandbox/fake para desenvolvimento;
-- timeout e retry limitados;
-- logs redigidos;
-- callback autenticado/validado;
-- reconciliação periódica sem sobrescrever estado local cegamente;
-- identificador de correlação seguro.
+- protected `HOSPEDFREE_MOFH_*` environment values;
+- TLS enabled;
+- disposable smoke-test account/domain;
+- timeout and retry limits left enabled;
+- logs reviewed for redaction;
+- no callback dependency unless callback authentication is proven.
 
-Nunca enviar payload bruto, senha ou chave em e-mail, frontend, ticket ou log.
+Never expose raw MOFH payloads or credentials to API responses, frontend, tickets or logs.
 
-## hsite.top
+### Safe integration smoke test
 
-- disponibilidade precisa ser validada pelo domínio local e pelo provider;
-- lista de subdomínios reservados deve ser configurável;
-- normalização e unicidade ocorrem antes do provisionamento;
-- não prometer reserva antes de confirmação;
-- mudanças de DNS e SSL devem mostrar estado de propagação.
+Use the local-only diagnostic command with an explicitly authorized account:
 
-## DNS, Cloudflare e SSL
+```bash
+php artisan hosting:smoke-test --user=<id-or-username> --account=<id-or-uuid> --installer --site-builder
+```
 
-Cloudflare e ACME são integrações alvo, não dependências confirmadas.
+The account option is optional when that user owns exactly one hosting account. The command checks MOFH connectivity, the normalized remote package catalog, local package mappings, account/domain lookup, WebFTP, installer access and Site.Pro. It never prints credentials, cookies, raw provider payloads or tool session URLs. If VistaPanel returns an installer URL containing the hosting password, the command confirms that the unsafe URL was blocked and that the configured HTTPS hosting panel is available as the safe fallback.
 
-- criptografar tokens;
-- restringir escopos;
-- manter zona/domínio vinculados ao proprietário;
-- nunca logar chave privada;
-- validar domínio antes de emissão;
-- usar jobs idempotentes;
-- testar apenas com domínios descartáveis autorizados;
-- não desativar verificação TLS.
+The command does not switch `HOSPEDFREE_PROVIDER`, provision a remote account or convert an account created by the `fake` provider.
 
-## Arquivos e deploy
+### WebFTP/File Manager
 
-- validar tamanho, MIME e conteúdo;
-- impedir path traversal e symlink escape;
-- bloquear .env, .git, .github, node_modules, chaves privadas e backups;
-- não apagar conteúdo remoto inteiro sem modo explícito e recuperação;
-- uma implantação concorrente por conta é o padrão inicial;
-- Git v1 aceita somente repositório público;
-- logs mostram etapas, não conteúdo sensível.
+The native file manager connects server-side with the VistaPanel username and the encrypted hosting password. Keep explicit FTPS and passive mode enabled; never solve connectivity errors by disabling TLS or by placing credentials in an external URL.
 
-## Observabilidade
+MOFH's `ftpupload.net:21` endpoint can temporarily refuse TCP connections or an account password can still be propagating after a reset. Read-only operations create a fresh connection and use the bounded provider retry setting. Mutating operations are never retried automatically because the remote mutation might already have completed.
 
-Registrar:
+Use the safe smoke test to distinguish application errors from provider reachability. If the result is `file_manager_connection_failed` and a TCP check to port 21 also fails, the provider endpoint is unavailable from the application host. Configure an HTTPS external fallback without credentials so the customer still has a recovery path; the native manager remains the primary path.
 
-- evento e estado;
-- IDs internos/correlação;
-- duração;
-- resultado seguro;
-- retry;
-- operador/ator quando aplicável.
+For one explicitly authorized local test account, validate the controlled promotion separately:
 
-Não registrar:
+```bash
+php artisan hosting:promote-fake-account <account-id>
+```
 
-- senha;
-- token;
-- cookie;
-- 2FA;
-- chave privada;
-- corpo bruto do provider;
-- dados de pagamento;
-- conteúdo de arquivo do cliente.
+Only after the validation confirms the MOFH package mapping and remote domain availability, repeat with `--confirm`. The command reuses the existing local Free slot, records an idempotent provider operation, stores the returned VistaPanel username and hosting password server-side with encryption, and never prints credentials. This is an explicit operational migration for selected test data, not an automatic fallback or a provider callback.
 
-## Matriz de ambientes
+Site.Pro may return an HTTPS editor URL on a separate regional host with an opaque `login_hash`. Configure each exact regional host in the Site Builder admin settings. The adapter accepts only that parameter on an allowlisted host; user names, FTP passwords, API credentials, fragments and additional query parameters remain blocked.
 
-| Ambiente | Provider | Pagamento | DNS/SSL | Dados |
-| --- | --- | --- | --- | --- |
-| Teste unitário | fake | fake | fake | factories |
-| Local | fake/sandbox | sandbox | fake | banco isolado |
-| Staging público | conta descartável | sandbox | domínio descartável | sintéticos |
-| Produção | real | real | real | mínimos necessários |
+## SSL, ACME and Cloudflare
 
-Testes reais de MOFH, callback, Cloudflare ou ACME nunca devem rodar contra contas/domínios de clientes.
+Use the ACME staging directory until a disposable authorized domain completes the entire flow. Only HTTPS directory hosts listed in `HOSPEDFREE_ACME_ALLOWED_DIRECTORY_HOSTS` are accepted.
 
-## Validação
+The Cloudflare token entered in admin settings is stored encrypted in `hosting_integration_secrets`. An environment token can remain as a deployment fallback, but it is never returned by the settings or health APIs.
 
-Checks usuais:
+Required before production issuance:
 
-    composer test:php
-    npm run lint
-    npm run typecheck
-    npm run format:check
-    npm run build
-    php artisan route:list
+- apply all additive hosting migrations;
+- configure an ACME account e-mail and an allowlisted directory;
+- use a least-privilege Cloudflare token restricted to the configured zone when automatic DNS is enabled;
+- complete request, TXT propagation, issuance and cleanup using a disposable authorized domain;
+- keep `HOSPEDFREE_SSL_MAINTENANCE_ENABLED=false` until staging request, renewal, replacement installation and reconciliation complete with an authorized disposable domain;
+- treat certificate issuance and installation as separate states;
+- do not advertise remote certificate installation or revocation until the panel adapter confirms those operations;
+- keep `hosting_ssl_operations` free of certificate material, credentials and raw external responses.
 
-Gerar API somente quando rotas/schemas mudarem:
+The MOFH API documentation states that the public API is limited and does not document direct VPanel calls. Historical VistaPanel operator guidance also states that certificate upload was not available through a programmatic API. Accordingly, the current MOFH adapter returns `manual_required` instead of simulating installation. Sources reviewed on 2026-08-12: [MOFH API limitations](https://api.myownfreehost.net/limitations) and [VistaPanel automatic renewal/install limitation](https://forum.infinityfree.com/t/auto-renew-ssl/29871).
 
-    composer api-docs
+When maintenance is enabled, `hosting:maintain` reconciles issued orders after the configured interval and starts renewal inside the configured expiration window. A pending renewal never clears the current certificate. Replacement material is written only after successful ACME issuance, and installation is queued with a new idempotency key.
 
-Há dívida global herdada de lint e formatação registrada em divergences-and-known-issues.md. Não afirmar sucesso sem executar.
+## Validation
+
+Useful commands:
+
+```bash
+php artisan test tests/Feature/Hosting/HostingLifecycleTest.php
+composer test:php
+npm run typecheck
+npm run lint
+npm run format:check
+npm run build
+php artisan route:list
+```
+
+Run `composer test:php` before public release. Current inherited failures are tracked in `docs/audits/hosting-conversion-baseline.md`.
